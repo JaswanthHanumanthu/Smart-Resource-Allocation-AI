@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --bg:        radial-gradient(circle at 20% 30%,#0f2027 0%,#020617 100%);
+      --glass-bg:  rgba(15,23,42,0.65);
+      --glass-bd:  rgba(255,255,255,0.10);
+      --clr-text:  #f1f5f9;
+      --clr-muted: #94a3b8;
+      --clr-acc:   #14b8a6;
+      --clr-crit:  #ef4444;
+      --clr-warn:  #f59e0b;
+      --clr-ok:    #10b981;
+    }
+    body.hc {
+      --bg:        #000;
+      --glass-bg:  #111;
+      --glass-bd:  #fff;
+      --clr-text:  #fff;
+      --clr-muted: #ddd;
+      --clr-acc:   #00ffe0;
+      --clr-crit:  #ff4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      background:var(--bg);color:var(--clr-text);
+      font-family:'Inter',sans-serif;padding:10px;
+      overflow-x:hidden;min-height:100vh;
+      transition:background .4s,color .4s;
+    }
+    body::before{
+      content:"";position:fixed;top:0;left:0;width:100%;height:100%;
+      background-image:
+        linear-gradient(rgba(20,184,166,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(20,184,166,.04) 1px,transparent 1px);
+      background-size:50px 50px;z-index:-1;
+      mask-image:radial-gradient(ellipse at center,black,transparent 90%);
+      animation:gridmove 30s linear infinite;opacity:.15;
+    }
+    @keyframes gridmove{from{background-position:0 0}to{background-position:50px 50px}}
+
+    /* ── Glassmorphism ── */
+    .glass{
+      background:var(--glass-bg);
+      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      border:1px solid var(--glass-bd);
+      box-shadow:0 4px 30px rgba(0,0,0,.35);
+    }
+    /* ── Bento card ── */
+    .bento{
+      border-radius:18px;overflow:hidden;
+      border:1px solid rgba(59,130,246,.15);
+      transition:transform .28s cubic-bezier(.4,0,.2,1),
+                  border-color .28s,box-shadow .28s;
+    }
+    .bento:hover{
+      transform:translateY(-4px) scale(1.012);
+      border-color:rgba(59,130,246,.55);
+      box-shadow:0 16px 40px rgba(59,130,246,.12);
+    }
+    .bento.crit{border-color:rgba(239,68,68,.25)!important}
+    .bento.crit:hover{border-color:rgba(239,68,68,.65)!important;box-shadow:0 0 32px rgba(239,68,68,.14)!important}
+    .bento.kpi-crit{animation:ringpulse 2.5s infinite}
+    @keyframes ringpulse{
+      0%{box-shadow:0 0 0 0 rgba(239,68,68,.35)}
+      70%{box-shadow:0 0 0 14px rgba(239,68,68,0)}
+      100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}
+    }
+
+    /* ── Gauge ── */
+    .g-warn {stroke:#ef4444!important;filter:drop-shadow(0 0 8px rgba(239,68,68,.5))}
+    .g-mid  {stroke:#f59e0b!important;filter:drop-shadow(0 0 8px rgba(245,158,11,.5))}
+    .g-ok   {stroke:#10b981!important;filter:drop-shadow(0 0 8px rgba(16,185,129,.5))}
+    .t-warn {color:#ef4444!important}.t-mid{color:#f59e0b!important}.t-ok{color:#10b981!important}
+    .circle-bar{
+      stroke-dasharray:251;stroke-dashoffset:251;
+      animation:fillbar 2s cubic-bezier(.4,0,.2,1) forwards;
+      transition:stroke-dashoffset .8s ease,stroke .5s ease;
+    }
+    @keyframes fillbar{to{stroke-dashoffset:__OFFSET__}}
+    @keyframes fadein{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+    .count-up{animation:fadein .8s ease-out forwards;opacity:0}
+
+    /* ── Pulse markers ── */
+    .pulse-m{background:rgba(239,68,68,.9);border-radius:50%;animation:predpulse 2s infinite}
+    .live-dot{border-radius:50%;background:#ef4444;animation:predpulse 2s infinite}
+    @keyframes predpulse{
+      0%{transform:scale(.9);box-shadow:0 0 0 0 rgba(239,68,68,.7)}
+      70%{transform:scale(1.1);box-shadow:0 0 0 10px rgba(239,68,68,0)}
+      100%{transform:scale(.9);box-shadow:0 0 0 0 rgba(239,68,68,0)}
+    }
+
+    /* ── Needs list ── */
+    #needs-list{overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(20,184,166,.3) transparent}
+    #needs-list::-webkit-scrollbar{width:3px}
+    #needs-list::-webkit-scrollbar-thumb{background:rgba(20,184,166,.3);border-radius:10px}
+    .need-item{
+      cursor:pointer;border-left:3px solid transparent;
+      transition:background .2s,border-color .2s,transform .2s,box-shadow .2s;
+      border-radius:12px;padding:11px 13px;margin-bottom:7px;
+      background:rgba(255,255,255,.03);outline:none;
+    }
+    .need-item:hover{background:rgba(20,184,166,.08);border-left-color:#14b8a6;transform:translateX(3px)}
+    .need-item:focus-visible{outline:2px solid #14b8a6;outline-offset:2px}
+    .need-item.active{background:rgba(20,184,166,.13);border-left-color:#14b8a6;box-shadow:0 4px 18px rgba(20,184,166,.15)}
+    .need-item.ci{border-left-color:rgba(239,68,68,.4)}
+    .need-item.ci:hover,.need-item.ci.active{border-left-color:#ef4444;background:rgba(239,68,68,.07)}
+    .uh{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+    .um{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+    .ul{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+
+    /* ── Fly animation ring ── */
+    @keyframes ringex{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.5);opacity:0}}
+    .fly-ring{width:18px;height:18px;border-radius:50%;border:2px solid #14b8a6;animation:ringex 1.2s ease-out forwards}
+
+    /* ── Radar refract ── */
+    @keyframes refract{
+      0%,100%{box-shadow:0 4px 24px -1px rgba(0,0,0,.3)}
+      50%{box-shadow:0 0 30px rgba(59,130,246,.4),inset 0 0 15px rgba(255,255,255,.07)}
+    }
+    .refract{animation:refract .8s ease-out}
+
+    /* ── AI log ── */
+    #feed-container{overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(20,184,166,.3) transparent}
+    #feed-container::-webkit-scrollbar{width:3px}
+    #feed-container::-webkit-scrollbar-thumb{background:rgba(20,184,166,.3);border-radius:10px}
+    @keyframes slidein{0%{opacity:0;transform:translateX(-10px)}100%{opacity:1;transform:none}}
+    .ani{animation:slidein .45s cubic-bezier(.16,1,.3,1) forwards}
+
+    /* ── HC toggle ── */
+    #hc-btn{
+      position:fixed;top:10px;right:12px;z-index:9999;
+      background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.35);
+      color:#14b8a6;border-radius:8px;padding:5px 11px;
+      font-size:10px;font-weight:700;letter-spacing:.06em;
+      cursor:pointer;transition:background .2s,color .2s;font-family:'Inter',sans-serif;
+    }
+    #hc-btn:hover{background:rgba(20,184,166,.28);color:#fff}
+    #hc-btn:focus-visible{outline:2px solid #14b8a6;outline-offset:2px}
+
+    /* ── Leaflet popup override ── */
+    .leaflet-popup-content-wrapper{
+      background:#0f1f3a!important;color:#e2e8f0!important;
+      border:1px solid rgba(20,184,166,.3)!important;border-radius:12px!important;
+      font-family:'Inter',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5)!important;
+    }
+    .leaflet-popup-tip{background:#0f1f3a!important}
+
+    /* ── Layout grids ── */
+    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:13px}
+    .main-row{display:grid;grid-template-columns:320px 1fr;gap:13px;height:520px;margin-bottom:13px}
+    .bot-row{display:grid;grid-template-columns:1fr 1fr;gap:13px;height:300px}
+  </style>
+</head>
+<body>
+
+<!-- A11y: High-Contrast Toggle -->
+<button id="hc-btn" aria-label="Toggle high-contrast mode" aria-pressed="false" onclick="toggleHC()">⬤ HC Mode</button>
+
+<!-- KPI Row -->
+<div class="kpi-row">
+  <div class="bento glass __CRIT_KPI_CLASS__" style="padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center" role="region" aria-label="Total needs KPI card">
+    <i data-lucide="target" style="width:26px;height:26px;color:__CRIT_COLOR__;margin-bottom:8px" aria-hidden="true"></i>
+    <span style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--clr-muted);text-transform:uppercase">Total Needs</span>
+    <p class="count-up" id="kpi-total" style="font-size:2.8rem;font-weight:800;color:var(--clr-text);line-height:1.1;margin-top:4px">__TOTAL__</p>
+    <span style="font-size:10px;color:#ef4444;margin-top:3px">__CRITICAL__ CRITICAL</span>
+  </div>
+
+  <div class="bento glass" style="padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center" role="region" aria-label="Matching efficiency gauge">
+    <span style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--clr-muted);text-transform:uppercase;margin-bottom:8px">Efficiency</span>
+    <div style="position:relative;width:96px;height:96px;display:flex;align-items:center;justify-content:center">
+      <svg style="width:100%;height:100%;transform:rotate(-90deg)" aria-hidden="true">
+        <circle cx="48" cy="48" r="38" stroke="rgba(255,255,255,.07)" stroke-width="7" fill="transparent"/>
+        <circle cx="48" cy="48" r="38" stroke="#14b8a6" stroke-width="7" fill="transparent" stroke-linecap="round" class="circle-bar"/>
+      </svg>
+      <span id="kpi-eff-num" style="position:absolute;font-size:1.3rem;font-weight:800">0%</span>
+    </div>
+    <span id="kpi-matched-denom" style="font-size:10px;color:var(--clr-muted);margin-top:5px">__MATCHED__ / __TOTAL__ MATCHED</span>
+  </div>
+
+  <div class="bento glass" style="padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center" role="region" aria-label="Pending needs count">
+    <i data-lucide="clock" style="width:26px;height:26px;color:#f59e0b;margin-bottom:8px" aria-hidden="true"></i>
+    <span style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--clr-muted);text-transform:uppercase">Pending</span>
+    <p class="count-up" style="font-size:2.8rem;font-weight:800;color:#f59e0b;line-height:1.1;margin-top:4px">__PENDING__</p>
+    <span style="font-size:10px;color:var(--clr-muted);margin-top:3px">Awaiting dispatch</span>
+  </div>
+
+  <div class="bento glass" style="padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center" role="region" aria-label="Matched needs count">
+    <i data-lucide="check-circle-2" style="width:26px;height:26px;color:#10b981;margin-bottom:8px" aria-hidden="true"></i>
+    <span style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--clr-muted);text-transform:uppercase">Matched</span>
+    <p class="count-up" style="font-size:2.8rem;font-weight:800;color:#10b981;line-height:1.1;margin-top:4px">__MATCHED__</p>
+    <span style="font-size:10px;color:var(--clr-muted);margin-top:3px">Resources deployed</span>
+  </div>
+</div>
+
+<!-- Main Row: Needs List | Map -->
+<div class="main-row">
+
+  <!-- LEFT: scrollable needs list -->
+  <div class="bento glass crit" style="display:flex;flex-direction:column;overflow:hidden" role="region" aria-label="Urgent needs list — click to fly map to location">
+    <div style="padding:14px 14px 9px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0">
+      <h2 style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--clr-muted);display:flex;align-items:center;gap:7px">
+        <span class="live-dot" style="width:8px;height:8px;display:inline-block" aria-hidden="true"></span>
+        Urgent Needs Feed
+      </h2>
+      <p style="font-size:10px;color:var(--clr-muted);margin-top:3px">Click a need → map flies to it</p>
+    </div>
+    <div id="needs-list" style="flex:1;padding:9px 11px;overflow-y:auto" role="list" aria-live="polite" aria-label="Scrollable list of urgent needs"></div>
+  </div>
+
+  <!-- RIGHT: map -->
+  <div class="bento glass" style="position:relative;overflow:hidden;padding:0" role="region" aria-label="Interactive geospatial impact map">
+    <div style="position:absolute;top:11px;left:11px;z-index:400;background:rgba(11,17,32,.85);backdrop-filter:blur(8px);padding:5px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.08);font-size:11px;display:flex;align-items:center;gap:6px" aria-label="Map status: live tracking">
+      <span class="live-dot" style="width:8px;height:8px;display:inline-block" aria-hidden="true"></span> Live Impact Tracking
+    </div>
+    <div style="position:absolute;bottom:11px;left:11px;z-index:400;background:rgba(11,17,32,.85);backdrop-filter:blur(8px);padding:7px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.08);font-size:10px;display:flex;gap:13px" role="img" aria-label="Map legend: red=critical, orange=high, teal=normal, grey=matched">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:#ef4444;border-radius:50%;display:inline-block"></span>Critical</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:#f59e0b;border-radius:50%;display:inline-block"></span>High</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:#14b8a6;border-radius:50%;display:inline-block"></span>Normal</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:#6b7280;border-radius:50%;display:inline-block"></span>Matched</span>
+    </div>
+    <div id="map" style="width:100%;height:100%;border-radius:18px"></div>
+  </div>
+</div>
+
+<!-- Bottom Row: Radar | AI Log -->
+<div class="bot-row">
+
+  <div id="radar-card" class="bento glass" style="padding:16px;display:flex;flex-direction:column" role="region" aria-label="Resource gap radar chart">
+    <h3 style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--clr-muted);margin-bottom:8px">Resource Gap Radar</h3>
+    <div style="flex:1;position:relative"><canvas id="radarChart" aria-label="Radar chart of unmet resource categories"></canvas></div>
+  </div>
+
+  <div class="bento glass crit" style="padding:16px;display:flex;flex-direction:column;overflow:hidden" role="region" aria-label="AI agent critical event log">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;flex-shrink:0">
+      <h3 style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--clr-muted)">AI Agent Log</h3>
+      <span id="log-counter" style="font-size:10px;background:rgba(255,255,255,.05);padding:2px 9px;border-radius:20px;color:var(--clr-muted)" aria-live="polite" aria-label="Number of active critical events">0 ACTIVE</span>
+    </div>
+    <div id="feed-container" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px" role="log" aria-live="polite" aria-label="Streaming critical event log"></div>
+    <div style="flex-shrink:0;padding-top:9px;border-top:1px solid rgba(255,255,255,.05);margin-top:6px">
+      <button id="expand-btn" onclick="toggleExpand()"
+              aria-label="Show or collapse all critical log entries" aria-expanded="false"
+              style="width:100%;padding:6px;border-radius:9px;font-size:10px;font-weight:700;
+                     background:rgba(20,184,166,.1);border:1px solid rgba(20,184,166,.2);
+                     color:#14b8a6;cursor:pointer;transition:background .2s;font-family:'Inter',sans-serif">
+        <span id="btn-txt">Show All Logs</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  // ── injected by Python ──────────────────────────────────
+  const data        = __DATA_JSON__;
+  let totalMatched  = __MATCHED__;
+  let totalNeeds    = __TOTAL__;
+  const efficiency0 = __EFF__;
+  // ────────────────────────────────────────────────────────
+
+  let globalId    = 1000;
+  const markers   = {};
+  const cats      = {Food:0,Medical:0,Shelter:0,General:0};
+  let isExpanded  = false;
+  let logsShown   = 0;
+  let activeId    = null;
+
+  // Fix @keyframes fillbar offset now that efficiency is known
+  (function(){
+    const offset = 251 - (251 * efficiency0 / 100);
+    const sheet  = Array.from(document.styleSheets).find(s => { try{return s.cssRules}catch(e){return false} });
+    if(sheet){
+      for(let r of sheet.cssRules){
+        if(r.name === 'fillbar' && r.cssRules){
+          try{ r.cssRules[0].style.strokeDashoffset = offset; }catch(e){}
+        }
+      }
+    }
+    // also set directly via style tag injection
+    const st = document.createElement('style');
+    st.textContent = `@keyframes fillbar{to{stroke-dashoffset:${offset}}}`;
+    document.head.appendChild(st);
+  })();
+
+  // ── HC toggle ────────────────────────────────────────────
+  function toggleHC(){
+    const on = document.body.classList.toggle('hc');
+    const btn = document.getElementById('hc-btn');
+    btn.setAttribute('aria-pressed', String(on));
+    btn.textContent = on ? '⬤ Normal' : '⬤ HC Mode';
+  }
+
+  // ── KPI updater ──────────────────────────────────────────
+  function updateKPIs(){
+    const eff = totalNeeds > 0 ? Math.round((totalMatched/totalNeeds)*100) : 0;
+    const el  = document.getElementById('kpi-eff-num');
+    const from = parseInt(el.innerText)||0;
+    const t0  = performance.now();
+    (function tick(now){
+      const p = Math.min((now-t0)/900,1);
+      const v = Math.floor(from+(eff-from)*p);
+      el.innerText = v+'%';
+      el.className = '';
+      if(v<30) el.classList.add('t-warn');
+      else if(v<70) el.classList.add('t-mid');
+      else el.classList.add('t-ok');
+      if(p<1) requestAnimationFrame(tick);
+    })(t0);
+    const c = document.querySelector('.circle-bar');
+    c.classList.remove('g-warn','g-mid','g-ok');
+    if(eff<30) c.classList.add('g-warn');
+    else if(eff<70) c.classList.add('g-mid');
+    else c.classList.add('g-ok');
+    c.style.strokeDashoffset = 251-(251*eff/100);
+    document.getElementById('kpi-total').innerText = totalNeeds;
+    document.getElementById('kpi-matched-denom').innerText = totalMatched+' / '+totalNeeds+' MATCHED';
+  }
+  setTimeout(updateKPIs, 500);
+
+  // ── Map ──────────────────────────────────────────────────
+  let lats=0,lons=0,vc=0;
+  data.forEach(d=>{if(d.latitude){lats+=d.latitude;lons+=d.longitude;vc++;}});
+  const center = vc>0?[lats/vc,lons/vc]:[37.7749,-122.4194];
+  const map = L.map('map',{zoomControl:true,zoomAnimation:true}).setView(center,12);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:''}).addTo(map);
+
+  // ── Fly-to with ring burst ───────────────────────────────
+  function flyTo(lat,lon,id){
+    map.flyTo([lat,lon],14,{animate:true,duration:1.0});
+    if(activeId!==null){
+      const p=document.getElementById('ni-'+activeId);
+      if(p) p.classList.remove('active');
+    }
+    activeId=id;
+    const cur=document.getElementById('ni-'+id);
+    if(cur){cur.classList.add('active');cur.scrollIntoView({behavior:'smooth',block:'nearest'});}
+    setTimeout(()=>{
+      const ri=L.divIcon({className:'',html:'<div class="fly-ring"></div>',iconSize:[18,18],iconAnchor:[9,9]});
+      const tmp=L.marker([lat,lon],{icon:ri,interactive:false}).addTo(map);
+      setTimeout(()=>map.removeLayer(tmp),1500);
+      if(markers[id]&&markers[id].m) markers[id].m.openPopup();
+    },750);
+  }
+
+  // ── Build list & markers ─────────────────────────────────
+  const nl = document.getElementById('needs-list');
+  function ucls(u){return u>=8?'uh':u>=5?'um':'ul';}
+  function icon(c){return {Medical:'🏥',Food:'🍱',Shelter:'🏠',General:'📦'}[c]||'📌';}
+
+  data.forEach(item=>{
+    item._id = globalId++;
+    const pend = item.status==='Pending'||item.status==='In Progress';
+    if(pend) cats[item.category]=(cats[item.category]||0)+1;
+    const crit = item.urgency>=8&&pend;
+
+    // map marker colour
+    let mc = crit?'rgba(239,68,68,.9)':item.urgency>=5?'#f59e0b':'#14b8a6';
+    if(item.status==='Matched') mc='#6b7280';
+    const dotHtml = crit
+      ?'<div class="pulse-m" style="width:12px;height:12px"></div>'
+      :`<div style="width:10px;height:10px;border-radius:50%;background:${mc}"></div>`;
+    const ci = L.divIcon({className:'',html:dotHtml,iconSize:[12,12],iconAnchor:[6,6]});
+    const mk = L.marker([item.latitude,item.longitude],{icon:ci})
+      .addTo(map)
+      .bindPopup(`<strong style="color:#14b8a6;font-size:13px">${item.category}</strong>
+        <span style="float:right;font-size:10px;color:#94a3b8">${item.status}</span><br>
+        <span style="font-size:11px;color:#f59e0b">⚡ Urgency ${item.urgency}/10</span><br>
+        <span style="font-size:11px;opacity:.9">${item.description}</span>`);
+    markers[item._id]={m:mk,cat:item.category};
+
+    // list item (pending only)
+    if(pend&&item.latitude){
+      const li=document.createElement('div');
+      li.className='need-item ani'+(crit?' ci':'');
+      li.id='ni-'+item._id;
+      li.setAttribute('role','listitem');
+      li.setAttribute('tabindex','0');
+      li.setAttribute('aria-label',
+        `${item.category} need, urgency ${item.urgency} of 10, ${item.status}: ${item.description}`);
+      li.innerHTML=`
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:700;color:var(--clr-text)">${icon(item.category)} ${item.category}</span>
+          <span class="${ucls(item.urgency)}" style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.06em">U-${item.urgency}</span>
+        </div>
+        <p style="font-size:11px;color:var(--clr-muted);line-height:1.45;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${item.description}</p>`;
+      const _id=item._id,_lat=item.latitude,_lon=item.longitude;
+      li.addEventListener('click',()=>flyTo(_lat,_lon,_id));
+      li.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flyTo(_lat,_lon,_id);}});
+      nl.appendChild(li);
+    }
+
+    // AI log (critical only, first 6)
+    if(crit&&logsShown<6){renderLog(item);logsShown++;}
+  });
+
+  if(nl.children.length===0)
+    nl.innerHTML='<p style="color:var(--clr-muted);font-size:12px;text-align:center;margin-top:28px">No pending needs.</p>';
+
+  // ── AI log renderer ──────────────────────────────────────
+  const feed=document.getElementById('feed-container');
+  function renderLog(item){
+    const t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const el=document.createElement('div');
+    el.id='log-'+item._id;el.className='ani';
+    el.setAttribute('role','article');
+    el.setAttribute('aria-label',`Critical ${item.category} event, urgency ${item.urgency}`);
+    el.style.cssText='padding:9px 11px;background:rgba(255,255,255,.04);border:1px solid rgba(239,68,68,.2);border-radius:9px;flex-shrink:0;transition:border .2s,background .2s';
+    el.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="color:#ef4444;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em">⚠ Critical</span>
+        <span style="color:var(--clr-muted);font-size:9px">${t}</span>
+      </div>
+      <p style="font-size:11px;color:#e2e8f0;line-height:1.45;margin:0 0 6px">${item.description}</p>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(20,184,166,.15);color:#14b8a6;border:1px solid rgba(20,184,166,.3)">${item.category}</span>
+        <button onclick="resolveTask(${item._id})"
+                aria-label="Resolve ${item.category} critical need with urgency ${item.urgency}"
+                style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;cursor:pointer;transition:background .2s;font-family:'Inter',sans-serif">Resolve ⚡</button>
+      </div>`;
+    feed.appendChild(el);
+    updateCount();lucide.createIcons();
+  }
+  function updateCount(){document.getElementById('log-counter').innerText=feed.children.length+' ACTIVE';}
+
+  // ── Expand/collapse log ──────────────────────────────────
+  window.toggleExpand=function(){
+    isExpanded=!isExpanded;
+    document.getElementById('expand-btn').setAttribute('aria-expanded',String(isExpanded));
+    document.getElementById('btn-txt').innerText=isExpanded?'Collapse Feed ↑':'Show All Logs';
+    if(isExpanded){
+      data.forEach(item=>{
+        const cr=item.urgency>=8&&(item.status==='Pending'||item.status==='In Progress');
+        if(cr&&!document.getElementById('log-'+item._id)) renderLog(item);
+      });
+    }
+  };
+
+  // ── Resolve task ─────────────────────────────────────────
+  window.resolveTask=function(id){
+    const le=document.getElementById('log-'+id);
+    const ne=document.getElementById('ni-'+id);
+    if(!le) return;
+    const btn=le.querySelector('button');
+    if(btn){btn.textContent='⏳ Matching…';btn.disabled=true;}
+    setTimeout(()=>{
+      const cat=markers[id]?.cat;
+      if(cat&&cats[cat]>0){
+        cats[cat]--;radar.data.datasets[0].data=Object.values(cats);radar.update();
+        totalMatched++;updateKPIs();
+        const rc=document.getElementById('radar-card');
+        if(rc){rc.classList.remove('refract');void rc.offsetWidth;rc.classList.add('refract');}
+      }
+      const md=markers[id];
+      if(md?.m){
+        map.removeLayer(md.m);
+        const di=L.divIcon({className:'',html:'<div style="width:8px;height:8px;border-radius:50%;background:#6b7280;opacity:.5"></div>',iconSize:[8,8],iconAnchor:[4,4]});
+        L.marker(md.m.getLatLng(),{icon:di}).addTo(map);
+      }
+      le.style.borderColor='rgba(16,185,129,.3)';le.style.opacity='.6';
+      if(btn) btn.remove();
+      const hdr=le.querySelector('span');
+      if(hdr){hdr.style.color='#10b981';hdr.textContent='✓ Matched';}
+      if(ne) ne.remove();
+    },1000);
+  };
+
+  // ── Radar chart ──────────────────────────────────────────
+  const radar=new Chart(document.getElementById('radarChart'),{
+    type:'radar',
+    data:{
+      labels:Object.keys(cats),
+      datasets:[{label:'Unmet Tasks',data:Object.values(cats),
+        backgroundColor:'rgba(20,184,166,.2)',borderColor:'#14b8a6',
+        pointBackgroundColor:'#14b8a6',pointBorderColor:'#fff',borderWidth:2}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,layout:{padding:8},
+      scales:{r:{ticks:{display:false},grid:{color:'rgba(255,255,255,.08)'},
+        angleLines:{color:'rgba(255,255,255,.08)'},
+        pointLabels:{color:'#94a3b8',font:{family:'Inter',size:10,weight:'600'}}}},
+      plugins:{legend:{display:false},
+        tooltip:{backgroundColor:'rgba(11,17,32,.92)',
+          titleFont:{family:'Inter'},bodyFont:{family:'Inter'}}}
+    }
+  });
+
+  // ── Live background ping every 30s ───────────────────────
+  setInterval(()=>{
+    const cl=['Medical','Food','Shelter','General'];
+    const rc=cl[Math.floor(Math.random()*cl.length)];
+    const ni={_id:globalId++,category:rc,urgency:9,status:'Pending',
+      latitude:center[0]+(Math.random()-.5)*.1,
+      longitude:center[1]+(Math.random()-.5)*.1,
+      description:`[LIVE] Field sensors: critical ${rc} shortage in sector alpha.`};
+    cats[rc]=(cats[rc]||0)+1;
+    radar.data.datasets[0].data=Object.values(cats);radar.update();
+    const pi=L.divIcon({className:'',html:'<div class="pulse-m" style="width:12px;height:12px"></div>',iconSize:[12,12],iconAnchor:[6,6]});
+    const pm=L.marker([ni.latitude,ni.longitude],{icon:pi}).addTo(map)
+      .bindPopup(`<strong style="color:#14b8a6">${rc}</strong><br><span style="color:#f59e0b">⚡ U-9</span><br>${ni.description}`);
+    markers[ni._id]={m:pm,cat:rc};
+    totalNeeds++;renderLog(ni);updateKPIs();
+  },30000);
+</script>
+</body>
+</html>
