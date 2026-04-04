@@ -1,6 +1,7 @@
 # 🛡️ Smart Resource Allocator: AI-Driven Humanitarian Resilience
 
 A high-fidelity, professional-grade mission control dashboard for NGOs to manage community needs, volunteer matching, and crisis forecasting. Built for **speed, privacy, and field resilience**.
+Link :- https://jaswanthhanumanthu-smart-resource-allocation-app-i2k7ts.streamlit.app/
 
 [![Live Demo](https://img.shields.io/badge/Demo-Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit)](https://smart-resource-allocator.streamlit.app/)
 [![AI Powered](https://img.shields.io/badge/AI-Gemini%201.5%20Flash-blue?style=for-the-badge&logo=google-gemini)](https://ai.google.dev/)
