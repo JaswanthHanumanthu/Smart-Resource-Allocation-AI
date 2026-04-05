@@ -2,5 +2,7 @@ streamlit
 google-generativeai
 pandas
 folium
+streamlit-folium
+plotly
 streamlit-lottie
-
+pypdf
