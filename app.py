@@ -1616,24 +1616,10 @@ def main():
         st.error(f"🚨 **Critical Operational Error:** {str(e)}")
         st.warning("⚠️ **We are experiencing high traffic.** Please wait a moment or refresh the situation dashboard.")
     
-    # --- PERSISTENT DYNAMIC TICKER (Global Global Context) ---
-    ticker_events = [
-        "🚀 RECENT MATCH: 4 volunteers deployed to Sector C for Food Distribution. Match time: 45s",
-        "⚠️ Alert: New medical report from Sector 7 categorized as High Priority (Urgency 10)",
-        "✅ Success: Mission Cluster #281 stabilized. 85 lives secured in Sector Alpha",
-        "🧠 AI Insight: Logistic through-put increased by 18.4% across all relief sectors",
-        "📡 Satellite Uplink: Synchronizing 124 situational snapshots with the Field Report Center"
-    ]
-    st.markdown(f"""
-        <div class='ticker-footer'>
-            <div class='ticker-wrap'>
-                {' &nbsp;&nbsp;&nbsp;&nbsp; [ MISSION BROADCAST ] &nbsp;&nbsp;&nbsp;&nbsp; '.join(ticker_events)}
-                &nbsp;&nbsp;&nbsp;&nbsp; [ MISSION BROADCAST ] &nbsp;&nbsp;&nbsp;&nbsp;
-                {' &nbsp;&nbsp;&nbsp;&nbsp; [ MISSION BROADCAST ] &nbsp;&nbsp;&nbsp;&nbsp; '.join(ticker_events)}
-            </div>
-            <div style='position: fixed; bottom: 45px; right: 20px; font-size: 0.65rem; color: #10b981; font-weight: 800; background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 4px; border: 1px solid #10b981; z-index: 10000;'>
-                🔒 ENTERPRISE-GRADE ENCRYPTION ACTIVE | 📡 GOOGLE CLOUD SECURE PIPELINES
-            </div>
+    # --- PERSISTENT STATIC FOOTER (Executive Attribution) ---
+    st.markdown("""
+        <div class='static-footer'>
+            © 2026 Smart Resource Allocation &nbsp;|&nbsp; 🛡️ Enterprise-Grade Secure Pipeline
         </div>
     """, unsafe_allow_html=True)
 
