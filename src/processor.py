@@ -1,17 +1,23 @@
 import google.generativeai as genai
 import json
-import os
+import streamlit as st
 import pandas as pd
 
 def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
     """
     Takes messy NGO survey notes and uses the Gemini API to extract structured data.
     """
-    # Configure API
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
-    if used_key:
-        genai.configure(api_key=used_key)
-    else:
+    # Configure API - Prioritize Secure Secrets
+    try:
+        # Check if already configured via app.py secrets check
+        if not api_key and 'GOOGLE_API_KEY' not in st.secrets:
+             raise Exception("No API Key Provided")
+        
+        if api_key:
+            genai.configure(api_key=api_key)
+        elif 'GOOGLE_API_KEY' in st.secrets:
+            genai.configure(api_key=st.secrets['GOOGLE_API_KEY'])
+    except Exception:
         # Fallback simulated response if no API key is present for the hackathon
         import time
         time.sleep(1) # simulate network delay
@@ -21,7 +27,7 @@ def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
             "latitude": 37.7749,
             "longitude": -122.4194,
             "description": "[SIMULATED - NO API KEY] Detected severe food shortage affecting 50 families.",
-            "note": "Provide GEMINI_API_KEY to use the live model."
+            "note": "Provide GOOGLE_API_KEY in Streamlit Secrets to use the live model."
         }
         
     model = genai.GenerativeModel('gemini-1.5-flash')

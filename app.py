@@ -1,5 +1,12 @@
 import streamlit as st
 import pandas as pd
+import google.generativeai as genai
+
+# --- 🔐 Enterprise-Grade Security: API Configuration ---
+if 'GOOGLE_API_KEY' in st.secrets:
+    genai.configure(api_key=st.secrets['GOOGLE_API_KEY'])
+else:
+    st.error('⚠️ Mission-Critical Status: Missing GOOGLE_API_KEY in Streamlit Secrets. Vision & AI extraction tiers are currently inhibited.')
 
 def run_dashboard():
     # Refined Interface Infrastructure
@@ -745,9 +752,13 @@ def run_dashboard():
         st.subheader("🤖 Smart Survey Digitization (Gemini Multimodal AI)")
         st.write("Automatically extract and digitize messy field notes or handwritten paper surveys.")
         
-        import os
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
+        # Configure API - Prioritize Secure Secrets
+        try:
+            # Check if already configured via app.py secrets check
+            # This function acts as a safety layer for standalone function calls
+            if 'GOOGLE_API_KEY' not in st.secrets:
+                 raise Exception("No API Key Provided")
+        except Exception:
             st.warning("Using built-in local Simulation mode fallback since GEMINI_API_KEY environment variable is not explicitly loaded.")
         else:
             st.caption("Gemini Environment Verified: Ready.")
