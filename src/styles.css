@@ -1,102 +1,203 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+/* --- Theme-Agnostic Foundation --- */
 :root {
-    --bg-dark: #0f172a;
-    --card-bg: rgba(30, 41, 59, 0.7);
-    --action-blue: #3b82f6;
-    --text-primary: #f8fafc;
-    --text-muted: #94a3b8;
-    --urgency-red: #ef4444;
-    --urgency-orange: #f59e0b;
-    --urgency-green: #10b981;
-    --border-color: rgba(255, 255, 255, 0.1);
+    --brand-primary: #6366f1; /* Vibrant Indigo */
+    --brand-glow: rgba(99, 102, 241, 0.4);
+    
+    /* Premium Light Mode (Default) */
+    --surface-elevation-1: #F9FAFB; /* Soft Off-White Background */
+    --surface-elevation-2: #FFFFFF; /* Pure White Elevated Cards */
+    --border-subtle: #E5E7EB; /* Faint Grey Border */
+    --text-high-contrast: #0F172A; /* Slate-900 Header */
+    --text-medium-contrast: #64748B; /* Slate-500 Body */
+    
+    /* Impact Palette */
+    --impact-red: #ef4444;
+    --impact-orange: #f59e0b;
+    --impact-green: #10b981;
+    
+    --radius-standard: 12px;
+    --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    
+    /* Glassmorphism Defaults */
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-blur: 15px;
 }
 
-body {
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
+/* --- Dark Mode Detection (Streamlit specific or OS) --- */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --surface-elevation-1: #0f172a; /* Deep Charcoal */
+        --surface-elevation-2: #1e293b;
+        --border-subtle: #334155; /* Dark Slate */
+        --text-high-contrast: #f1f5f9; /* Off-White */
+        --text-medium-contrast: #94a3b8;
+        --shadow-soft: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        --glass-bg: rgba(15, 23, 42, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.05);
+    }
 }
 
-/* Master-Detail Layout Containers */
-.context-feed {
-    height: 80vh;
-    overflow-y: auto;
-    padding-right: 10px;
+/* Alternative: Streamlit's internal theme detection (optional but helpful) */
+[data-theme="dark"] {
+    --surface-elevation-1: #0f172a;
+    --surface-elevation-2: #1e293b;
+    --border-subtle: #334155;
+    --text-high-contrast: #f1f5f9;
+    --text-medium-contrast: #94a3b8;
 }
 
-.detail-view {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 24px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+/* --- Global Resets & Typography --- */
+html, body, [data-testid="stAppViewContainer"] {
+    font-family: 'Inter', sans-serif !important;
+    background-color: var(--surface-elevation-1) !important;
+    color: var(--text-medium-contrast) !important;
 }
 
-.kpi-massive {
-    font-size: 3rem;
-    font-weight: 800;
-    letter-spacing: -2px;
-    color: var(--text-primary);
-    margin: 0;
+h1, h2, h3, h4, h5, h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+    font-family: 'Inter', sans-serif !important;
+    color: var(--text-high-contrast) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.025em !important;
 }
 
-.kpi-label {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+/* --- Surface Elevation & Card Styling --- */
+div[data-testid="stMetric"], 
+div[data-testid="stVerticalBlock"] > div[style*="border"], 
+.stDataFrame, 
+.stTable, 
+.element-container div.stMarkdown div[data-testid="stMarkdownContainer"] > div[style*="border"] {
+    border-radius: var(--radius-standard) !important;
+    border: 1px solid var(--border-subtle) !important;
+    background-color: var(--surface-elevation-2) !important;
+    padding: 1rem !important;
+    box-shadow: var(--shadow-soft) !important;
 }
 
-/* Scrollbar Customization */
-::-webkit-scrollbar {
-    width: 6px;
-}
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
+/* Custom Card Class (Usage: wrap in a div) */
+.high-end-card {
+    background-color: var(--surface-elevation-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-standard);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 1rem;
 }
 
-/* Action Buttons */
+.high-end-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* --- Impact Palette Enhancements --- */
+.impact-red { color: var(--impact-red); border: 1px solid var(--impact-red); }
+.impact-orange { color: var(--impact-orange); border: 1px solid var(--impact-orange); }
+.impact-green { color: var(--impact-green); border: 1px solid var(--impact-green); }
+
+/* Glow Effects for Dark Mode */
+@media (prefers-color-scheme: dark) {
+    .impact-red { filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.4)); }
+    .impact-orange { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4)); }
+    .impact-green { filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.4)); }
+}
+
+/* Border Effects for Light Mode */
+@media (prefers-color-scheme: light) {
+    .impact-red { border: 1.5px solid var(--impact-red); padding: 2px 6px; border-radius: 4px; }
+    .impact-orange { border: 1.5px solid var(--impact-orange); padding: 2px 6px; border-radius: 4px; }
+    .impact-green { border: 1.5px solid var(--impact-green); padding: 2px 6px; border-radius: 4px; }
+}
+
+/* --- Primary Brand Color & Buttons --- */
+[data-testid="stMetricValue"] {
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+    color: var(--text-high-contrast) !important;
+    letter-spacing: -1px !important;
+}
+
 .stButton > button {
-    background-color: var(--action-blue) !important;
-    color: white !important;
+    background-color: var(--brand-primary) !important;
+    color: #ffffff !important;
     border-radius: 8px !important;
     border: none !important;
     font-weight: 600 !important;
-    padding: 12px 24px !important;
-    transition: all 0.2s ease;
+    padding: 10px 24px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+    letter-spacing: 0.01em !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .stButton > button {
+        box-shadow: 0 4px 6px -1px var(--brand-glow), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    }
 }
 
 .stButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    background-color: #4f46e5 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
 }
 
-/* Cards / List Items */
-.need-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    transition: border-color 0.2s;
+@media (prefers-color-scheme: dark) {
+    .stButton > button:hover {
+        box-shadow: 0 4px 12px var(--brand-glow) !important;
+    }
 }
 
-.need-card:hover {
-    border-color: var(--action-blue);
+.stButton > button:active {
+    transform: translateY(0);
 }
 
-.need-card.active {
-    border-left: 4px solid var(--action-blue);
+/* --- KPI Styling --- */
+.kpi-massive {
+    font-size: 3.5rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -3px !important;
+    color: var(--text-high-contrast) !important;
+    margin: 0 !important;
 }
 
-/* Typography Hierarchy */
-h1, h2, h3 {
-    font-weight: 800;
-    color: var(--text-primary);
+.kpi-label {
+    font-size: 0.75rem !important;
+    color: var(--text-medium-contrast) !important;
+    text-transform: uppercase !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.1em !important;
+    margin-bottom: -0.5rem !important;
 }
+
+/* --- Streamlit Overrides for Cleanliness --- */
+[data-testid="stSidebar"] {
+    background-color: var(--glass-bg) !important;
+    backdrop-filter: blur(var(--glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
+    border-right: 1px solid var(--glass-border) !important;
+}
+
+[data-testid="stHeader"] {
+    background-color: rgba(255, 255, 255, 0) !important;
+    backdrop-filter: blur(5px);
+}
+
+/* Ensure Chart Containers are Transparent */
+div[data-testid="stPlotlyChart"], div.stFoliumContainer {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+    background: var(--border-subtle); 
+    border-radius: 10px; 
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-medium-contrast); }

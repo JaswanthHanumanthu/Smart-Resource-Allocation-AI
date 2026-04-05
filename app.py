@@ -4,17 +4,22 @@ import pandas as pd
 def main():
     st.set_page_config(page_title="Smart Resource Allocation", page_icon="💡", layout="wide")
     
-    # Custom CSS & Theming for Badges
-    st.markdown("""
+    # Refined Interface Infrastructure
+    theme_base = st.get_option("theme.base")
+    st.markdown(f"""
     <style>
-        .badge-Pending { background-color: #F59E0B; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;}
-        .badge-Matched { background-color: #10B981; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;}
-        .badge-InProgress { background-color: #3B82F6; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;}
-        .ai-pulse-idle { color: #60a5fa; filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.6)); animation: pulse-blue 3s infinite; }
-        .ai-pulse-critical { color: #ef4444; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)); animation: pulse-red-header 1s infinite; }
-        @keyframes pulse-blue { 0%, 100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
-        @keyframes pulse-red-header { 0%, 100% { opacity: 0.6; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
-        .main-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .badge-base {{ padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; }}
+        .badge-Pending {{ background-color: var(--impact-orange); color: white; }}
+        .badge-Matched {{ background-color: var(--impact-green); color: white; }}
+        .badge-InProgress {{ background-color: var(--brand-primary); color: white; }}
+        
+        /* Pulse Effects (Semantic) */
+        .ai-pulse-idle {{ color: var(--brand-primary); filter: drop-shadow(0 0 8px var(--brand-glow)); animation: pulse-brand 3s infinite; }}
+        .ai-pulse-critical {{ color: var(--impact-red); filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)); animation: pulse-critical-glow 1s infinite; }}
+        @keyframes pulse-brand {{ 0%, 100% {{ opacity: 0.6; transform: scale(0.95); }} 50% {{ opacity: 1; transform: scale(1.05); }} }}
+        @keyframes pulse-critical-glow {{ 0%, 100% {{ opacity: 0.7; transform: scale(0.9); }} 50% {{ opacity: 1; transform: scale(1.1); }} }}
+        
+        .main-header {{ display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }}
     </style>
     """, unsafe_allow_html=True)
     
@@ -243,9 +248,9 @@ def main():
     
     st.markdown(f"""
         <div class="main-header">
-            <i data-lucide="{pulse_icon}" class="{pulse_class}" style="width: 32px; height: 32px;"></i>
-            <h1 style="margin: 0; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                Smart Resource Allocator <span style="font-size: 0.4em; vertical-align: middle; padding: 4px 8px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; color: #60a5fa; margin-left: 10px;">PRO v2.0</span>
+            <i data-lucide="{pulse_icon}" class="{pulse_class}" style="width: 38px; height: 38px;"></i>
+            <h1 style="margin: 0; color: var(--text-high-contrast); font-weight: 800; letter-spacing: -2px;">
+                Smart Resource Allocator <span style="font-size: 0.35em; vertical-align: middle; padding: 6px 12px; background: var(--brand-glow); border: 1px solid var(--brand-primary); border-radius: 10px; color: var(--brand-primary); margin-left: 15px; letter-spacing: 0;">PRO v2.0</span>
             </h1>
         </div>
         <script>lucide.createIcons();</script>
@@ -318,14 +323,14 @@ def main():
             parity = calculate_parity_score(v_df)
             
             st.markdown(f"""
-                <div style='display: flex; gap: 40px; margin-bottom: 30px;'>
+                <div class='high-end-card' style='display: flex; gap: 60px; margin-bottom: 40px;'>
                     <div>
-                        <div class='kpi-label'>Total Humans Impacted</div>
-                        <div class='kpi-massive'>{int(total_impacted)}</div>
+                        <div class='kpi-label'>Humans Impacted</div>
+                        <div class='kpi-massive'>{int(total_impacted):,}</div>
                     </div>
                     <div>
-                        <div class='kpi-label'>Fairness Index (Parity)</div>
-                        <div class='kpi-massive' style='color: {'#10b981' if parity > 85 else '#f59e0b' if parity > 70 else '#ef4444'};'>{parity}%</div>
+                        <div class='kpi-label'>Fairness Index</div>
+                        <div class='kpi-massive' style='color: {'var(--impact-green)' if parity > 85 else 'var(--impact-orange)' if parity > 70 else 'var(--impact-red)'};'>{parity}%</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -345,23 +350,35 @@ def main():
                 with st.container(height=650):
                     import streamlit.components.v1 as components
                     for idx, row in v_df.iterrows():
-                        urg_color = "#ef4444" if row['urgency'] >= 8 else "#f59e0b" if row['urgency'] >= 5 else "#10b981"
+                        urg_class = "impact-red" if row['urgency'] >= 8 else "impact-orange" if row['urgency'] >= 5 else "impact-green"
                         is_active = (sel_idx == idx)
-                        active_style = "border-left: 4px solid #3b82f6; border-right: 4px solid #3b82f6; background: rgba(59, 130, 246, 0.1);" if is_active else f"border-left: 4px solid {urg_color}; background: rgba(30, 41, 59, 0.5);"
                         
+                        # High-End Selection Aesthetics
+                        if is_active:
+                            card_border = "2px solid var(--brand-primary)"
+                            card_bg = "var(--surface-elevation-2)"
+                            glow_effect = "box-shadow: 0 0 15px var(--brand-glow);"
+                        else:
+                            card_border = "1px solid var(--border-subtle)"
+                            card_bg = "var(--surface-elevation-1)"
+                            glow_effect = ""
+
                         # Auto-Scroll Anchor
                         anchor_id = f"card_anchor_{idx}"
                         if is_active:
-                            # Use JS to scroll this anchor into view
                             st.markdown(f"<div id='{anchor_id}'></div>", unsafe_allow_html=True)
                             components.html(f"<script>window.parent.document.getElementById('{anchor_id}').scrollIntoView({{behavior: 'smooth', block: 'center'}});</script>", height=0)
                         
-                        # Custom HTML Card (Emotive Contextual Density)
-                        narrative = row.get('human_context_summary', 'Focusing on community survival.')
+                        # Custom HTML Card (Refined)
+                        narrative = row.get('human_context_summary', 'Coordinating community relief.')
                         card_html = f"""
-                            <div style='{active_style} padding: 12px; border-radius: 4px; margin-bottom: 10px; cursor: pointer;'>
-                                <div style='font-size: 0.72rem; color: #94a3b8;'>{row['category']} • {f'🔵 Impacting {row.get("people_affected", 1)} Humans' if is_active else f'URGENCY {row["urgency"]}'}</div>
-                                <div style='font-weight: 600; font-size: 0.88rem;'>{narrative}</div>
+                            <div class='{urg_class}' style='padding: 16px; border-radius: var(--radius-standard); margin-bottom: 12px; cursor: pointer; border: {card_border}; background: {card_bg}; {glow_effect} transition: all 0.3s ease;'>
+                                <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;'>
+                                    <span style='font-size: 0.65rem; color: var(--text-medium-contrast); text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;'>{row['category']}</span>
+                                    <span style='font-size: 0.65rem; font-weight: 800;'>{f'VOLUNTEERS NEEDED' if row['urgency'] >= 8 else 'STANDARD TASK'}</span>
+                                </div>
+                                <div style='font-weight: 700; font-size: 0.95rem; color: var(--text-high-contrast); line-height: 1.4;'>{narrative}</div>
+                                <div style='margin-top: 10px; font-size: 0.75rem; color: var(--brand-primary); font-weight: 600;'>{f'🔵 Impacting {row.get("people_affected", 1)} Humans' if is_active else f'Severity Level: {row["urgency"]}/10'}</div>
                             </div>
                         """
                         st.markdown(card_html, unsafe_allow_html=True)
@@ -373,22 +390,23 @@ def main():
                 st.markdown("### 📖 Detail View")
                 if sel_idx is not None and sel_idx in v_df.index:
                     sel_row = v_df.loc[sel_idx]
-                    with st.container(border=True):
-                        st.markdown(f"#### {sel_row['category']} Situational Analysis")
-                        st.markdown(f"**Human Narrative:** *{sel_row.get('human_context_summary', 'Coordinating resource allocation for local residents.')}*")
-                        st.write(f"**Total Impact Projection:** {sel_row.get('people_affected', 5)} lives affected by this cluster.")
-                        st.write(f"**Geospatial Center:** {sel_row['latitude']:.4f}, {sel_row['longitude']:.4f}")
-                        st.markdown(f"**Detailed Field Notes:** *{sel_row['description']}*")
-                        
-                        st.divider()
-                        st.markdown("### ⚡ Critical Actions")
-                        col_a, col_b = st.columns(2)
-                        with col_a:
-                            if st.button("Dispatch Teams", use_container_width=True):
-                                st.toast(f"Dispatching units to {sel_row['category']} incident cluster.")
-                        with col_b:
-                            if st.button("Resolve Case", use_container_width=True):
-                                st.toast("Incident marked as resolved.")
+                    st.markdown("<div class='high-end-card'>", unsafe_allow_html=True)
+                    st.markdown(f"#### {sel_row['category']} Situational Analysis")
+                    st.markdown(f"**Human Narrative:** *{sel_row.get('human_context_summary', 'Coordinating resource allocation for local residents.')}*")
+                    st.write(f"**Total Impact Projection:** {sel_row.get('people_affected', 5)} lives affected by this cluster.")
+                    st.write(f"**Geospatial Center:** {sel_row['latitude']:.4f}, {sel_row['longitude']:.4f}")
+                    st.markdown(f"**Detailed Field Notes:** *{sel_row['description']}*")
+                    
+                    st.divider()
+                    st.markdown("### ⚡ Critical Actions")
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        if st.button("Dispatch Teams", use_container_width=True):
+                            st.toast(f"Dispatching units to {sel_row['category']} incident cluster.")
+                    with col_b:
+                        if st.button("Resolve Case", use_container_width=True):
+                            st.toast("Incident marked as resolved.")
+                    st.markdown("</div>", unsafe_allow_html=True)
                 else:
                     st.info("Satellite systems ready. Select a tactical card from the Context Feed or Map to focus operations.")
 
@@ -399,13 +417,18 @@ def main():
                 from folium.plugins import MarkerCluster
                 
                 # Smooth Fly-To Logic (Dynamic Location/Zoom)
-                center = [v_df['latitude'].mean(), v_df['longitude'].mean()]
+                center = [v_df['latitude'].mean(), v_df['longitude'].mean()] if not v_df.empty else [0, 0]
                 zoom = 12
                 if sel_idx is not None and sel_idx in v_df.index:
                     center = [v_df.loc[sel_idx, 'latitude'], v_df.loc[sel_idx, 'longitude']]
                     zoom = 14
                 
-                m = folium.Map(location=center, zoom_start=zoom, tiles="cartodb dark_matter")
+                # Theme-Aware Geospatial Tiles
+                tile_layer = "cartodb dark_matter" if theme_base == "dark" else "cartodb positron"
+                plotly_template = "plotly_dark" if theme_base == "dark" else "plotly_white"
+                marker_opacity = "1.0" if theme_base == "dark" else "0.7"
+                
+                m = folium.Map(location=center, zoom_start=zoom, tiles=tile_layer)
                 
                 # PERFORMANCE: Use MarkerCluster for 5,000+ potential points
                 cluster = MarkerCluster(name="Active Situations").add_to(m)
@@ -426,7 +449,23 @@ def main():
                 
                 for idx, row in v_df.iterrows():
                     is_active = (sel_idx == idx)
-                    color = "red" if row['urgency'] >= 8 else "orange" if row['urgency'] >=5 else "green"
+                    color_hex = "var(--impact-red)" if row['urgency'] >= 8 else "var(--impact-orange)" if row['urgency'] >= 5 else "var(--impact-green)"
+                    
+                    # Custom Marker with Glow/Border (Theme-Agnostic via CSS Classes)
+                    urg_cls = "impact-red" if row['urgency'] >= 8 else "impact-orange" if row['urgency'] >= 5 else "impact-green"
+                    active_pulse = "animation: pulse-brand 2s infinite;" if is_active else ""
+                    
+                    icon_html = f"""
+                        <div class='{urg_cls}' style='
+                            width: 16px; 
+                            height: 16px; 
+                            background-color: {color_hex}; 
+                            border-radius: 50%; 
+                            border: 2px solid white;
+                            opacity: {marker_opacity};
+                            {active_pulse}
+                        '></div>
+                    """
                     
                     # Need Delta (Sparkline Simulation)
                     spark_color = "#ef4444" if row['urgency'] >= 8 else "#3b82f6"
@@ -442,11 +481,10 @@ def main():
                                  f"<b>Intensity (48h):</b> {spark_html}<br>" \
                                  f"Urgency: {row['urgency']} • 🔵 Lives: {row.get('people_affected', 5)}"
                     
-                    # PERFORMANCE: Add to parent cluster to prevent map lag with 5,000+ points
                     folium.Marker(
                         location=[row['latitude'], row['longitude']],
                         popup=folium.Popup(popup_text, max_width=300),
-                        icon=folium.Icon(color="blue" if is_active else color, icon="star" if is_active else "info-sign"),
+                        icon=folium.DivIcon(html=icon_html, icon_size=(16, 16), icon_anchor=(8, 8)),
                     ).add_to(cluster)
                 
                 folium.LayerControl().add_to(m)
@@ -894,6 +932,7 @@ def main():
         else:
             import plotly.express as px
             import plotly.graph_objects as go
+            plotly_template = "plotly_dark" if theme_base == "dark" else "plotly"
             st.write("Cross-sectional performance indicators and temporal resource allocation analysis.")
             
             # KPI Header (Emotive + Fairness Refactor)
@@ -942,7 +981,7 @@ def main():
                 fig_trend.add_trace(go.Scatter(x=trend_df['dt'], y=trend_df['Total Reported'], name='Needs Reported', line=dict(color='#ef4444', width=3)))
                 fig_trend.add_trace(go.Scatter(x=trend_df['dt'], y=trend_df['Allocated'], name='Resources Allocated', fill='tozeroy', line=dict(color='#10b981', width=3)))
                 fig_trend.update_layout(
-                    template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                    template=plotly_template, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                     margin=dict(l=0, r=0, t=20, b=0), height=350,
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
                 )
@@ -954,10 +993,10 @@ def main():
                 cat_dist.columns = ['category', 'count']
                 fig_donut = px.pie(cat_dist, values='count', names='category', hole=0.6,
                                  color_discrete_sequence=['#ef4444', '#3b82f6', '#10b981', '#f59e0b'])
-                fig_donut.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)',
+                fig_donut.update_layout(template=plotly_template, paper_bgcolor='rgba(0,0,0,0)',
                                       margin=dict(l=0, r=0, t=0, b=0), height=300, showlegend=False)
                 # Donut center count
-                fig_donut.add_annotation(text=f"Total<br>{len(df)}", showarrow=False, font_size=20, font_color="white")
+                fig_donut.add_annotation(text=f"Total<br>{len(df)}", showarrow=False, font_size=20, font_color="white" if theme_base=="dark" else "black")
                 st.plotly_chart(fig_donut, use_container_width=True)
                 
                 st.divider()

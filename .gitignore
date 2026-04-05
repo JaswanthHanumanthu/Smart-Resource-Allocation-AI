@@ -3,4 +3,4 @@ venv/
 __pycache__/
 *.pyc
 .env
-.streamlit/
+# .streamlit/ is now included to push theme config
