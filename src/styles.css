@@ -12,10 +12,10 @@
     --text-high-contrast: #0F172A; /* Slate-900 Header */
     --text-medium-contrast: #64748B; /* Slate-500 Body */
     
-    /* Impact Palette */
-    --impact-red: #ef4444;
-    --impact-orange: #f59e0b;
-    --impact-green: #10b981;
+    /* Okabe-Ito Accessible Impact Palette */
+    --impact-red: #D55E00; /* Vermillion */
+    --impact-orange: #E69F00; /* Orange */
+    --impact-green: #009E73; /* Bluish Green */
     
     --radius-standard: 12px;
     --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
@@ -51,7 +51,9 @@
 
 /* --- Global Resets & Typography --- */
 html, body, [data-testid="stAppViewContainer"] {
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
     background-color: var(--surface-elevation-1) !important;
     color: var(--text-medium-contrast) !important;
 }

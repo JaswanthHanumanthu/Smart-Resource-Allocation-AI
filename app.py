@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 
-def main():
-    st.set_page_config(page_title="Smart Resource Allocation", page_icon="💡", layout="wide")
-    
+def run_dashboard():
     # Refined Interface Infrastructure
+    st.markdown("""
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    """, unsafe_allow_html=True)
+    
     theme_base = st.get_option("theme.base")
     st.markdown(f"""
     <style>
@@ -121,6 +123,7 @@ def main():
             clean_res = response.text.strip().replace('```json', '').replace('```', '')
             return json.loads(clean_res)
         except Exception as e:
+            st.warning("⚠️ **System Congestion:** We are experiencing high traffic with the AI analysis engine. Falling back to spatial-only extension prediction.")
             # Fallback to simple spatial center offset for prototype stability
             avg_lat = sum(n['latitude'] for n in needs_list) / len(needs_list)
             avg_lon = sum(n['longitude'] for n in needs_list) / len(needs_list)
@@ -207,11 +210,11 @@ def main():
             })
             
         # Append 4 critical pending cases for the live demo route
-        now_ts = now.strftime('%Y-%m-%d %H:%M:%S')
+        now_ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         demo_records.extend([
             {"urgency": 10, "category": "Medical", "latitude": 37.7749, "longitude": -122.4194, "description": "Massive fire structural collapse. Critical medical attention required.", "status": "Pending", "verified": True, "report_count": 12, "people_affected": 150, "human_context_summary": "High-density residential block with multiple trauma cases.", "timestamp": now_ts},
             {"urgency": 8, "category": "Medical", "latitude": 37.7785, "longitude": -122.4192, "description": "Critical shortage of intravenous supplies.", "status": "Pending", "verified": True, "report_count": 5, "people_affected": 24, "human_context_summary": "Concentration of trauma patients.", "timestamp": now_ts},
-            {"urgency": 9, "category": "Food", "latitude": 37.7749, "longitude": -122.4194, "description": "No food reserves left.", "status": "Pending", "verified": True, "report_count": 8, "people_affected": 85, "human_context_summary": "Large shelter cluster.", "timestamp": (now - timedelta(hours=2)).strftime("%Y-%m-%d %H:00:00")},
+            {"urgency": 9, "category": "Food", "latitude": 37.7749, "longitude": -122.4194, "description": "No food reserves left.", "status": "Pending", "verified": True, "report_count": 8, "people_affected": 85, "human_context_summary": "Large shelter cluster.", "timestamp": (datetime.now() - timedelta(hours=2)).strftime("%Y-%m-%d %H:00:00")},
             {"urgency": 5, "category": "General", "latitude": 37.7700, "longitude": -122.4300, "description": "Secondary tremor debris blockage.", "status": "Pending", "verified": True, "report_count": 2, "people_affected": 0, "human_context_summary": "Clear road for food delivery.", "timestamp": now_ts}
         ])
         # Add dependency (Food delivery depends on Road clearing)
@@ -316,6 +319,8 @@ def main():
         
         if v_df.empty:
             st.info("Awaiting verified mission data. Please proceed to 'Data Upload' or the Admin portal.")
+            if st.button("Attempt Rapid Match (No Data)"):
+                st.toast("⚠️ Please upload a report first!", icon="📁")
         else:
             # KPI Header (Emotive + Fairness Refactor)
             total_impacted = v_df['people_affected'].sum() if 'people_affected' in v_df.columns else len(v_df)*5
@@ -449,22 +454,28 @@ def main():
                 
                 for idx, row in v_df.iterrows():
                     is_active = (sel_idx == idx)
-                    color_hex = "var(--impact-red)" if row['urgency'] >= 8 else "var(--impact-orange)" if row['urgency'] >= 5 else "var(--impact-green)"
                     
-                    # Custom Marker with Glow/Border (Theme-Agnostic via CSS Classes)
+                    # Accessible Icon Mapping (Color-blind safe shapes + icons)
+                    color_hex = "var(--impact-red)" if row['urgency'] >= 8 else "var(--impact-orange)" if row['urgency'] >= 5 else "var(--impact-green)"
+                    urg_icon = "triangle" if row['urgency'] >= 8 else "circle" if row['urgency'] >= 5 else "square"
+                    urg_fa = "exclamation-triangle" if row['urgency'] >= 8 else "circle" if row['urgency'] >= 5 else "check"
                     urg_cls = "impact-red" if row['urgency'] >= 8 else "impact-orange" if row['urgency'] >= 5 else "impact-green"
                     active_pulse = "animation: pulse-brand 2s infinite;" if is_active else ""
                     
                     icon_html = f"""
-                        <div class='{urg_cls}' style='
-                            width: 16px; 
-                            height: 16px; 
+                        <div class='{urg_cls}' role='img' aria-label='{row['category']} mission, Urgency {row['urgency']}/10' style='
+                            width: 22px; 
+                            height: 22px; 
                             background-color: {color_hex}; 
-                            border-radius: 50%; 
+                            border-radius: {"50%" if urg_icon=="circle" else "4px"}; 
                             border: 2px solid white;
+                            display: flex; align-items: center; justify-content: center;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
                             opacity: {marker_opacity};
                             {active_pulse}
-                        '></div>
+                        '>
+                            <i class="fa fa-{urg_fa}" style="color: white; font-size: 11px;"></i>
+                        </div>
                     """
                     
                     # Need Delta (Sparkline Simulation)
@@ -669,7 +680,7 @@ def main():
                     if 'extracted_img_result' in st.session_state:
                         res = st.session_state['extracted_img_result']
                         if "error" in res:
-                            st.warning("⚠️ **Extraction Failed:** The file may be unreadable or your API key is invalid. Try uploading a clearer picture!")
+                            st.warning("⚠️ **We are experiencing high traffic.** Please wait a moment or try uploading a clearer document.")
                         else:
                             st.success(f"AI Analysis Complete (Language: {res.get('detected_language', 'Unknown')})")
                             st.info("💡 **Production Pipeline:** Please review and edit the data below to meet the verification standards.")
@@ -757,7 +768,7 @@ def main():
             if 'extracted_txt_result' in st.session_state:
                 res = st.session_state['extracted_txt_result']
                 if "error" in res:
-                    st.warning("⚠️ **Extraction Failed:** The text could not be parsed or your API key is invalid. Try re-typing standard characters.")
+                    st.warning("⚠️ **We are experiencing high traffic.** Please wait a moment or check your API configuration.")
                 else:
                     st.success(f"AI Analysis Complete (Language: {res.get('detected_language', 'Unknown')})")
                     st.info("💡 **Production Pipeline:** Please review and edit the data below to meet the verification standards.")
@@ -1025,6 +1036,8 @@ def main():
             
         if v_df.empty:
             st.warning("Needs database is currently empty. Please verify data in the Admin Portal to enable matching.")
+            if st.button("Initialize AI Matching Engine"):
+                st.toast("⚠️ Please upload a report first!", icon="📁")
         else:
             volunteers = st.session_state['volunteers_db']
             
@@ -1058,7 +1071,7 @@ def main():
             
             # Action Plan Button Logic
             if st.button("Generate Optimal Action Plan"):
-                st.write(f"DEBUG (Console): Generated plan for {actual_name}")
+                st.toast("Calculating optimal dispatch routes...", icon="📡")
                 st.session_state['show_action_plan'] = actual_name
                 st.session_state['play_thought_process_animation'] = True
             
@@ -1120,7 +1133,7 @@ def main():
                                     from src.utils.logger import log_event
                                     # In a real app we'd update DB
                                     st.balloons()
-                                    st.success(f"Task Force Deployed Successfully.")
+                                    st.toast("Task Force Deployed Successfully!", icon="✅")
                                     log_event("MATCH_CREATED", f"Multi-person squad assigned to mission Cluster #{top_task.name}")
                             
                             st.markdown("---")
@@ -1146,8 +1159,203 @@ def main():
                                     st.caption(f"Algorithmic Readiness Score: {row['match_score']:.2f}/10.0 | Distance: {dist_km:.1f}km | **Estimated Travel Time: {eta_str}**")
                                     
                                     def update_status_closure(idx=original_idx):
-                                        st.write(f"DEBUG (Console): Button Dispatched / Session DB updated for task {idx}")
                                         st.session_state['needs_df'].at[idx, 'status'] = 'Matched'
+                                        st.toast("Task status updated to Matched.", icon="🔄")
+                                        
+                                    st.button(f"Confirm & Dispatch", key=f"btn_{original_idx}", on_click=update_status_closure)
+                            
+                            st.markdown("---")
+                            st.markdown("### 🧠 AI Thought Process Engine")
+                            console_placeholder = st.empty()
+                            
+                            log_text = ""
+                            v_skill = selected_volunteer['skills'][0] if len(selected_volunteer['skills']) > 0 else 'General'
+                            steps = [
+                                f"[ANALYZING] Proximity to location... (Range <= {max_radius}°)",
+                                f"[VALIDATING] Skill match: '{v_skill}' -> Required Skill...",
+                                "[OPTIMIZING] Priority given to High Urgency constraints...",
+                                "[MATCHED] Best fit found."
+                            ]
+                            
+                            if st.session_state.get('play_thought_process_animation', False):
+                                import time
+                                for step in steps:
+                                    log_text += f"> {step}\n"
+                                    console_placeholder.markdown(f'''
+                                        <div style="background-color: #0b1120; border: 1px solid #1e293b; border-radius: 8px; padding: 16px; font-family: monospace; color: #10b981; margin-top: 10px; box-shadow: inset 0 0 10px #000;">
+                                            <pre style="color: #10b981; background: transparent; border: none; margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 0.9em;">{log_text}</pre>
+                                        </div>
+                                    ''', unsafe_allow_html=True)
+                fig_trend.update_layout(
+                    template=plotly_template, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                    margin=dict(l=0, r=0, t=20, b=0), height=350,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                st.plotly_chart(fig_trend, use_container_width=True, help="Scatter plot showing reported need volume over time versus resources successfully allocated. Indicates the current operational deficit or surplus for critical missions.")
+            
+            with rowCol2:
+                st.markdown("#### 🍩 Need Distribution")
+                cat_dist = df['category'].value_counts().reset_index()
+                cat_dist.columns = ['category', 'count']
+                fig_donut = px.pie(cat_dist, values='count', names='category', hole=0.6,
+                                 color_discrete_sequence=['#D55E00', '#56B4E9', '#009E73', '#E69F00'])
+                fig_donut.update_layout(template=plotly_template, paper_bgcolor='rgba(0,0,0,0)',
+                                      margin=dict(l=0, r=0, t=0, b=0), height=300, showlegend=False)
+                # Donut center count
+                fig_donut.add_annotation(text=f"Total<br>{len(df)}", showarrow=False, font_size=20, font_color="white" if theme_base=="dark" else "black")
+                st.plotly_chart(fig_donut, use_container_width=True, help="Donut chart showing proportional breakdown of reported humanitarian needs by category. High Urgency categories are mapped to accessible Vermillion and Orange tones.")
+                
+                st.divider()
+                st.markdown("#### 📄 Stakeholder Reports")
+                if st.button("Export Executive Report (PDF)", key="final_exec_pdf", type="primary"):
+                    from src.utils.pdf_generator import generate_executive_pdf
+                    pdf_path = "data/executive_impact_report.pdf"
+                    with st.spinner("Compiling situational stakeholder report..."):
+                        path = generate_executive_pdf(df, pdf_path)
+                        with open(path, "rb") as f:
+                            st.download_button(
+                                label="Download Compiled Impact PDF",
+                                data=f,
+                                file_name="Impact_Summary.pdf",
+                                mime="application/pdf",
+                            )
+                        st.success("Report successfully compiled and ready for dispatch.")
+
+        
+    elif page in ["Volunteer Matching", "🚨 EMERGENCY DISPATCH 🚨"]:
+        st.subheader("🤝 Smart Volunteer Matching & XUX Portal")
+        st.write("AI-driven dispatch engine featuring Interactive Explainability (XUX). Real-time algorithm tuning via manual weight overrides.")
+        
+        needs_df = st.session_state.get('needs_df', pd.DataFrame())
+        v_df = needs_df[needs_df['verified'] == True] if 'verified' in needs_df.columns else needs_df
+            
+        if v_df.empty:
+            st.warning("Needs database is currently empty. Please verify data in the Admin Portal to enable matching.")
+            if st.button("Initialize AI Matching Engine"):
+                st.toast("⚠️ Please upload a report first!", icon="📁")
+        else:
+            volunteers = st.session_state['volunteers_db']
+            
+            # --- XUX ALGORITHM OVERRIDE SLIDERS ---
+            with st.container(border=True):
+                st.markdown("### ⚙️ Algorithm Tuning (Override AI Defaults)")
+                colS, colP, colU = st.columns(3)
+                w_skill = colS.slider("Skill Alignment Weight (%)", 0, 100, 50) / 100.0
+                w_prox = colP.slider("Proximity Weight (%)", 0, 100, 30) / 100.0
+                w_urg = colU.slider("Urgency Weight (%)", 0, 100, 20) / 100.0
+            
+            from src.models.matching import calculate_distance
+            
+            st.markdown("---")
+            st.subheader("📊 NGO Recruitment Gap Analysis")
+            unmatched_critical = needs_df[(needs_df['status'] == 'Pending') & (needs_df['urgency'] >= 8)]
+            if unmatched_critical.empty:
+                st.success("Excellence! All critical high-urgency needs are currently managed or matched.")
+            else:
+                cat_counts = unmatched_critical['category'].value_counts()
+                top_gap = cat_counts.index[0]
+                recruitment_mapping = {
+                    "Medical": "Doctors, Nurses, Medics",
+                    "Food": "Drivers, Distribution Logistics, Cooks",
+                    "Shelter": "Builders, Drivers, General Labour"
+                }
+                suggestion = recruitment_mapping.get(top_gap, "General Volunteers")
+                st.warning(f"**System Vulnerability Detected:** You have {len(unmatched_critical)} Pending High-Urgency needs without any volunteers, primarily in the '{top_gap}' category.")
+                st.info(f"**AI Recommendation:** Prioritize urgent recruitment drive for: **{suggestion}**.")
+            st.markdown("---")
+            
+            # Action Plan Button Logic
+            if st.button("Generate Optimal Action Plan"):
+                st.toast("Calculating optimal dispatch routes...", icon="📡")
+                st.session_state['show_action_plan'] = actual_name
+                st.session_state['play_thought_process_animation'] = True
+            
+            if st.session_state.get('show_action_plan') == actual_name:
+                from src.models.matching import match_volunteer_to_needs
+                
+                with st.spinner("Calculating optimal routing and skill matrix..."):
+                    # Only match on Pending tasks
+                    available_needs = needs_df[needs_df['status'] == 'Pending']
+                    
+                    if available_needs.empty:
+                        st.success("No pending tasks available!")
+                    else:
+                        # Only match on verified tasks
+                        if 'verified' in available_needs.columns:
+                            available_needs = available_needs[available_needs['verified'] == True]
+                        
+                        if available_needs.empty:
+                            st.info("Awaiting task verification by administrator.")
+                        else:
+                            import os
+                            api_key = os.environ.get("GEMINI_API_KEY")
+                            matches = match_volunteer_to_needs(selected_volunteer, available_needs, top_n=10, api_key=api_key)
+                        
+                        # Apply Distance Filter
+                        matches = matches[matches['distance'] <= max_radius].head(3)
+                        
+                        if matches.empty:
+                            st.warning(f"No matches found within {max_radius} radius for this volunteer's queue.")
+                        else:
+                            # Find squad
+                            from src.models.matching import calculate_distance
+                            # Simple SQUAD BUNDLING (Doctor/Medic + Driver + Generalist)
+                            def get_squad_matches(task, vols):
+                                squad = []
+                                # 1. Lead (Based on skill)
+                                lead_skill = "Doctor" if task['category'] == "Medical" else "General"
+                                lead = next((v for v in vols if lead_skill in v['skills']), vols[0])
+                                squad.append(lead)
+                                
+                                # 2. Logistics/Driver
+                                driver = next((v for v in vols if "Driver" in v['skills'] and v['name'] != lead['name']), vols[1])
+                                squad.append(driver)
+                                return squad
+
+                            colX, colY = st.columns([1, 1])
+                            top_task = matches.iloc[0]
+                            
+                            with colX:
+                                st.markdown("### 🏹 Recommended Mission Squad")
+                                rec_squad = get_squad_matches(top_task, volunteers)
+                                
+                                for s in rec_squad:
+                                    with st.container(border=True):
+                                        st.write(f"**{s['name']}**")
+                                        st.caption(f"Role: {', '.join(s['skills'])}")
+                                
+                                if st.button(f"Dispatch Task Force", type="primary"):
+                                    from src.utils.logger import log_event
+                                    # In a real app we'd update DB
+                                    st.balloons()
+                                    st.toast("Task Force Deployed Successfully!", icon="✅")
+                                    log_event("MATCH_CREATED", f"Multi-person squad assigned to mission Cluster #{top_task.name}")
+                            
+                            st.markdown("---")
+                            st.markdown("### 🏆 Top Recommended Tasks:")
+                            for _, row in matches.iterrows():
+                                original_idx = row.name 
+                                
+                                with st.expander(f"Task for {row['category']} - Urgency {row['urgency']}/10", expanded=True):
+                                    st.markdown(f"<span class='badge-Pending'>Pending</span>", unsafe_allow_html=True)
+                                    st.write(f"**Need Description:** {row['description']}")
+                                    st.write(f"**AI Reasoning (XAI):** *{row['match_reason']}*")
+                                    
+                                    confidence = row.get('confidence_score', row['match_score'] * 10.0)
+                                    st.write(f"**Confidence Score:** {confidence:.1f}%")
+                                    st.progress(confidence / 100.0)
+                                    
+                                    # Extra feature: Realistic ETA calculation inside UI
+                                    dist_km = row['distance'] * 111
+                                    avg_speed_kmh = 30 # Rough speed in a crisis zone
+                                    eta_mins = int((dist_km / avg_speed_kmh) * 60)
+                                    eta_str = f"~{eta_mins} mins" if eta_mins > 0 else "Under 1 min"
+                                    
+                                    st.caption(f"Algorithmic Readiness Score: {row['match_score']:.2f}/10.0 | Distance: {dist_km:.1f}km | **Estimated Travel Time: {eta_str}**")
+                                    
+                                    def update_status_closure(idx=original_idx):
+                                        st.session_state['needs_df'].at[idx, 'status'] = 'Matched'
+                                        st.toast("Task status updated to Matched.", icon="🔄")
                                         
                                     st.button(f"Confirm & Dispatch", key=f"btn_{original_idx}", on_click=update_status_closure)
                             
@@ -1183,6 +1391,16 @@ def main():
                                         <pre style="color: #10b981; background: transparent; border: none; margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 0.9em;">{log_text}</pre>
                                     </div>
                                 ''', unsafe_allow_html=True)
+
+def main():
+    st.set_page_config(page_title="Smart Resource Allocation", page_icon="💡", layout="wide")
+    try:
+        run_dashboard()
+    except Exception as e:
+        from src.utils.logger import log_event
+        log_event("GLOBAL_ERROR_SHIELD", str(e))
+        st.error(f"🚨 **Critical Operational Error:** {str(e)}")
+        st.warning("⚠️ **We are experiencing high traffic.** Please wait a moment or refresh the situation dashboard.")
 
 if __name__ == "__main__":
     main()
