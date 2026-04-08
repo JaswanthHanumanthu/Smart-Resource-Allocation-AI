@@ -3,10 +3,14 @@ import pandas as pd
 import google.generativeai as genai
 
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
-if 'GOOGLE_API_KEY' in st.secrets:
-    genai.configure(api_key=st.secrets['GOOGLE_API_KEY'])
-else:
-    st.error('⚠️ Mission-Critical Status: Missing GOOGLE_API_KEY in Streamlit Secrets. Vision & AI extraction tiers are currently inhibited.')
+import os
+try:
+    _api_key = st.secrets.get('GOOGLE_API_KEY') or os.environ.get('GOOGLE_API_KEY')
+except Exception:
+    _api_key = os.environ.get('GOOGLE_API_KEY')
+
+if _api_key:
+    genai.configure(api_key=_api_key)
 
 def run_dashboard():
     # Refined Interface Infrastructure

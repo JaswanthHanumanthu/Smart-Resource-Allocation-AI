@@ -11,3 +11,16 @@ python-dotenv
 pypdf
 Pillow
 numpy
+folium
+google-generativeai
+numpy
+pandas
+Pillow
+plotly
+pydantic
+pypdf
+python-dotenv
+requests
+streamlit
+streamlit-folium
+streamlit-lottie
