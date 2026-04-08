@@ -174,8 +174,54 @@ def run_dashboard():
         
     if 'show_all_logs' not in st.session_state:
         st.session_state['show_all_logs'] = False
-            
+
+    # --- SESSION PERSISTENCE ---
+    if 'user_role' not in st.session_state:
+        st.session_state['user_role'] = 'Executive Dashboard'
+    if 'last_page' not in st.session_state:
+        st.session_state['last_page'] = 'System Dashboard'
+
     st.sidebar.title("Navigation")
+
+    # --- ADAPTIVE UI: ROLE SELECTOR ---
+    st.sidebar.markdown("##### 👤 View Mode")
+    user_role = st.sidebar.radio(
+        "Select your role",
+        ["Executive Dashboard", "Field Worker"],
+        index=["Executive Dashboard", "Field Worker"].index(st.session_state['user_role']),
+        horizontal=True,
+        label_visibility="collapsed",
+        key="role_selector"
+    )
+    st.session_state['user_role'] = user_role
+
+    is_field_worker = (user_role == "Field Worker")
+
+    # Inject adaptive CSS based on role
+    if is_field_worker:
+        st.markdown("""
+        <style>
+            /* Field Worker Mode — larger touch targets, simplified chrome */
+            .stButton > button {
+                padding: 12px 29px !important;   /* +20% padding */
+                font-size: 1.08rem !important;   /* +20% font */
+                min-height: 52px !important;
+            }
+            .fw-hide { display: none !important; }
+            .fw-emergency-banner {
+                background: linear-gradient(135deg, #f43f5e, #be123c);
+                border-radius: 14px;
+                padding: 16px 24px;
+                text-align: center;
+                font-size: 1.1rem;
+                font-weight: 800;
+                color: white;
+                margin-bottom: 20px;
+                box-shadow: 0 0 24px rgba(244,63,94,0.5);
+                animation: pulse-urgent 1.5s infinite;
+            }
+        </style>
+        """, unsafe_allow_html=True)
     
     # Ambient AI: Context-Aware Sidebar
     df_for_sidebar = st.session_state.get('needs_df', pd.DataFrame())
@@ -201,8 +247,12 @@ def run_dashboard():
     pages = ["System Dashboard", "Field Report Center", "Impact Map", "Executive Impact Analytics", dispatch_label]
     if st.sidebar.checkbox("System Administration (Hidden)", value=False):
         pages.insert(0, "🛡️ Admin Verification")
-        
-    page = st.sidebar.radio("Go to", pages)
+
+    # Restore last visited page (session persistence)
+    _last = st.session_state.get('last_page', pages[0])
+    _default_idx = pages.index(_last) if _last in pages else 0
+    page = st.sidebar.radio("Go to", pages, index=_default_idx)
+    st.session_state['last_page'] = page   # persist for this session
     
     st.sidebar.markdown("---")
     st.sidebar.subheader("📡 Field Coordination")
@@ -310,6 +360,18 @@ def run_dashboard():
         <script>lucide.createIcons();</script>
     """, unsafe_allow_html=True)
     
+    # --- ADAPTIVE UI: FIELD WORKER EMERGENCY BANNER ---
+    if is_field_worker:
+        st.markdown("""
+            <div class='fw-emergency-banner'>
+                🚨 FIELD WORKER MODE — Simplified View Active
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("⚡ EMERGENCY UPLOAD — Submit Critical Report Now", type="primary", use_container_width=True):
+            st.session_state['last_page'] = "Field Report Center"
+            st.rerun()
+        st.markdown("---")
+
     if page == "🛡️ Admin Verification":
         st.subheader("🛡️ Administrative Verification Portal")
         st.write("Secure review queue for reports flagged as 'Suspicious' by the AI or awaiting manual authentication.")
@@ -1150,46 +1212,48 @@ def run_dashboard():
                 st.metric("Population Protection Index", f"{total_human_impact:,}", "120 Lives Secured (1h)")
                 
             st.divider()
-            
-            # --- 2. SITUATIONAL ANALYSIS VISUALS ---
-            c1, c2 = st.columns([1.5, 1])
-            
-            with c1:
-                st.markdown("#### 📊 Sectoral Crisis Intensity (Volume × Severity)")
-                # Real-time Bar Chart
-                fig_bar = px.bar(
-                    category_stats.reset_index(),
-                    x='category',
-                    y='crisis_score',
-                    color='crisis_score',
-                    color_continuous_scale=['#009E73', '#E69F00', '#D55E00'], # Accessible Okabe-Ito
-                    labels={'crisis_score': 'Crisis Urgency Score', 'category': 'Relief Sector'},
-                    template=plotly_template
-                )
-                fig_bar.update_layout(showlegend=False, margin=dict(t=30, b=30, l=30, r=30))
-                st.plotly_chart(fig_bar, use_container_width=True)
+
+            # --- 2. SITUATIONAL ANALYSIS VISUALS (Executive only) ---
+            if not is_field_worker:
+                c1, c2 = st.columns([1.5, 1])
                 
-            with c2:
-                st.markdown("#### 🎯 Resource Deployment Efficiency")
-                # Tactical Coverage Gauge (Plotly Gauge)
-                fig_gauge = go.Figure(go.Indicator(
-                    mode = "gauge+number",
-                    value = coverage,
-                    domain = {'x': [0, 1], 'y': [0, 1]},
-                    title = {'text': "Urgent Task Match Rate", 'font': {'size': 16}},
-                    gauge = {
-                        'axis': {'range': [None, 100], 'tickwidth': 1},
-                        'bar': {'color': "#009E73"},
-                        'steps': [
-                            {'range': [0, 50], 'color': "rgba(213, 94, 0, 0.2)"},
-                            {'range': [50, 85], 'color': "rgba(230, 159, 0, 0.2)"}],
-                        'threshold': {
-                            'line': {'color': "white", 'width': 4},
-                            'thickness': 0.75,
-                            'value': 90}}))
-                fig_gauge.update_layout(template=plotly_template, height=350, margin=dict(t=20, b=20, l=40, r=40))
-                st.plotly_chart(fig_gauge, use_container_width=True)
-                
+                with c1:
+                    st.markdown("#### 📊 Sectoral Crisis Intensity (Volume × Severity)")
+                    fig_bar = px.bar(
+                        category_stats.reset_index(),
+                        x='category',
+                        y='crisis_score',
+                        color='crisis_score',
+                        color_continuous_scale=['#009E73', '#E69F00', '#D55E00'],
+                        labels={'crisis_score': 'Crisis Urgency Score', 'category': 'Relief Sector'},
+                        template=plotly_template
+                    )
+                    fig_bar.update_layout(showlegend=False, margin=dict(t=30, b=30, l=30, r=30))
+                    st.plotly_chart(fig_bar, use_container_width=True)
+                    
+                with c2:
+                    st.markdown("#### 🎯 Resource Deployment Efficiency")
+                    fig_gauge = go.Figure(go.Indicator(
+                        mode = "gauge+number",
+                        value = coverage,
+                        domain = {'x': [0, 1], 'y': [0, 1]},
+                        title = {'text': "Urgent Task Match Rate", 'font': {'size': 16}},
+                        gauge = {
+                            'axis': {'range': [None, 100], 'tickwidth': 1},
+                            'bar': {'color': "#009E73"},
+                            'steps': [
+                                {'range': [0, 50], 'color': "rgba(213, 94, 0, 0.2)"},
+                                {'range': [50, 85], 'color': "rgba(230, 159, 0, 0.2)"}],
+                            'threshold': {
+                                'line': {'color': "white", 'width': 4},
+                                'thickness': 0.75,
+                                'value': 90}}))
+                    fig_gauge.update_layout(template=plotly_template, height=350, margin=dict(t=20, b=20, l=40, r=40))
+                    st.plotly_chart(fig_gauge, use_container_width=True)
+            else:
+                # Field Worker simplified view — show critical numbers only
+                st.info("📊 **Field Worker Mode:** Detailed charts hidden for clarity. Switch to **Executive Dashboard** in the sidebar to view full analytics.")
+
             st.divider()
             
             # Tactical Detail Row
