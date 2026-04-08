@@ -31,13 +31,17 @@ Designed for crisis zones with intermittent connectivity.
 
 ---
 
-## 🚀 Core Features
+## 🏆 Why We Win
 
-*   **🎯 Smart Matching Engine**: Prioritizes Urgency, Skill, and Proximity to connect the right volunteers to the most critical needs.
-*   **🔮 Temporal Crisis Forecasting**: AI analyzes current clusters to predict "High-Probability Risk" areas 0-5 hours into the future.
-*   **📊 Executive Impact Analytics**: Real-time Plotly dashboards for stakeholder reporting, tracking "Total Humans Impacted" and "Resource Parity."
-*   **🗺️ Interactive Impact Map**: Geospatial visualization with Heatmaps, Marker Clusters, and Dependency Mapping (e.g., *Clear Debris* must happen before *Food Delivery*).
-*   **🗨️ Chat with your Data**: Natural language interface for NGO managers to query the resource database.
+✅ **Speed**: AI extracts data from handwritten surveys in <5 seconds
+
+✅ **Fairness**: Built-in bias detection & equity auditing
+
+✅ **Resilience**: Works offline in crisis zones (PWA)
+
+✅ **Transparency**: Every match decision is explainable
+
+✅ **Impact**: Predictive models prevent crises before they happen
 
 ---
 
