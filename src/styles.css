@@ -461,6 +461,159 @@ html {
 ::-webkit-scrollbar-thumb:hover { background: var(--brand-primary); }
 
 /* ============================================================
+   DYNAMIC THEME ENGINE — LIGHT MODE
+   All selectors use body.light-mode prefix so they override
+   the dark defaults above when JS adds the class to <body>
+   ============================================================ */
+body.light-mode,
+body.light-mode [data-testid="stAppViewContainer"],
+body.light-mode [data-testid="stApp"],
+body.light-mode .main,
+body.light-mode .block-container {
+    background-color: #FFFFFF !important;
+    color: #1E293B !important;
+}
+
+/* Sidebar — clean white panel */
+body.light-mode [data-testid="stSidebar"],
+body.light-mode [data-testid="stSidebarContent"] {
+    background: #F8FAFC !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-right: 1px solid #E2E8F0 !important;
+}
+
+/* Sidebar blocks — slim, white, not bulky */
+body.light-mode [data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div {
+    background: #FFFFFF !important;
+    backdrop-filter: none !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode [data-testid="stSidebar"] label,
+body.light-mode [data-testid="stSidebar"] .stMarkdown,
+body.light-mode [data-testid="stSidebar"] .stRadio label,
+body.light-mode [data-testid="stSidebar"] .stCheckbox label,
+body.light-mode [data-testid="stSidebar"] p,
+body.light-mode [data-testid="stSidebar"] span {
+    color: #1E293B !important;
+}
+
+body.light-mode [data-testid="stSidebar"] h2,
+body.light-mode [data-testid="stSidebar"] h3 {
+    color: #4285F4 !important;
+}
+
+/* Typography — Inter headers, JetBrains Mono metrics */
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode h5,
+body.light-mode h6,
+body.light-mode .stMarkdown h1,
+body.light-mode .stMarkdown h2,
+body.light-mode .stMarkdown h3,
+body.light-mode .stMarkdown h4 {
+    color: #1E293B !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+body.light-mode p,
+body.light-mode li,
+body.light-mode label,
+body.light-mode .stMarkdown p {
+    color: #334155 !important;
+}
+
+/* Metric cards — floating, airy look */
+body.light-mode div[data-testid="stMetric"] {
+    background: #FFFFFF !important;
+    backdrop-filter: none !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode div[data-testid="stMetric"]:hover {
+    border-color: #4285F4 !important;
+    box-shadow: 0px 8px 30px rgba(66, 133, 244, 0.12) !important;
+}
+
+body.light-mode [data-testid="stMetricValue"] {
+    color: #1E293B !important;
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+body.light-mode [data-testid="stMetricLabel"] {
+    color: #64748B !important;
+}
+
+/* Header bar — frosted white */
+body.light-mode [data-testid="stHeader"] {
+    background: rgba(248, 250, 252, 0.92) !important;
+    backdrop-filter: blur(12px) !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+}
+
+/* Cards */
+body.light-mode .high-end-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .high-end-card:hover {
+    box-shadow: 0px 8px 32px rgba(66, 133, 244, 0.10) !important;
+    border-color: #4285F4 !important;
+}
+
+/* Data tables */
+body.light-mode .stDataFrame thead th {
+    background: rgba(66, 133, 244, 0.07) !important;
+    color: #4285F4 !important;
+}
+
+body.light-mode .stDataFrame tbody tr:hover td {
+    background: rgba(66, 133, 244, 0.04) !important;
+}
+
+/* Tabs */
+body.light-mode [data-testid="stTabs"] [role="tab"] {
+    color: #64748B !important;
+}
+
+body.light-mode [data-testid="stTabs"] [role="tab"][aria-selected="true"] {
+    color: #4285F4 !important;
+    border-bottom: 2px solid #4285F4 !important;
+}
+
+/* Static footer */
+body.light-mode .static-footer {
+    background: rgba(248, 250, 252, 0.9) !important;
+    border-top: 1px solid #E2E8F0 !important;
+    color: #64748B !important;
+}
+
+/* Light skeleton shimmer */
+body.light-mode .skeleton-block {
+    background: linear-gradient(
+        90deg,
+        rgba(226, 232, 240, 0.9) 25%,
+        rgba(66, 133, 244, 0.10) 50%,
+        rgba(226, 232, 240, 0.9) 75%
+    ) !important;
+}
+
+/* Light scrollbar */
+body.light-mode ::-webkit-scrollbar-thumb {
+    background: #CBD5E1 !important;
+}
+body.light-mode ::-webkit-scrollbar-thumb:hover {
+    background: #4285F4 !important;
+}
+
+/* ============================================================
    MISC OVERRIDES
    ============================================================ */
 /* Remove light-mode white backgrounds Streamlit injects */
