@@ -4,6 +4,8 @@ import google.generativeai as genai
 import os
 import json
 
+from src.utils.api_keys import get_google_api_key
+
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Simple euclidean distance approximation for the prototype."""
     return np.sqrt((lat1 - lat2)**2 + (lon1 - lon2)**2)
@@ -67,7 +69,7 @@ def match_volunteer_to_needs(volunteer: dict, needs_df: pd.DataFrame, top_n: int
     top_matches = df.sort_values(by="match_score", ascending=False).head(top_n)
     
     # --- 4. Explainable AI (XAI) Logic via Gemini ---
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
+    used_key = api_key or get_google_api_key()
     ai_results = {}
     
     if used_key:

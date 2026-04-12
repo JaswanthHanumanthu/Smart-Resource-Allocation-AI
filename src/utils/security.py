@@ -1,6 +1,8 @@
 import google.generativeai as genai
 import os
 import streamlit as st
+
+from src.utils.api_keys import get_google_api_key
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -9,7 +11,7 @@ def ai_truth_check(text: str, api_key: str = None) -> bool:
     Uses Gemini to detect if the input is a realistic emergency report or spam/placeholder text.
     Returns True if realistic, False if suspicious.
     """
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
+    used_key = api_key or get_google_api_key()
     if not used_key:
         if "lorem ipsum" in text.lower() or len(text) < 5:
             return False

@@ -4,6 +4,8 @@ import streamlit as st
 import pandas as pd
 import os
 
+from src.utils.api_keys import get_google_api_key
+
 def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
     """
     Takes messy NGO survey notes and uses the Gemini API to extract structured data.
@@ -13,16 +15,11 @@ def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
         time.sleep(2)
         return {"error": "Server Congestion: AI Ingestion Tier is currently undergoing load-shedding. Please use the 'Manual Upload' bypass."}
 
-    # Configure API - Prioritize Secure Secrets
     try:
-        # Check if already configured via app.py secrets check
-        if not api_key and 'GOOGLE_API_KEY' not in st.secrets:
-             raise Exception("No API Key Provided")
-        
-        if api_key:
-            genai.configure(api_key=api_key)
-        elif 'GOOGLE_API_KEY' in st.secrets:
-            genai.configure(api_key=st.secrets['GOOGLE_API_KEY'])
+        used_key = api_key or get_google_api_key()
+        if not used_key:
+            raise Exception("No API Key Provided")
+        genai.configure(api_key=used_key)
     except Exception:
         # Fallback simulated response if no API key is present for the hackathon
         import time
@@ -33,7 +30,7 @@ def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
             "latitude": 37.7749,
             "longitude": -122.4194,
             "description": "[SIMULATED - NO API KEY] Detected severe food shortage affecting 50 families.",
-            "note": "Provide GOOGLE_API_KEY in Streamlit Secrets to use the live model."
+            "note": "Set GOOGLE_API_KEY in .env or Streamlit secrets to use the live model."
         }
         
     model = genai.GenerativeModel('gemini-1.5-flash')
@@ -79,10 +76,8 @@ def process_field_audio(audio_data: bytes, api_key: str = None) -> dict:
     if st.session_state.get('high_traffic'):
         return {"error": "Audio Processing Inhibited: System Load 98%."}
     
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
-    if not used_key and 'GOOGLE_API_KEY' in st.secrets:
-        used_key = st.secrets['GOOGLE_API_KEY']
-        
+    used_key = api_key or get_google_api_key()
+
     if not used_key:
         # Fallback simulation
         return {
@@ -161,12 +156,10 @@ def process_survey_image(pil_image, api_key: str = None) -> dict:
     Takes a PIL Image of a handwritten NGO survey and uses Gemini 1.5 Flash to extract structured data.
     """
     try:
-        if not api_key and 'GOOGLE_API_KEY' not in st.secrets:
-             raise Exception("No API Key Provided")
-        if api_key:
-            genai.configure(api_key=api_key)
-        elif 'GOOGLE_API_KEY' in st.secrets:
-            genai.configure(api_key=st.secrets['GOOGLE_API_KEY'])
+        used_key = api_key or get_google_api_key()
+        if not used_key:
+            raise Exception("No API Key Provided")
+        genai.configure(api_key=used_key)
     except Exception:
         # Fallback simulation for hackathon prototype
         import time
@@ -177,7 +170,7 @@ def process_survey_image(pil_image, api_key: str = None) -> dict:
             "latitude": 37.8044,
             "longitude": -122.2712,
             "description": "[SIMULATED OCR] Handwriting read: Urgent medical supplies needed immediately for 15 wounded.",
-            "note": "Provide GOOGLE_API_KEY in secrets to use the live multimodal model."
+            "note": "Set GOOGLE_API_KEY in .env or Streamlit secrets for the live multimodal model.",
         }
         
     model = genai.GenerativeModel('gemini-1.5-flash')
@@ -223,7 +216,7 @@ def summarize_situation_ai(df: pd.DataFrame, api_key: str = None) -> str:
     """
     Uses Gemini to generate a fast 2-sentence executive summary of the CSV data/dataframe state.
     """
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
+    used_key = api_key or get_google_api_key()
     if not used_key:
         import time
         time.sleep(1.5)
@@ -236,6 +229,7 @@ def summarize_situation_ai(df: pd.DataFrame, api_key: str = None) -> str:
             return f"[SIMULATION] Warning: High urgency needs are visibly rising across sectors with {pending_ct} items currently pending dispatch. Strongly recommend shifting resources into {top_gap} distribution immediately."
             
     try:
+        genai.configure(api_key=used_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
         report_data = df.groupby(['category', 'status']).size().to_string()
         prompt = f"""You are an AI logistics director for an NGO. Look at the following raw aggregation of community needs.
@@ -249,14 +243,11 @@ Data counts:
 
 def chat_with_data(query: str, df: pd.DataFrame, api_key: str = None) -> str:
     try:
-        import os
-        used_key = api_key or os.environ.get("GEMINI_API_KEY")
-        if not used_key and 'GOOGLE_API_KEY' in st.secrets:
-            used_key = st.secrets['GOOGLE_API_KEY']
-            
+        used_key = api_key or get_google_api_key()
+
         if not used_key:
-             raise Exception("No API Key Provided")
-        
+            raise Exception("No API Key Provided")
+
         genai.configure(api_key=used_key)
     except Exception:
         import time
@@ -289,10 +280,11 @@ def predict_depletion_zones(df: pd.DataFrame) -> list:
     """
     import json
     try:
-        if 'GOOGLE_API_KEY' not in st.secrets:
-             raise Exception("No API Key Provided")
-        
-        genai.configure(api_key=st.secrets['GOOGLE_API_KEY'])
+        used_key = get_google_api_key()
+        if not used_key:
+            raise Exception("No API Key Provided")
+
+        genai.configure(api_key=used_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Sample recent data to fit prompt limits
@@ -331,10 +323,8 @@ def centralized_input_sanitizer(raw_data: dict, api_key: str = None) -> dict:
     Self-Healing Backend: Intercepts raw inputs and uses Gemini to 'heal' and standardize them.
     Ensures that categories are correct, urgency is balanced, and description is professional.
     """
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
-    if not used_key and 'GOOGLE_API_KEY' in st.secrets:
-        used_key = st.secrets['GOOGLE_API_KEY']
-        
+    used_key = api_key or get_google_api_key()
+
     if not used_key:
         return raw_data # Pass through if no API key
         
@@ -364,10 +354,8 @@ def auto_tag_document(content: str, api_key: str = None) -> list:
     """
     Analyzes document content to generate semantic humanitarian tags.
     """
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
-    if not used_key and 'GOOGLE_API_KEY' in st.secrets:
-        used_key = st.secrets['GOOGLE_API_KEY']
-        
+    used_key = api_key or get_google_api_key()
+
     if not used_key:
         return ["#General", "#Humanitarian"]
         
@@ -391,10 +379,8 @@ def process_report_intelligence(file_content: str, api_key: str = None) -> dict:
     """
     Elite Data Intelligence: Analyzes full reports and extracts global KPI signals.
     """
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
-    if not used_key and 'GOOGLE_API_KEY' in st.secrets:
-        used_key = st.secrets['GOOGLE_API_KEY']
-        
+    used_key = api_key or get_google_api_key()
+
     if not used_key:
         return {"efficiency_score": 88.4, "relief_gaps": ["Trauma Kits", "Swiftwater Rescue Boat"], "strategic_summary": "System operating at high capacity; slight congestion in medical logistics."}
         
@@ -424,10 +410,8 @@ def run_intelligent_audit(df: pd.DataFrame, api_key: str = None) -> str:
     Intelligent Audit Engine: Uses Gemini to cross-reference 
     reports with situational data to find bottlenecks.
     """
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
-    if not used_key and 'GOOGLE_API_KEY' not in st.secrets:
-        used_key = st.secrets['GOOGLE_API_KEY']
-        
+    used_key = api_key or get_google_api_key()
+
     if not used_key:
         return "Operational Audit Result: [MOCK] 3 Bottlenecks detected in Sector North. Recommendation: Shift 5 water tankers to community center B."
         
@@ -466,9 +450,7 @@ def generate_elite_report(uploaded_file, current_df: pd.DataFrame, api_key: str 
     3. Performs 48-hour Predictive Gap Analysis for India.
     4. Generates a Strategic Action Plan with a Reliability Score.
     """
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
-    if not used_key and 'GOOGLE_API_KEY' in st.secrets:
-        used_key = st.secrets['GOOGLE_API_KEY']
+    used_key = api_key or get_google_api_key()
 
     # --- Read the incoming file ---
     new_data_str = ""
@@ -577,9 +559,10 @@ def run_autonomous_matching(needs_df: pd.DataFrame, volunteers: list) -> list:
     } for v in volunteers]
 
     try:
-        api_key = st.secrets.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-        if not api_key: raise Exception("No Key")
-        
+        api_key = get_google_api_key()
+        if not api_key:
+            raise Exception("No Key")
+
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
@@ -637,9 +620,10 @@ def translate_text(text: str, target_lang: str) -> str:
         return text
         
     try:
-        api_key = st.secrets.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-        if not api_key: return text
-        
+        api_key = get_google_api_key()
+        if not api_key:
+            return text
+
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
@@ -652,9 +636,10 @@ def translate_text(text: str, target_lang: str) -> str:
 def process_voice_command(audio_data: bytes) -> dict:
     """Parses voice commands for dashboard navigation."""
     try:
-        api_key = st.secrets.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-        if not api_key: return {"error": "AI Navigation Offline"}
-        
+        api_key = get_google_api_key()
+        if not api_key:
+            return {"error": "AI Navigation Offline"}
+
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
         

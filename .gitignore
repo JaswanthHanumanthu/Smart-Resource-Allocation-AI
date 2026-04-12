@@ -2,5 +2,12 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+
+# API keys and local secrets (never commit)
 .env
-# .streamlit/ is now included to push theme config
+.env.*
+!.env.example
+.streamlit/secrets.toml
+secrets.toml
+
+# .streamlit/ may still be tracked for theme/config.toml — only secrets.toml is excluded above

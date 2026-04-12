@@ -1,78 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
 
-<<<<<<< HEAD
-/* ============================================================
-   DESIGN SYSTEM — Trust · Urgency · Intelligence
-   Palette: Deep Navy · Google Blue · Rose · Emerald
-   ============================================================ */
-:root {
-    /* Brand */
-    --brand-primary:   #4285F4;               /* Google Blue */
-    --brand-glow:      rgba(66, 133, 244, 0.35);
-    --brand-success:   #10b981;               /* Emerald Green */
-    --brand-critical:  #f43f5e;               /* Magenta / Rose */
-
-    /* Surfaces — forced dark for field readability */
-    --surface-base:        #0f172a;           /* Deep Slate / Navy */
-    --surface-elevation-1: #0f172a;
-    --surface-elevation-2: rgba(30, 41, 59, 0.82); /* Translucent Charcoal */
-    --border-subtle:       rgba(66, 133, 244, 0.25); /* Blue-tinted subtle border */
-    --border-card:         rgba(66, 133, 244, 0.55); /* Google Blue card border */
-
-    /* Typography */
-    --text-high-contrast:   #f1f5f9;
-    --text-medium-contrast: #94a3b8;
-
-    /* Legacy Impact Palette (mapped to new colours) */
-    --impact-red:    #f43f5e;   /* Rose / Magenta — critical */
-    --impact-orange: #f59e0b;   /* Amber — warning */
-    --impact-green:  #10b981;   /* Emerald — safe / success */
-
-    /* Glows */
-    --glow-red:    0 0 18px rgba(244,  63,  94, 0.45);
-    --glow-orange: 0 0 18px rgba(245, 158,  11, 0.40);
-    --glow-green:  0 0 18px rgba( 16, 185, 129, 0.40);
-    --glow-blue:   0 0 18px rgba( 66, 133, 244, 0.40);
-
-    /* Glassmorphism */
-    --glass-bg:     rgba(15, 23, 42, 0.65);
-    --glass-border: rgba(66, 133, 244, 0.20);
-    --glass-blur:   16px;
-
-    /* Misc */
-    --radius-standard: 16px;
-    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25);
-}
-
-/* ============================================================
-   GLOBAL BASE — Force dark theme universally
-   ============================================================ */
-html,
-body,
-[data-testid="stAppViewContainer"],
-[data-testid="stApp"],
-.main,
-.block-container {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-    font-size: 16px !important;
-    line-height: 1.6 !important;
-    background-color: var(--surface-base) !important;
-    color: var(--text-medium-contrast) !important;
-    animation: fade-in 0.8s ease-out;
-}
-
-@keyframes fade-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0);   }
-}
-
-/* ============================================================
-   TYPOGRAPHY
-   ============================================================ */
-h1, h2, h3, h4, h5, h6,
-.stMarkdown h1, .stMarkdown h2, .stMarkdown h3,
-.stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
-=======
 /* ======================================================
    MISSION-CRITICAL DESIGN SYSTEM v3.0
    Smart Resource Allocator — Enterprise Grade
@@ -83,6 +10,7 @@ h1, h2, h3, h4, h5, h6,
     --brand-primary: #4285F4;
     --brand-glow: rgba(66, 133, 244, 0.4);
     --brand-success: #34A853;
+    --brand-critical: #f43f5e;
 
     /* Light Mode Surfaces */
     --surface-elevation-1: #F0F4FF;
@@ -116,6 +44,8 @@ h1, h2, h3, h4, h5, h6,
     /* Crisis Theme (default OFF) */
     --crisis-bg: transparent;
     --crisis-border: transparent;
+    --surface-base: var(--surface-elevation-1);
+    --border-card: rgba(66, 133, 244, 0.45);
 }
 
 /* --- Dark Mode Overrides --- */
@@ -157,15 +87,15 @@ html, body, [data-testid="stAppViewContainer"], .stApp {
     color: #f8fafc !important;
 }
 
-h1, h2, h3, h4, h5, h6 {
->>>>>>> 978ae7b52b392d91b7b0b1de59e4a27fca9ab4c1
+h1, h2, h3, h4, h5, h6,
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3,
+.stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
     font-family: 'Inter', sans-serif !important;
     color: var(--text-high-contrast) !important;
     font-weight: 800 !important;
     letter-spacing: -0.03em !important;
 }
 
-<<<<<<< HEAD
 p, li, label, .stMarkdown p {
     color: var(--text-medium-contrast) !important;
 }
@@ -217,19 +147,6 @@ p, li, label, .stMarkdown p {
     letter-spacing: 0.1em !important;
 }
 
-/* ============================================================
-   CARDS — Glassmorphism + Google Blue border
-   ============================================================ */
-.high-end-card {
-    background: var(--surface-elevation-2);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    border: 1px solid var(--border-card);
-    border-radius: var(--radius-standard);
-    padding: 1.5rem;
-    box-shadow: var(--shadow-soft), var(--glow-blue);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-=======
 /* ======================================================
    CARD SYSTEM
    ====================================================== */
@@ -242,12 +159,10 @@ p, li, label, .stMarkdown p {
     padding: 1.5rem;
     box-shadow: var(--glass-shadow);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
->>>>>>> 978ae7b52b392d91b7b0b1de59e4a27fca9ab4c1
     margin-bottom: 1rem;
 }
 
 .high-end-card:hover {
-<<<<<<< HEAD
     transform: translateY(-4px);
     box-shadow: var(--shadow-soft), 0 0 28px rgba(66, 133, 244, 0.55) !important;
     border-color: var(--brand-primary) !important;
@@ -469,17 +384,8 @@ div.stFoliumContainer {
     border: none !important;
 }
 
-/* ============================================================
-   FOOTER
-   ============================================================ */
-=======
-    transform: translateY(-5px) scale(1.005);
-    box-shadow: 0 24px 48px -8px rgba(66, 133, 244, 0.18), var(--glass-shadow) !important;
-    border-color: var(--brand-primary) !important;
-}
-
 /* ======================================================
-   COMPETITION-GRADE NAVIGATION CARDS 
+   COMPETITION-GRADE NAVIGATION (SIDEBAR)
    ====================================================== */
 .nav-container {
     display: flex;
@@ -561,31 +467,21 @@ section[data-testid="stSidebar"] .stButton button:hover * {
 /* ======================================================
    STATIC MISSION FOOTER
    ====================================================== */
->>>>>>> 978ae7b52b392d91b7b0b1de59e4a27fca9ab4c1
+
 .static-footer {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-<<<<<<< HEAD
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    color: var(--text-medium-contrast);
-    text-align: center;
-    padding: 12px 0;
-    font-size: 0.72rem;
-    font-family: 'Inter', sans-serif;
-    letter-spacing: 0.05em;
-=======
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     color: var(--text-medium-contrast);
     text-align: center;
     padding: 12px 0;
-    font-size: 0.7rem;
->>>>>>> 978ae7b52b392d91b7b0b1de59e4a27fca9ab4c1
+    font-size: 0.72rem;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.05em;
     border-top: 1px solid var(--glass-border);
     z-index: 1000;
 }
@@ -613,7 +509,6 @@ section[data-testid="stSidebar"] .stButton button:hover * {
     100% { box-shadow: 0 0 5px rgba(234, 67, 53, 0.4); border-color: rgba(234, 67, 53, 0.5); }
 }
 
-<<<<<<< HEAD
 /* ============================================================
    SMOOTH SCROLLING
    ============================================================ */
@@ -872,7 +767,8 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
 .stProgress > div > div {
     background: linear-gradient(90deg, var(--brand-primary), var(--brand-success)) !important;
     border-radius: 10px !important;
-=======
+}
+
 .kpi-card-pulse-red {
     animation: pulse-red-glow 1.5s infinite ease-in-out;
     background: rgba(234, 67, 53, 0.1) !important;
@@ -905,7 +801,7 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
     --brand-primary: #000000 !important;
 }
 
-.field-mode .stApp, .field-mode [data-testid=" stAppViewContainer\] {
+.field-mode .stApp, .field-mode [data-testid="stAppViewContainer"] {
  background: #FFFFFF !important;
  filter: none !important;
  color: #000000 !important;
@@ -926,7 +822,7 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
 * { transition: none !important; } /* Global transition disable to save cycles */
 .high-end-card, button, .stButton>button, .nav-item { transition: all 0.2s ease !important; } /* Only interactive elements get transitions */
 
-@keyframes shimmer {
+@keyframes shimmer_loader {
     0% { background-position: -468px 0; }
     100% { background-position: 468px 0; }
 }
@@ -938,7 +834,7 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
     background-size: 800px 104px;
     display: inline-block;
     position: relative;
-    animation: shimmer 1s linear infinite forwards;
+    animation: shimmer_loader 1s linear infinite forwards;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -972,10 +868,10 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
 #MainMenu { visibility: hidden; } /* Hide Hamburger */
 footer { visibility: hidden; } /* Hide Streamlit Footer */
 header { visibility: hidden; } /* Hide Streamlit Header */
-div[data-testid=" stSidebarCollapseButton\] { display: none !important; } /* Hide Sidebar Arrow */
+div[data-testid="stSidebarCollapseButton"] { display: none !important; } /* Hide Sidebar Arrow */
 
 /* Lock Sidebar Width and Style */
-section[data-testid=\stSidebar\] {
+section[data-testid="stSidebar"] {
  min-width: 320px !important;
  max-width: 320px !important;
 }
@@ -993,7 +889,7 @@ section[data-testid=\stSidebar\] {
     --glass-blur: 20px !important;
 }
 
-.light-mode-theme .stApp, .light-mode-theme [data-testid=" stAppViewContainer\] {
+.light-mode-theme .stApp, .light-mode-theme [data-testid="stAppViewContainer"] {
  background: #FFFFFF !important;
  color: #1D1D1F !important;
 }
@@ -1012,6 +908,6 @@ section[data-testid=\stSidebar\] {
 }
 
 .light-mode-theme .kpi-massive {
- color: #0066CC !important;
->>>>>>> 978ae7b52b392d91b7b0b1de59e4a27fca9ab4c1
+    color: #0066CC !important;
 }
+

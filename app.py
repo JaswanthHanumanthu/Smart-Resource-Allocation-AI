@@ -3,13 +3,10 @@ import pandas as pd
 import google.generativeai as genai
 import contextlib
 
-# --- 🔐 Enterprise-Grade Security: API Configuration ---
-import os
-try:
-    _api_key = st.secrets.get('GOOGLE_API_KEY') or os.environ.get('GOOGLE_API_KEY')
-except Exception:
-    _api_key = os.environ.get('GOOGLE_API_KEY')
+from src.utils.api_keys import get_google_api_key
 
+# Configure Gemini once when a usable key exists (.env, env var, or Streamlit secrets).
+_api_key = get_google_api_key()
 if _api_key:
     genai.configure(api_key=_api_key)
 
@@ -41,11 +38,15 @@ from datetime import datetime, timedelta
 @st.cache_resource
 def get_gemini_model(model_name='gemini-1.5-flash'):
     import google.generativeai as genai
-    if 'GOOGLE_API_KEY' in st.secrets:
-        genai.configure(api_key=st.secrets['GOOGLE_API_KEY'])
-        return genai.GenerativeModel(model_name)
-    return None
+
+    key = get_google_api_key()
+    if not key:
+        return None
+    genai.configure(api_key=key)
+    return genai.GenerativeModel(model_name)
 def run_dashboard():
+    max_urgency = 1.0  # default before any live metrics; recomputed from needs for nav / alerts
+
     from src.database.client import ProductionDB
     db = ProductionDB()
     
@@ -58,8 +59,12 @@ def run_dashboard():
             st.toast("✅ Database seeded from local mission records.", icon="💾")
         except: pass
 
-    if 'GOOGLE_API_KEY' not in st.secrets:
-        st.error('⚠️ Mission-Critical Status: Missing GOOGLE_API_KEY in Streamlit Secrets. Vision & AI extraction tiers are currently inhibited.')
+    if not get_google_api_key():
+        st.warning(
+            "⚠️ **No Gemini API key found.** Add `GOOGLE_API_KEY` to a project `.env` file "
+            "or to **Streamlit secrets** (local: `.streamlit/secrets.toml`, cloud: App Settings → Secrets). "
+            "Vision and AI features stay in simulation mode until a key is set."
+        )
 
     # Refined Interface Infrastructure
     st.markdown("""
@@ -165,7 +170,8 @@ def run_dashboard():
     if 'lang' not in st.session_state: st.session_state['lang'] = "English"
     if 'offline_mode' not in st.session_state: st.session_state['offline_mode'] = False
     if 'high_traffic' not in st.session_state: st.session_state['high_traffic'] = False
-    if 'page' not in st.session_state: st.session_state['page'] = "🛡️ Strategic Dashboard"
+    if 'nav_page_id' not in st.session_state:
+        st.session_state['nav_page_id'] = "System Dashboard"
     if 'sync_queue' not in st.session_state: st.session_state['sync_queue'] = []
     if 'needs_stale' not in st.session_state: st.session_state['needs_stale'] = True
 
@@ -173,14 +179,6 @@ def run_dashboard():
     st.sidebar.title("🛡️ Command Center")
     st.sidebar.caption("Mission-Critical Release V2.0")
     
-    st.sidebar.markdown("### 🗺️ Navigation")
-    page = st.sidebar.radio(
-        "Mission Map",
-        ["🛡️ Strategic Dashboard", "📊 Impact Analytics", "🚨 Emergency Dispatch", "📁 Field Report Center", "📚 Mission Library"],
-        label_visibility="collapsed",
-        key="page" # Directly use 'page' key
-    )
-
     # --- 🌍 REGIONAL ARCHITECTURE ---
     st.sidebar.markdown("---")
     with st.sidebar.expander("🌍 Regional Settings"):
@@ -459,9 +457,6 @@ def run_dashboard():
     # --- SESSION PERSISTENCE ---
     if 'user_role' not in st.session_state:
         st.session_state['user_role'] = 'Executive Dashboard'
-    if 'last_page' not in st.session_state:
-        st.session_state['last_page'] = 'System Dashboard'
-
     st.sidebar.title("Navigation")
 
     # --- ADAPTIVE UI: ROLE SELECTOR ---
@@ -504,9 +499,20 @@ def run_dashboard():
         </style>
         """, unsafe_allow_html=True)
             
-    # --- COMPETITION-GRADE SIDEBAR NAVIGATION (STABLE INDEX) ---
+    # --- SIDEBAR NAVIGATION (session key must not match any widget `key=` — avoids Streamlit crash) ---
     st.sidebar.subheader("Strategic Navigation")
-    
+
+    df_for_nav = st.session_state.get('needs_df', pd.DataFrame())
+    if (
+        not df_for_nav.empty
+        and "status" in df_for_nav.columns
+        and "urgency" in df_for_nav.columns
+    ):
+        pending = df_for_nav[df_for_nav["status"] == "Pending"]
+        max_urgency = float(pending["urgency"].max()) if not pending.empty else 0.0
+    else:
+        max_urgency = 0.0
+
     nav_items = [
         {"id": "System Dashboard", "icon": "🕹️", "title": "Command Center", "desc": "Real-time mission intelligence"},
         {"id": "Field Report Center", "icon": "📁", "title": "Intelligence Field", "desc": "Process incoming field data"},
@@ -516,7 +522,8 @@ def run_dashboard():
         {"id": "📚 Document Library", "icon": "📚", "title": "Document Archive", "desc": "Persistent mission records"},
     ]
     if max_urgency >= 9:
-        st.sidebar.markdown("""
+        st.sidebar.markdown(
+            """
         <style>
             div[data-testid="stRadio"] {
                 animation: pulse-glow 2s infinite;
@@ -527,46 +534,48 @@ def run_dashboard():
                 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); }
             }
         </style>
-        """, unsafe_allow_html=True)
-        dispatch_label = "🚨 EMERGENCY DISPATCH 🚨"
-    else:
-        dispatch_label = "Volunteer Matching"
-        
-    pages = ["System Dashboard", "Field Report Center", "Impact Map", "Executive Impact Analytics", dispatch_label]
-    if st.sidebar.checkbox("System Administration (Hidden)", value=False):
-        pages.insert(0, "🛡️ Admin Verification")
+        """,
+            unsafe_allow_html=True,
+        )
 
-    # Restore last visited page (session persistence)
-    _last = st.session_state.get('last_page', pages[0])
-    _default_idx = pages.index(_last) if _last in pages else 0
-    page = st.sidebar.radio("Go to", pages, index=_default_idx)
-    st.session_state['last_page'] = page   # persist for this session
-    if is_admin:
-        nav_items.insert(0, {"id": "🛡️ Admin Verification", "icon": "🛡️", "title": "Secure Verification", "desc": "Audit suspicious reports"})
+    show_admin_nav = st.sidebar.checkbox("System Administration (Hidden)", value=False)
+    nav_items_display = list(nav_items)
+    if show_admin_nav:
+        nav_items_display.insert(
+            0,
+            {
+                "id": "🛡️ Admin Verification",
+                "icon": "🛡️",
+                "title": "Secure Verification",
+                "desc": "Audit suspicious reports",
+            },
+        )
 
-    # Map current state to index for radio stability
-    nav_titles = [f"{item['icon']} {item['title']}" for item in nav_items]
-    current_page_idx = 0
-    for idx, item in enumerate(nav_items):
-        if st.session_state['page'] == item['id']:
-            current_page_idx = idx
-            break
+    valid_ids = {item["id"] for item in nav_items_display}
+    if st.session_state.get("nav_page_id") not in valid_ids:
+        st.session_state["nav_page_id"] = nav_items_display[0]["id"]
 
-    selected_nav = st.sidebar.radio(
+    nav_titles = [f"{item['icon']} {item['title']}" for item in nav_items_display]
+    title_to_id = {t: nav_items_display[i]["id"] for i, t in enumerate(nav_titles)}
+
+    def _title_for_page_id(pid):
+        for it in nav_items_display:
+            if it["id"] == pid:
+                return f"{it['icon']} {it['title']}"
+        return nav_titles[0]
+
+    # Widget uses key="nav_selection" only; do not set st.session_state.nav_selection after the radio.
+    if st.session_state.get("nav_selection") not in nav_titles:
+        st.session_state["nav_selection"] = _title_for_page_id(st.session_state["nav_page_id"])
+
+    st.sidebar.radio(
         "Strategic Mission Select",
         options=nav_titles,
-        index=current_page_idx,
-        key="main_nav_radio",
-        label_visibility="collapsed"
+        key="nav_selection",
+        label_visibility="collapsed",
     )
-    
-    # Update page state based on radio selection
-    new_page_id = nav_items[nav_titles.index(selected_nav)]['id']
-    if new_page_id != st.session_state['page']:
-        st.session_state['page'] = new_page_id
-        st.rerun()
-
-    page = st.session_state['page']
+    page = title_to_id[st.session_state.nav_selection]
+    st.session_state["nav_page_id"] = page
     
     st.sidebar.markdown("---")
     st.sidebar.subheader("📡 Field Coordination")
@@ -709,7 +718,11 @@ def run_dashboard():
             </div>
         """, unsafe_allow_html=True)
         if st.button("⚡ EMERGENCY UPLOAD — Submit Critical Report Now", type="primary", use_container_width=True):
-            st.session_state['last_page'] = "Field Report Center"
+            st.session_state["nav_page_id"] = "Field Report Center"
+            for _it in nav_items:
+                if _it["id"] == "Field Report Center":
+                    st.session_state["nav_selection"] = f"{_it['icon']} {_it['title']}"
+                    break
             st.rerun()
         st.markdown("---")
 
@@ -1532,16 +1545,12 @@ Generated by Gemini 1.5 Flash Intelligence Engine
         st.subheader("🤖 Smart Survey Digitization (Gemini Multimodal AI)")
         st.write("Automatically extract and digitize messy field notes or handwritten paper surveys.")
         
-        # Configure API - Prioritize Secure Secrets
-        try:
-            # Check if already configured via app.py secrets check
-            # This function acts as a safety layer for standalone function calls
-            if 'GOOGLE_API_KEY' not in st.secrets:
-                 raise Exception("No API Key Provided")
-        except Exception:
-            st.warning("Using built-in local Simulation mode fallback since GEMINI_API_KEY environment variable is not explicitly loaded.")
+        if not get_google_api_key():
+            st.warning(
+                "Using simulation mode: set `GOOGLE_API_KEY` in `.env` or Streamlit secrets for live Gemini multimodal extraction."
+            )
         else:
-            st.caption("Gemini Environment Verified: Ready.")
+            st.caption("Gemini API key loaded — live extraction available.")
             
         tab1, tab2, tab3 = st.tabs(["📄 Paper Survey (Image)", "📝 Text Field Notes", "🎙️ Voice Reporting"])
         
@@ -2194,7 +2203,7 @@ Generated by Gemini 1.5 Flash Intelligence Engine
                         with open(os.path.join("uploads", filename), "rb") as f:
                             st.download_button("Download", data=f, file_name=filename, key=f"dl_{filename}", use_container_width=True)
                             
-    elif page in ["Volunteer Matching", "🚨 EMERGENCY DISPATCH 🚨"]:
+    elif page in ["Volunteer Matching", "🚨 EMERGENCY DISPATCH 🚨", "Rapid Dispatch"]:
         st.subheader("🤝 Smart Volunteer Matching & XUX Portal")
         st.write("AI-driven dispatch engine featuring Interactive Explainability (XUX). Real-time algorithm tuning via manual weight overrides.")
         
@@ -2354,12 +2363,9 @@ Generated by Gemini 1.5 Flash Intelligence Engine
                     if selected_rows.empty:
                         st.warning("Please check at least one row to deploy.")
                     else:
-                        import os, google.generativeai as genai
-                        
-                        # Configure Gemini
-                        api_key = os.environ.get("GEMINI_API_KEY")
-                        if not api_key and 'GOOGLE_API_KEY' in st.secrets:
-                            api_key = st.secrets['GOOGLE_API_KEY']
+                        import google.generativeai as genai
+
+                        api_key = get_google_api_key()
                         
                         for _, task_row in selected_rows.iterrows():
                             v_name = selected_volunteer.get('name', 'Field Unit')
@@ -2438,9 +2444,9 @@ Generated by Gemini 1.5 Flash Intelligence Engine
                         if available_needs.empty:
                             st.info("Awaiting task verification by administrator.")
                         else:
-                            import os
-                            api_key = os.environ.get("GEMINI_API_KEY")
-                            matches = match_volunteer_to_needs(selected_volunteer, available_needs, top_n=10, api_key=api_key)
+                            matches = match_volunteer_to_needs(
+                                selected_volunteer, available_needs, top_n=10, api_key=get_google_api_key()
+                            )
                         
                         # Apply Distance Filter
                         matches = matches[matches['distance_km'] <= max_radius].head(3)
@@ -2570,7 +2576,7 @@ Every decision is **explainable, auditable, and bias-aware** — not a black box
                                         </div>
                                     ''', unsafe_allow_html=True)
         
-    elif page in ["Volunteer Matching", "🚨 EMERGENCY DISPATCH 🚨"]:
+    elif page in ["Volunteer Matching", "🚨 EMERGENCY DISPATCH 🚨", "Rapid Dispatch"]:
         st.subheader("🤝 Smart Volunteer Matching & XUX Portal")
         st.write("AI-driven dispatch engine featuring Interactive Explainability (XUX). Real-time algorithm tuning via manual weight overrides.")
         
@@ -2635,9 +2641,9 @@ Every decision is **explainable, auditable, and bias-aware** — not a black box
                         if available_needs.empty:
                             st.info("Awaiting task verification by administrator.")
                         else:
-                            import os
-                            api_key = os.environ.get("GEMINI_API_KEY")
-                            matches = match_volunteer_to_needs(selected_volunteer, available_needs, top_n=10, api_key=api_key)
+                            matches = match_volunteer_to_needs(
+                                selected_volunteer, available_needs, top_n=10, api_key=get_google_api_key()
+                            )
                         
                         # Apply Distance Filter
                         matches = matches[matches['distance'] <= max_radius].head(3)

@@ -5,12 +5,14 @@ from src.models.matching import calculate_distance
 import google.generativeai as genai
 import os
 
+from src.utils.api_keys import get_google_api_key
+
 def get_semantic_similarity(text1, text2, api_key=None):
     """
     Calculates semantic similarity using Gemini Embeddings if available.
     Falls back to difflib SequenceMatcher.
     """
-    used_key = api_key or os.environ.get("GEMINI_API_KEY")
+    used_key = api_key or get_google_api_key()
     if not used_key:
         return SequenceMatcher(None, text1.lower(), text2.lower()).ratio()
         

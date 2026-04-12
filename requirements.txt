@@ -1,17 +1,9 @@
-streamlit
-google-generativeai
-pandas
-plotly
+# Third-party packages (app.py, src/, scripts/). Stdlib only in comments below.
+# Stdlib used: contextlib, csv, datetime, difflib, json, os, pathlib, random, sqlite3,
+# subprocess, sys, time, traceback, typing, streamlit.components (part of streamlit).
+
 folium
-streamlit-folium
-pydantic
-requests
-streamlit-lottie
-python-dotenv
-pypdf
-Pillow
-numpy
-folium
+fpdf2
 google-generativeai
 numpy
 pandas

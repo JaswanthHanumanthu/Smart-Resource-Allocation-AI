@@ -7,6 +7,8 @@ import google.generativeai as genai
 from datetime import datetime
 import streamlit as st
 
+from src.utils.api_keys import get_google_api_key
+
 class ProductionDB:
     def __init__(self, db_path="data/mission_critical.db"):
         self.db_path = db_path
@@ -79,8 +81,9 @@ class ProductionDB:
     def generate_embedding(self, text: str):
         """Uses Gemini to get semantic vector embeddings."""
         try:
-            api_key = st.secrets.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-            if not api_key: return None
+            api_key = get_google_api_key()
+            if not api_key:
+                return None
             
             genai.configure(api_key=api_key)
             result = genai.embed_content(
