@@ -8,12 +8,17 @@ from src.utils.api_keys import get_google_api_key
 
 # Configure Gemini once when a usable key exists (.env, env var, or Streamlit secrets).
 # Try to get the key from Streamlit Secrets (for Web) or Environment Variables (for Local)
-_api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+
+# This checks Streamlit Cloud Secrets first, then your local .env
+try:
+    _api_key = st.secrets["GOOGLE_API_KEY"]
+except Exception:
+    _api_key = os.getenv("GOOGLE_API_KEY")
 
 if _api_key:
     genai.configure(api_key=_api_key)
 else:
-    st.error("Missing Google API Key. Please add it to Streamlit Secrets or a .env file.")
+    st.error("⚠️ Google API Key not found. Please add it to Streamlit Secrets.")
     st.stop()
 
 @contextlib.contextmanager
