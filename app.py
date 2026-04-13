@@ -6,9 +6,14 @@ import contextlib
 from src.utils.api_keys import get_google_api_key
 
 # Configure Gemini once when a usable key exists (.env, env var, or Streamlit secrets).
-_api_key = get_google_api_key()
+# Try to get the key from Streamlit Secrets (for Web) or Environment Variables (for Local)
+_api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+
 if _api_key:
     genai.configure(api_key=_api_key)
+else:
+    st.error("Missing Google API Key. Please add it to Streamlit Secrets or a .env file.")
+    st.stop()
 
 @contextlib.contextmanager
 def skeleton_spinner(label="AI Processing...", n_blocks=3, heights=None):
