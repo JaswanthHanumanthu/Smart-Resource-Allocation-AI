@@ -37,7 +37,7 @@ def render():
     # Simple styling on dataframe
     st.dataframe(
         df, 
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
         column_config={
             "Requested Amount ($)": st.column_config.NumberColumn(format="$%d"),
