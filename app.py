@@ -27,7 +27,7 @@ from src.utils.api_keys import get_google_api_key
 from src.database.client import ProductionDB
 from src.processor import (
     translate_text, process_voice_command, chat_with_data, 
-    predict_depletion_zones, predict_crisis_clusters, 
+    predict_depletion_zones, 
     run_intelligent_audit, process_field_audio, 
     process_field_image, generate_elite_report, 
     process_ngo_notes, process_report_intelligence, 
