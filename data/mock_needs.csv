@@ -1,21 +1,21 @@
-urgency,category,latitude,longitude,description
-7,Food,37.81089404067363,-122.46626867075445,Soup kitchen running low on staple foods.
-4,Food,37.79293075385878,-122.3851715225405,Urgent request for antibiotics and bandages.
-8,Medical,37.769949925196954,-122.42442458666302,Need immediate medical supplies for clinic.
-5,Medical,37.72622649611599,-122.42988497639982,Urgent request for antibiotics and bandages.
-7,Food,37.819120175568486,-122.37673411342061,Urgent request for antibiotics and bandages.
-10,Food,37.78122882178456,-122.39667280041435,Temporary shelter required for 10 families.
-3,Food,37.763441650253995,-122.43674592311942,Need immediate medical supplies for clinic.
-7,Shelter,37.726496625222026,-122.41235560255946,Urgent request for antibiotics and bandages.
-8,Shelter,37.74798938256222,-122.41731657399741,Temporary shelter required for 10 families.
-5,Shelter,37.749002546602604,-122.37328279756507,Temporary shelter required for 10 families.
-4,Medical,37.793226351882545,-122.38494661513218,Need immediate medical supplies for clinic.
-8,Shelter,37.78589966577827,-122.39466798898626,Blankets and warm clothing needed.
-8,Medical,37.80821949117362,-122.41543078676109,Tents needed to replace damaged housing.
-3,Medical,37.74223646535078,-122.41072488343362,School supplies for local children missing after disaster.
-6,Shelter,37.764006060757325,-122.37287446927358,Tents needed to replace damaged housing.
-5,Medical,37.74312360877881,-122.40869657523133,Soup kitchen running low on staple foods.
-2,Shelter,37.80043614103177,-122.44180008179774,School supplies for local children missing after disaster.
-8,Shelter,37.76741558744913,-122.43977264942959,Soup kitchen running low on staple foods.
-6,Food,37.745694166286825,-122.4528733060937,Urgent request for antibiotics and bandages.
-2,Shelter,37.781670032782,-122.46783635932587,Food shortage in the local community center.
+urgency,category,latitude,longitude,description,detected_language,people_affected,human_context_summary,status,verified,report_count
+9,Medical,37.797208287753264,-122.49539827916436,Urgent need for insulin supplies at community health center. 30 diabetic patients at risk.,English,30,Elderly patients with diabetes requiring daily insulin injections.,Pending,True,1
+8,Food,37.73890469093906,-122.46368628189619,Food bank completely empty. 200 families need emergency food rations.,English,200,Low-income families relying on food bank for daily meals.,Pending,True,1
+9,Shelter,37.81273539426624,-122.39112808201233,Temporary shelter needed for 15 homeless individuals during rainstorm.,English,15,Homeless individuals exposed to severe weather conditions.,Pending,True,1
+6,Medical,37.837648730832775,-122.48548978677928,First aid kits running low at community center. Minor injuries going untreated.,English,45,General community members with minor cuts and bruises.,Pending,True,1
+7,Food,37.762407491149645,-122.4946324448899,School lunch program lacking supplies. 150 children may go hungry.,English,150,School children from low-income families dependent on school meals.,Pending,True,1
+5,Shelter,37.729882075968575,-122.41854315390346,Damaged roof causing leaks. 8 families need temporary housing repairs.,English,40,Families living in partially damaged housing units.,Pending,True,1
+8,Medical,37.699145755149424,-122.46758597589013,Shortage of hypertension medication at local clinic.,English,60,Elderly residents with chronic hypertension requiring daily medication.,Pending,True,1
+9,Food,37.79888151004472,-122.41220936310349,Clean drinking water contaminated. Residents need bottled water.,English,500,Entire neighborhood affected by water contamination.,Pending,True,1
+6,General,37.730170499526515,-122.40511749057985,Power outage affecting 30 households. Need generators.,English,120,Families without electricity during heatwave.,Pending,True,1
+7,Medical,37.82440887306846,-122.49836019845151,Expectant mothers lacking prenatal vitamins and supplements.,English,12,Pregnant women in their second and third trimester.,Pending,True,1
+6,Shelter,37.82383108029325,-122.38769769680188,Winter coats and blankets needed for 50 elderly residents.,English,50,Elderly residents without proper winter clothing.,Pending,True,1
+5,Food,37.74934008264288,-122.47452328003011,Soup kitchen needing instant noodles and canned goods.,English,80,Homeless individuals and low-income families relying on soup kitchen.,Pending,True,1
+4,Medical,37.84805409155309,-122.44554487278198,Dental emergency kits needed for mobile dental unit.,English,25,Underserved community with limited dental care access.,Pending,True,1
+3,General,37.70973933494083,-122.48392537970665,Community center needs cleaning supplies for hygiene kits.,English,100,General community members benefiting from hygiene education.,Pending,True,1
+7,Shelter,37.8304990986156,-122.4028038349813,Wheelchair-accessible van needed for disabled veteran transport.,English,8,Disabled veterans requiring transportation to medical appointments.,Pending,True,1
+8,Food,37.8240405237239,-122.38264291412898,Baby formula and diapers needed for 20 infants.,English,20,New mothers unable to afford basic infant supplies.,Pending,True,1
+7,Medical,37.78069649463276,-122.34370147776329,Mental health counseling services needed for trauma survivors.,English,35,Disaster survivors experiencing PTSD and anxiety.,Pending,True,1
+6,General,37.75546550035334,-122.41107349899627,翻译：需要帮助老年人获取药物 (Translation: Elderly need help accessing medications),English,18,Chinese-speaking elderly with language barrier to healthcare.,Pending,True,1
+4,Food,37.82760474628048,-122.40043683962172,Vegetarian meal options urgently needed for temple community.,English,60,Vegetarian community members with dietary restrictions.,Pending,True,1
+3,Medical,37.83277310404973,-122.40702365675891,Pet food needed for evacuees who brought animals. 12 families with pets.,English,12,Families refusing evacuation without pet accommodations.,Pending,True,1

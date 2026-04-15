@@ -878,36 +878,117 @@ section[data-testid="stSidebar"] {
 
 /* --- LIGHT MODE (APPLE-STYLE MINIMALIST) --- */
 .light-mode-theme {
-    --surface-elevation-1: #FAFAFA !important;
+    --surface-elevation-1: #F9FAFB !important;
     --surface-elevation-2: #FFFFFF !important;
-    --text-high-contrast: #1D1D1F !important;
-    --text-medium-contrast: #86868B !important;
-    --border-subtle: #E5E5E7 !important;
+    --text-high-contrast: #0F172A !important;
+    --text-medium-contrast: #64748B !important;
+    --text-subtle: #94A3B8 !important;
+    --border-subtle: #E5E7EB !important;
     --brand-primary: #0066CC !important;
-    --glass-bg: rgba(255, 255, 255, 0.8) !important;
-    --glass-border: rgba(0, 0, 0, 0.1) !important;
+    --glass-bg: rgba(255, 255, 255, 0.85) !important;
+    --glass-border: rgba(229, 231, 235, 0.6) !important;
     --glass-blur: 20px !important;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    --card-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.05) !important;
 }
 
 .light-mode-theme .stApp, .light-mode-theme [data-testid="stAppViewContainer"] {
- background: #FFFFFF !important;
- color: #1D1D1F !important;
+ background: #F9FAFB !important;
+ color: #0F172A !important;
+}
+
+.light-mode-theme [data-testid="stSidebar"] {
+ background: rgba(255, 255, 255, 0.9) !important;
+ backdrop-filter: blur(20px) !important;
+ -webkit-backdrop-filter: blur(20px) !important;
+ border-right: 1px solid #E5E7EB !important;
 }
 
 .light-mode-theme .high-end-card {
  background: #FFFFFF !important;
- border: 1px solid #E5E5E7 !important;
- box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04) !important;
- color: #1D1D1F !important;
+ border: 1px solid #E5E7EB !important;
+ box-shadow: var(--card-shadow) !important;
+ color: #0F172A !important;
+ transition: all 0.2s ease !important;
+}
+
+.light-mode-theme .high-end-card:hover {
+ box-shadow: var(--card-shadow-hover) !important;
+ transform: translateY(-1px) !important;
 }
 
 .light-mode-theme h1, .light-mode-theme h2, .light-mode-theme h3 {
- color: #1D1D1F !important;
+ color: #0F172A !important;
  background: none !important;
- -webkit-text-fill-color: #1D1D1F !important;
+ -webkit-text-fill-color: #0F172A !important;
+}
+
+.light-mode-theme h4, .light-mode-theme h5, .light-mode-theme h6 {
+ color: #334155 !important;
+ background: none !important;
+ -webkit-text-fill-color: #334155 !important;
+}
+
+.light-mode-theme p, .light-mode-theme span {
+ color: #64748B !important;
 }
 
 .light-mode-theme .kpi-massive {
     color: #0066CC !important;
 }
+
+.light-mode-theme div[data-testid="stMetric"] {
+ background: #FFFFFF !important;
+ border: 1px solid #E5E7EB !important;
+ box-shadow: var(--card-shadow) !important;
+ transition: all 0.2s ease !important;
+}
+
+.light-mode-theme div[data-testid="stMetric"]:hover {
+ box-shadow: var(--card-shadow-hover) !important;
+ transform: translateY(-1px) !important;
+}
+
+.light-mode-theme .stButton > button {
+ background: #0066CC !important;
+ color: #FFFFFF !important;
+ border: none !important;
+ box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3) !important;
+ transition: all 0.15s ease !important;
+}
+
+.light-mode-theme .stButton > button:hover {
+ box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4) !important;
+ transform: translateY(-1px) !important;
+}
+
+.light-mode-theme .stButton > button:active {
+ box-shadow: 0 1px 4px rgba(0, 102, 204, 0.3) !important;
+ transform: translateY(0) !important;
+}
+
+.light-mode-theme [data-testid="stExpander"] {
+ background: #FFFFFF !important;
+ border: 1px solid #E5E7EB !important;
+ border-radius: 12px !important;
+}
+
+.light-mode-theme [data-testid="stTabs"] {
+ border-bottom: 1px solid #E5E7EB !important;
+}
+
+.light-mode-theme .stTabs [data-baseweb="tab-list"] {
+ gap: 8px !important;
+}
+
+.light-mode-theme .stTabs [data-baseweb="tab"] {
+ color: #64748B !important;
+ border-bottom: 2px solid transparent !important;
+}
+
+.light-mode-theme .stTabs [aria-selected="true"] {
+ color: #0066CC !important;
+ border-bottom-color: #0066CC !important;
+}
+
 
