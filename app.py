@@ -1329,9 +1329,15 @@ def main():
         .dev-signature-container {
             margin-top: 80px;
             padding: 40px 10px;
-            border-top: 1px solid rgba(66, 133, 244, 0.3);
+            /* 🔗 Glassmorphism Core */
             background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            
+            /* 🌈 3D Gradient Border Top */
+            border-top: 3px solid;
+            border-image: linear-gradient(90deg, #4285F4, #EA4335, #FBBC05, #34A853) 1;
+            
             text-align: center;
             width: 100%;
         }
@@ -1352,6 +1358,8 @@ def main():
             font-weight: 800;
             letter-spacing: -0.5px;
             margin-bottom: 25px;
+            /* ✨ Ethereal Text Glow */
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
         }
 
         .dev-links {
@@ -1371,19 +1379,23 @@ def main():
             border-radius: 4px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background: rgba(66, 133, 244, 0.05);
+            /* 💡 Initial Neon Glow */
+            box-shadow: 0 0 5px rgba(66, 133, 244, 0.2);
         }
 
         .dev-button:hover {
             background: #4285F4;
             color: #ffffff !important;
-            box-shadow: 0 0 20px rgba(66, 133, 244, 0.4);
-            transform: translateY(-3px);
+            /* 🔥 Intensified Neon Glow on Hover */
+            box-shadow: 0 0 25px rgba(66, 133, 244, 0.7), 0 0 45px rgba(66, 133, 244, 0.3);
+            transform: translateY(-5px);
+            border-color: #ffffff;
         }
 
         .build-info {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.6rem;
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.3);
             letter-spacing: 1px;
         }
         </style>
