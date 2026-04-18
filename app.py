@@ -11,12 +11,8 @@ from datetime import datetime, timedelta
 # Primary: st.secrets, Fallback: os.getenv
 
 # Check Environment Variables first, then fallback to Streamlit secrets
-_api_key = os.getenv('GOOGLE_API_KEY')
-if not _api_key:
-    try:
-        _api_key = st.secrets.get('GOOGLE_API_KEY')
-    except Exception:
-        pass
+from src.utils.api_keys import get_google_api_key
+_api_key = get_google_api_key()
 
 if _api_key:
     genai.configure(api_key=_api_key)
@@ -690,12 +686,24 @@ def run_dashboard():
                 total_impacted = v_df['people_affected'].sum() if 'people_affected' in v_df.columns else len(v_df)*5
                 st.info(f"💡 **Strategic Snapshot:** {int(total_impacted):,} lives secured across the current operation.")
 
-                # --- AI UNIFIED TACTICAL INSIGHT ---
-                st.markdown("### 🛰️ AI Strategic Intelligence Pulse")
+                # --- 🏦 SENIOR LEADERSHIP SUMMARY: PREMIER INTELLIGENCE ---
+                st.markdown("""
+                    <div style='background: linear-gradient(90deg, #4285F4 0%, #34A853 100%); padding: 2px; border-radius: 12px; margin-bottom: 20px;'>
+                        <div style='background: #0F172A; padding: 20px; border-radius: 10px;'>
+                            <h2 style='margin: 0; font-size: 1.8rem; font-weight: 900; letter-spacing: -0.02em; color: white;'>
+                                <i class="fas fa-microchip" style="margin-right: 15px; color: #4285F4;"></i>
+                                Senior Leadership Summary
+                                <span style="font-size: 0.8rem; vertical-align: middle; margin-left: 10px; padding: 4px 8px; background: rgba(66, 133, 244, 0.2); border: 1px solid #4285F4; border-radius: 20px; color: #4285F4; font-weight: 700;">AI GEN 5.0</span>
+                            </h2>
+                            <p style='margin: 10px 0 0 0; color: #94A3B8; font-size: 0.95rem; font-weight: 500;'>Consolidated Global Mission Intelligence & Predictive Asset Allocation</p>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+
                 with st.container(border=True):
-                    if st.button("Generate Tactical Intelligence Report", use_container_width=True):
+                    if st.button("🚀 UNLOCK LEADERSHIP INSIGHTS", use_container_width=True):
                         from src.processor import get_tactical_insights
-                        with st.spinner("🤖 Consolidating multi-sector telemetry..."):
+                        with st.spinner("🧠 Senior AI Strategist processing mission telemetry..."):
                             insights = get_tactical_insights(v_df, st.session_state.get('volunteers_db', []))
                         
                         if insights:
@@ -711,20 +719,20 @@ def run_dashboard():
                                 })
                                 if not chart_df.empty:
                                     fig = px.bar(chart_df, x='Sector', y='Intensity', color='Intensity', 
-                                                 color_continuous_scale='Reds', title="AI-Prioritized Sector Intensity")
-                                    fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=300)
+                                                 color_continuous_scale='Turbo', title="Operational Intensity Matrix")
+                                    fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=350)
                                     st.plotly_chart(fig, use_container_width=True)
                             
                             with t_col2:
-                                st.metric("Social ROI Projection", f"{insights.get('social_roi_score', 0)}%")
-                                st.markdown("#### 🧠 Strategic Reasoning Log")
-                                st.info(insights.get('reasoning_log', 'Strategic alignment verified.'))
+                                st.metric("Humanitarian ROI Projection", f"{insights.get('social_roi_score', 0)}%")
+                                st.markdown("#### 🧠 Strategic Alignment Reasoning")
+                                st.success(insights.get('reasoning_log', 'Strategic alignment verified.'))
                             
-                            st.markdown("#### 🎯 AI-Suggested Strategic Allocations")
+                            st.markdown("#### 🎯 AI-Optimized Mission Allocations")
                             for alloc in insights.get('allocations', []):
-                                with st.expander(f"Need ID {alloc.get('need_id')} → {alloc.get('volunteer_name')}"):
-                                    st.write(f"**Reasoning:** {alloc.get('reasoning')}")
-                                    st.caption(f"Impact Projection: {alloc.get('impact_projection')}")
+                                with st.expander(f"CRITICAL MATCH: Need {alloc.get('need_id')} → {alloc.get('volunteer_name')}"):
+                                    st.write(f"**Lead Strategy:** {alloc.get('reasoning')}")
+                                    st.caption(f"Impact Horizon: {alloc.get('impact_projection')}")
                 st.divider()
 
                 sel_idx = st.session_state.get('selected_idx')
