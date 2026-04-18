@@ -1,7 +1,3 @@
-# Third-party packages (app.py, src/, scripts/). Stdlib only in comments below.
-# Stdlib used: contextlib, csv, datetime, difflib, json, os, pathlib, random, sqlite3,
-# subprocess, sys, time, traceback, typing, streamlit.components (part of streamlit).
-
 folium
 fpdf2
 google-generativeai
@@ -16,3 +12,5 @@ requests
 streamlit
 streamlit-folium
 streamlit-lottie
+gunicorn
+uvicorn

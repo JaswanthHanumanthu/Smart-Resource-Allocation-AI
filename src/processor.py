@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import os
 
-from src.utils.api_keys import get_google_api_key
+from .utils.api_keys import get_google_api_key
 
 def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
     """
@@ -273,6 +273,7 @@ User Query: {query}"""
     except Exception as e:
         return f"Sorry, I encountered an issue checking the data: {str(e)}"
 
+@st.cache_data
 def predict_depletion_zones(df: pd.DataFrame) -> list:
     """
     Feeds recent historical resource data to Gemini API to predict high-risk zones 
@@ -350,6 +351,7 @@ def centralized_input_sanitizer(raw_data: dict, api_key: str = None) -> dict:
     except Exception:
         return raw_data
 
+@st.cache_data
 def auto_tag_document(content: str, api_key: str = None) -> list:
     """
     Analyzes document content to generate semantic humanitarian tags.
@@ -375,6 +377,7 @@ def auto_tag_document(content: str, api_key: str = None) -> list:
     except Exception:
         return ["#General"]
 
+@st.cache_data
 def process_report_intelligence(file_content: str, api_key: str = None) -> dict:
     """
     Elite Data Intelligence: Analyzes full reports and extracts global KPI signals.
@@ -478,15 +481,11 @@ def generate_elite_report(uploaded_file, current_df: pd.DataFrame, api_key: str 
     # --- Mock fallback if no API key ---
     if not used_key:
         return {
-            "summary": "**[MOCK REPORT — No API Key]**\n\n🔴 **Critical Gap:** Food distribution in Rajasthan sector is 47% below capacity.\n🟡 **Moderate Risk:** Medical volunteers in Maharashtra need reassignment within 24h.\n🟢 **Stable:** Shelter operations in Tamil Nadu performing above baseline.",
-            "urgent_dispatches": [
-                "🚨 Deploy Team Alpha → Rajasthan (Food, 48h critical window)",
-                "⚡ Redirect Dr. Priya Sharma → Maharashtra flood zone (Medical)",
-                "📦 Pre-position 200 food kits → Bihar corridor (Predictive Gap)"
-            ],
-            "reliability_score": 87.4,
-            "predicted_gaps": "Bihar and Odisha face resource depletion risk within 36–48 hours based on current burn rates.",
-            "data_quality_notes": "2 duplicate records detected and merged. 3 missing coordinates inferred from region name."
+            "summary": "### [SIMULATED REPORT — NO API KEY]\nThe current mission profile shows stable resource distribution; however, localized shortages in Rajasthan require immediate attention to prevent long-term degradation of community health metrics.",
+            "immediate_actions": "| Task | Priority | Responsible Party |\n| :--- | :--- | :--- |\n| Deploy Team Alpha to Rajasthan | CRITICAL | Logistics Unit |\n| Reassign Medical Volunteers | HIGH | Field Coordinator |\n| Pre-position Food Kits in Bihar | MEDIUM | Supply Chain |",
+            "sustainability_impact": "| Initiative | Sustainability Goal | Expected Outcome |\n| :--- | :--- | :--- |\n| Solar Well Installation | Clean Water | 5-year water security |\n| Community Health Training | Education | 30% reduction in local clinic load |",
+            "social_roi": "The estimated Social Return on Investment is robust, driven by the preventative nature of the proposed medical reassignments.",
+            "social_roi_score": 88
         }
 
     try:
@@ -496,22 +495,25 @@ def generate_elite_report(uploaded_file, current_df: pd.DataFrame, api_key: str 
         db_snapshot = current_df[['category', 'urgency', 'status', 'latitude', 'longitude', 'description']].head(15).to_string() if not current_df.empty else "No existing records."
 
         master_prompt = f"""
-        You are the Lead Strategist for a Smart Humanitarian Resource Allocator operating across India.
+        You are a Senior Social Impact Strategist for a global humanitarian mission. Your objective is to optimize resource distribution for maximum human impact.
 
-        CURRENT DATABASE STATE (top 15 records):
+        CURRENT MISSION SNAPSHOT:
         {db_snapshot}
 
         NEW INCOMING FIELD DATA:
         {new_data_str[:4000]}
 
-        YOUR TASKS — respond ONLY with valid JSON matching this schema:
+        YOUR MISSION CRITICAL TASKS:
+        Analyze the incoming data and provide a strategic analysis in JSON format with the following keys:
         {{
-            "summary": "<2-paragraph markdown executive summary of the combined situation>",
-            "urgent_dispatches": ["<dispatch 1>", "<dispatch 2>", "<dispatch 3>"],
-            "predicted_gaps": "<1-paragraph prediction of which Indian regions will deplete resources in 48 hours and why>",
-            "reliability_score": <float 0-100, how reliable and complete this data is>,
-            "data_quality_notes": "<1 sentence on data errors found and how they were corrected>"
+            "immediate_actions": "<A Markdown table listing exactly 3 immediate action items: | Task | Priority | Responsible Party |>",
+            "sustainability_impact": "<A Markdown table summarizing long-term impact: | Initiative | Sustainability Goal | Expected Outcome |>",
+            "social_roi": "<A detailed explanation of the 'Social Return on Investment' (Social ROI) score (0-100) based on current efficiency and lives potentially saved>",
+            "social_roi_score": <integer 0-100>,
+            "summary": "<A 2-paragraph executive overview of the tactical situation in professional prose>"
         }}
+
+        Output ONLY valid JSON.
         """
 
         response = model.generate_content(master_prompt)
@@ -527,6 +529,7 @@ def generate_elite_report(uploaded_file, current_df: pd.DataFrame, api_key: str 
             "data_quality_notes": "AI response parsing failed."
         }
 
+@st.cache_data
 def run_autonomous_matching(needs_df: pd.DataFrame, volunteers: list) -> list:
     """
     AI-Autonomous Matching Engine.

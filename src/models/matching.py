@@ -4,12 +4,15 @@ import google.generativeai as genai
 import os
 import json
 
-from src.utils.api_keys import get_google_api_key
+from ..utils.api_keys import get_google_api_key
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Simple euclidean distance approximation for the prototype."""
     return np.sqrt((lat1 - lat2)**2 + (lon1 - lon2)**2)
 
+import streamlit as st
+
+@st.cache_data
 def match_volunteer_to_needs(volunteer: dict, needs_df: pd.DataFrame, top_n: int = 3, api_key: str = None) -> pd.DataFrame:
     """
     Ranks needs for a specific volunteer prioritizing Urgency > Skill > Proximity.

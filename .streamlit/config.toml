@@ -10,5 +10,4 @@ showErrorDetails = false
 
 [server]
 headless = true
-address = "0.0.0.0"
-port = 5000
+# address and port should be set via environment variables or command line for deployment (e.g., Render)

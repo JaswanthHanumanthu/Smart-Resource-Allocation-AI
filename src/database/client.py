@@ -7,7 +7,7 @@ import google.generativeai as genai
 from datetime import datetime
 import streamlit as st
 
-from src.utils.api_keys import get_google_api_key
+from ..utils.api_keys import get_google_api_key
 
 class ProductionDB:
     def __init__(self, db_path="data/mission_critical.db"):

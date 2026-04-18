@@ -2,7 +2,7 @@ import google.generativeai as genai
 import os
 import streamlit as st
 
-from src.utils.api_keys import get_google_api_key
+from .api_keys import get_google_api_key
 import pandas as pd
 from datetime import datetime, timedelta
 

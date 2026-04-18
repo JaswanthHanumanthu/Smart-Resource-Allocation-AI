@@ -10,11 +10,13 @@ from datetime import datetime, timedelta
 # API configuration is lazy-loaded to reduce app wake-up time.
 # Primary: st.secrets, Fallback: os.getenv
 
-_api_key = None
-try:
-    _api_key = st.secrets.get('GOOGLE_API_KEY') or os.getenv('GOOGLE_API_KEY')
-except Exception:
-    _api_key = os.getenv('GOOGLE_API_KEY')
+# Check Environment Variables first, then fallback to Streamlit secrets
+_api_key = os.getenv('GOOGLE_API_KEY')
+if not _api_key:
+    try:
+        _api_key = st.secrets.get('GOOGLE_API_KEY')
+    except Exception:
+        pass
 
 if _api_key:
     genai.configure(api_key=_api_key)
@@ -50,8 +52,8 @@ def run_dashboard():
     from src.database.client import ProductionDB
     db = ProductionDB()
 
-    if 'GOOGLE_API_KEY' not in st.secrets:
-        st.error('⚠️ Mission-Critical Status: Missing GOOGLE_API_KEY in Streamlit Secrets. Vision & AI extraction tiers are currently inhibited.')
+    if not _api_key:
+        st.error('⚠️ Mission-Critical Status: Missing GOOGLE_API_KEY. Vision & AI extraction tiers are currently inhibited. Please set GOOGLE_API_KEY in your environment variables or Streamlit secrets.')
 
     st.markdown("""
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -247,8 +249,9 @@ def run_dashboard():
     active_crisis_level = "STABLE"
 
     if 'needs_df' not in st.session_state or st.session_state.get('needs_stale', True):
-        st.session_state['needs_df'] = db.get_all_needs()
-        st.session_state['needs_stale'] = False
+        with st.spinner("🛰️ Synchronizing Mission Telemetry..."):
+            st.session_state['needs_df'] = db.get_all_needs()
+            st.session_state['needs_stale'] = False
 
     try:
         _df_init = st.session_state.get('needs_df', pd.DataFrame())
@@ -323,9 +326,11 @@ def run_dashboard():
             model = get_gemini_model('gemini-1.5-flash')
             if model is None:
                 raise Exception("Missing GOOGLE_API_KEY")
-            response = model.generate_content(prompt)
-            clean_res = response.text.strip().replace('```json', '').replace('```', '')
-            return json.loads(clean_res)
+            
+            with st.spinner("🧠 AI Cluster Analysis in Progress..."):
+                response = model.generate_content(prompt)
+                clean_res = response.text.strip().replace('```json', '').replace('```', '')
+                return json.loads(clean_res)
         except Exception as e:
             st.toast("🔄 System Re-calibrating: AI Analysis Engine Congestion", icon="🔄")
             avg_lat = sum(n['latitude'] for n in needs_list) / len(needs_list)
@@ -555,16 +560,18 @@ def run_dashboard():
 
                     btn_a, btn_b = st.columns(2)
                     if btn_a.button("Approve Entry", key=f"admin_app_{idx}", type="primary", width='stretch'):
-                        db.update_need_details(row.get('id'), {'category': rev_cat, 'urgency': rev_urg, 'latitude': rev_lat, 'longitude': rev_lon, 'verified': True})
-                        st.session_state['needs_stale'] = True
-                        st.success(f"Record Published!")
-                        st.rerun()
+                        with st.spinner("Publishing Record to Field..."):
+                            db.update_need_details(row.get('id'), {'category': rev_cat, 'urgency': rev_urg, 'latitude': rev_lat, 'longitude': rev_lon, 'verified': True})
+                            st.session_state['needs_stale'] = True
+                            st.success(f"Record Published!")
+                            st.rerun()
 
                     if btn_b.button("Reject (Spam)", key=f"admin_rej_{idx}", width='stretch'):
-                        db.delete_need(row.get('id'))
-                        st.session_state['needs_stale'] = True
-                        st.error("Entry Discarded.")
-                        st.rerun()
+                        with st.spinner("Discarding Signal..."):
+                            db.delete_need(row.get('id'))
+                            st.session_state['needs_stale'] = True
+                            st.error("Entry Discarded.")
+                            st.rerun()
 
     elif page == "System Dashboard":
         df = st.session_state.get('needs_df', pd.DataFrame())
@@ -741,7 +748,7 @@ def run_dashboard():
                     st.warning("Awaiting field data to perform logistical audit.")
                 else:
                     from src.processor import run_intelligent_audit
-                    with st.spinner("🕵️ AI is cross-referencing mission telemetry..."):
+                    with st.spinner("🕵️ AI Cross-Referencing Mission Telemetry..."):
                         ai_report = run_intelligent_audit(audit_df)
                         st.session_state['last_audit_report'] = ai_report
 
@@ -789,8 +796,34 @@ def run_dashboard():
                     df['status'] = 'Pending'
                 if 'verified' not in df.columns:
                     df['verified'] = True
+                
+                with st.spinner("🕵️ Senior Strategist Analyzing Impact Payload..."):
+                    from src.processor import generate_elite_report
+                    elite_report = generate_elite_report(uploaded_file, st.session_state.get('needs_df', pd.DataFrame()), api_key=_api_key)
+                
                 st.session_state['needs_df'] = pd.concat([st.session_state['needs_df'], df], ignore_index=True)
                 st.success("Uploaded and Synchronized!")
+                
+                if elite_report and 'error' not in elite_report:
+                    with st.expander("📊 Strategic Impact Analysis", expanded=True):
+                        st.markdown(f"### 🛡️ {elite_report.get('summary', 'Mission Analysis')}")
+                        st.divider()
+                        
+                        col_a, col_b = st.columns(2)
+                        with col_a:
+                            st.markdown("#### ⚡ Immediate Action Items")
+                            st.markdown(elite_report.get('immediate_actions', 'N/A'))
+                        with col_b:
+                            st.markdown("#### 🔋 Sustainability Impact")
+                            st.markdown(elite_report.get('sustainability_impact', 'N/A'))
+                        
+                        st.markdown("---")
+                        roi_col, score_col = st.columns([3, 1])
+                        with roi_col:
+                            st.markdown("#### 🎯 Social ROI Analysis")
+                            st.write(elite_report.get('social_roi', 'N/A'))
+                        with score_col:
+                            st.metric("Social ROI Score", f"{elite_report.get('social_roi_score', 0)}/100")
 
         df = st.session_state.get('needs_df', pd.DataFrame())
         if not df.empty:
@@ -805,13 +838,12 @@ def run_dashboard():
         if df.empty or 'latitude' not in df.columns or 'longitude' not in df.columns:
             st.info("No geographic data available. Please upload data first.")
         else:
-            col1, col2, col3 = st.columns(3)
-            with col1:
+            with st.sidebar:
+                st.markdown("### 🗺️ Map Controls")
                 cat_filter = st.selectbox("Filter by Category", ["All"] + list(df['category'].unique()) if 'category' in df.columns else ["All"])
-            with col2:
                 urgency_filter = st.selectbox("Filter by Urgency", ["All", "High (8-10)", "Medium (5-7)", "Low (1-4)"])
-            with col3:
-                st.metric("Total Needs", len(df))
+                st.metric("Total Strategic Needs", len(df))
+                st.markdown("---")
 
             filtered_df = df.copy()
             if cat_filter != "All" and 'category' in filtered_df.columns:
@@ -1099,7 +1131,7 @@ def run_dashboard():
 
             if st.button("📄 Generate Executive PDF Report", use_container_width=True):
                 from src.utils.pdf_generator import generate_executive_pdf
-                with st.spinner("Generating PDF report..."):
+                with st.spinner("📜 Formulating Executive PDF Document..."):
                     pdf_data = generate_executive_pdf(df)
                     st.download_button(
                         "📥 Download Executive Summary PDF",
@@ -1128,27 +1160,38 @@ def run_dashboard():
                 st.success("All missions currently assigned.")
             else:
                 from src.models.matching import match_volunteer_to_needs
-                matches = match_volunteer_to_needs(selected_volunteer, available_needs, top_n=3, api_key=_api_key)
+                with st.spinner("🤖 AI Optimizing Match Vector..."):
+                    matches = match_volunteer_to_needs(selected_volunteer, available_needs, top_n=3, api_key=_api_key)
+                
                 for _, row in matches.iterrows():
                     with st.expander(f"Task: {row.get('category', 'General')} (Urgency: {row.get('urgency', 5)}/10)", expanded=True):
                         st.write(f"Rationale: {row.get('match_reason', 'No reasoning available.')}")
                         if st.button("Confirm & Dispatch", key=f"dispatch_{row.name}", use_container_width=True):
-                            db.assign_volunteer(row.get('id'), selected_v)
-                            st.session_state['needs_stale'] = True
-                            st.toast(f"✅ Dispatched {selected_v}!")
-                            st.rerun()
+                            with st.spinner("Transmitting Dispatch Signal..."):
+                                db.assign_volunteer(row.get('id'), selected_v)
+                                st.session_state['needs_stale'] = True
+                                st.toast(f"✅ Dispatched {selected_v}!")
+                                st.rerun()
 
 def main():
-    st.set_page_config(page_title="Smart Resource Allocation", page_icon="💡", layout="wide")
+    st.set_page_config(
+        page_title="🛡️ Command Center | Smart Resource Allocator", 
+        page_icon="🛡️", 
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
     try:
         run_dashboard()
     except Exception as e:
+        import traceback
         st.error(f"🚨 Operational Error: {str(e)}")
+        st.expander("Diagnostic Traceback").code(traceback.format_exc())
 
     st.markdown("""
     <div style="margin-top: 80px; padding: 40px 10px; border-top: 1px solid rgba(66, 133, 244, 0.3); text-align: center;">
         <div style="font-family: monospace; color: #94a3b8; font-size: 0.75rem; letter-spacing: 3px;">Lead System Architect</div>
         <div style="color: #ffffff; font-size: 1.5rem; font-weight: 800;">JASWANTH HANUMANTHU</div>
+        <div style="color: #4285F4; font-size: 0.7rem; font-weight: 600; margin-top: 5px;">MISSION-CRITICAL HUMANITARIAN AI</div>
     </div>
     """, unsafe_allow_html=True)
 

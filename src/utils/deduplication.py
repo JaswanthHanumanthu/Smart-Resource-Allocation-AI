@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
 from difflib import SequenceMatcher
-from src.models.matching import calculate_distance
+from ..models.matching import calculate_distance
 import google.generativeai as genai
 import os
 
-from src.utils.api_keys import get_google_api_key
+from .api_keys import get_google_api_key
 
 def get_semantic_similarity(text1, text2, api_key=None):
     """

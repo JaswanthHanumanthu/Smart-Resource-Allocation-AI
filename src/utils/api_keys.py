@@ -47,25 +47,24 @@ def _normalize_key(raw: str | None) -> str | None:
 
 def get_google_api_key() -> str | None:
     """Return a usable API key, or None if not configured.
-    Primary: st.secrets (Streamlit Cloud)
-    Fallback: Environment Variables (os.getenv)
+    Primary: Environment Variables (os.getenv)
+    Fallback: st.secrets (Streamlit Cloud)
     """
     key = None
 
-    # 1. Primary: Streamlit Secrets
-    try:
-        import streamlit as st
+    # 1. Primary: Environment Variables (os.environ)
+    key = _normalize_key(os.environ.get("GOOGLE_API_KEY"))
 
-        key = _normalize_key(st.secrets.get("GOOGLE_API_KEY"))
-    except Exception:
-        pass
-
-    # 2. Fallback: Environment Variables (os.environ)
-    if not key:
-        key = _normalize_key(os.environ.get("GOOGLE_API_KEY"))
-
-    # 3. Last Fallback: GEMINI_API_KEY (os.environ)
+    # 2. Secondary Fallback: GEMINI_API_KEY (os.environ)
     if not key:
         key = _normalize_key(os.environ.get("GEMINI_API_KEY"))
+
+    # 3. Last Fallback: Streamlit Secrets
+    if not key:
+        try:
+            import streamlit as st
+            key = _normalize_key(st.secrets.get("GOOGLE_API_KEY"))
+        except Exception:
+            pass
 
     return key
