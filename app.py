@@ -743,6 +743,12 @@ def run_dashboard():
                                 with st.expander(f"CRITICAL MATCH: Need {alloc.get('need_id')} → {alloc.get('volunteer_name')}"):
                                     st.write(f"**Lead Strategy:** {alloc.get('reasoning')}")
                                     st.caption(f"Impact Horizon: {alloc.get('impact_projection')}")
+                                    st.markdown(f"""
+                                        <div style="background: rgba(66, 133, 244, 0.1); padding: 8px; border-radius: 8px; border-left: 3px solid #4285F4; margin-top: 5px;">
+                                            <span style="font-size: 0.7rem; font-weight: 800; color: #4285F4; text-transform: uppercase;">🇺🇳 UN SDG Alignment</span><br>
+                                            <span style="font-size: 0.9rem; font-weight: 600;">🌍 {alloc.get('sdg_alignment', 'General Impact')}</span>
+                                        </div>
+                                    """, unsafe_allow_html=True)
                 st.divider()
 
                 sel_idx = st.session_state.get('selected_idx')
@@ -879,6 +885,17 @@ def run_dashboard():
                             st.write(elite_report.get('social_roi', 'N/A'))
                         with score_col:
                             st.metric("Social ROI Score", f"{elite_report.get('social_roi_score', 0)}/100")
+                        
+                        if elite_report.get('sdg_impact'):
+                            st.markdown("#### 🌍 Global SDG Multiplier")
+                            sdg_cols = st.columns(len(elite_report['sdg_impact']))
+                            for i, sdg in enumerate(elite_report['sdg_impact']):
+                                sdg_cols[i].markdown(f"""
+                                    <div style='background:#1E293B; border: 1px solid #4285F4; border-radius: 8px; padding: 10px; text-align: center;'>
+                                        <div style='color:#4285F4; font-size: 0.7rem; font-weight: 800;'>UN SDG IMPACT</div>
+                                        <div style='font-size: 0.8rem; font-weight: 600;'>{sdg}</div>
+                                    </div>
+                                """, unsafe_allow_html=True)
 
         df = st.session_state.get('needs_df', pd.DataFrame())
         if not df.empty:

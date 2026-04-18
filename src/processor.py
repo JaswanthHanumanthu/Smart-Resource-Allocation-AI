@@ -507,10 +507,11 @@ def generate_elite_report(uploaded_file, current_df: pd.DataFrame, api_key: str 
         Analyze the incoming data and provide a strategic analysis in JSON format with the following keys:
         {{
             "immediate_actions": "<A Markdown table listing exactly 3 immediate action items: | Task | Priority | Responsible Party |>",
-            "sustainability_impact": "<A Markdown table summarizing long-term impact: | Initiative | Sustainability Goal | Expected Outcome |>",
+            "sustainability_impact": "<A Markdown table summarizing long-term impact: | Initiative | SDG Alignment | Expected Outcome |>",
             "social_roi": "<A detailed explanation of the 'Social Return on Investment' (Social ROI) score (0-100) based on current efficiency and lives potentially saved>",
             "social_roi_score": <integer 0-100>,
-            "summary": "<A 2-paragraph executive overview of the tactical situation in professional prose>"
+            "summary": "<A 2-paragraph executive overview of the tactical situation in professional prose>",
+            "sdg_impact": ["SDG 2: Zero Hunger", "SDG 3: Good Health", "SDG 11: Sustainable Cities"]
         }}
 
         Output ONLY valid JSON.
@@ -699,7 +700,8 @@ def get_tactical_insights(df: pd.DataFrame, volunteers: list, api_key: str = Non
                     "need_id": integer,
                     "volunteer_name": "string",
                     "reasoning": "string (XAI logic)",
-                    "impact_projection": "string"
+                    "impact_projection": "string",
+                    "sdg_alignment": "string (e.g. SDG 3: Good Health)"
                 }}
             ],
             "chart_labels": ["Sector Name", ...],
