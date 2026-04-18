@@ -107,7 +107,7 @@ class ProductionDB:
             )
             return result['embedding']
         except Exception as e:
-            print(f"Embedding Error: {e}")
+            logger.error(f"Embedding Error: {e}")
             return None
 
     def assign_volunteer(self, need_id, volunteer_name, dispatcher_id="System"):

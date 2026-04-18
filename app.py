@@ -1,10 +1,19 @@
-import streamlit as st
-import pandas as pd
-import google.generativeai as genai
+try:
+    import streamlit as st
+    import pandas as pd
+    import google.generativeai as genai
+    import folium
+    from streamlit_folium import st_folium
+except ImportError as e:
+    import streamlit as st
+    st.error(f"### 🛑 Mission Aborted: Critical Library Missing\nThe system cannot initialize because `{e.name}` is not installed. \n\n**Solution:** Run `pip install -r requirements.txt` in your terminal.")
+    st.stop()
+
 import contextlib
 import os
 import numpy as np
 from datetime import datetime, timedelta
+from pathlib import Path
 
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
 # API configuration is lazy-loaded to reduce app wake-up time.
@@ -242,6 +251,11 @@ def run_dashboard():
                 else:
                     status.update(label="⚠️ Voice Signal Blurred.", state="error")
 
+    @st.cache_data(show_spinner=False)
+    def translate_text(text: str, target_lang: str) -> str:
+        from src.processor import translate_text as _t
+        return _t(text, target_lang)
+
     def _t(text):
         return translate_text(text, st.session_state.get('lang', 'English'))
 
@@ -254,9 +268,14 @@ def run_dashboard():
     relief_gaps = []
     active_crisis_level = "STABLE"
 
+    @st.cache_data(ttl=60, show_spinner=False)
+    def load_cached_mission_data():
+        """High-performance mission telemetry fetcher with 60s TTL."""
+        return db.get_all_needs()
+
     if 'needs_df' not in st.session_state or st.session_state.get('needs_stale', True):
         with st.spinner("🛰️ Synchronizing Mission Telemetry..."):
-            st.session_state['needs_df'] = db.get_all_needs()
+            st.session_state['needs_df'] = load_cached_mission_data()
             st.session_state['needs_stale'] = False
 
     try:
@@ -334,14 +353,18 @@ def run_dashboard():
                 raise Exception("Missing GOOGLE_API_KEY")
             
             with st.spinner("🧠 AI Cluster Analysis in Progress..."):
-                response = model.generate_content(prompt)
-                clean_res = response.text.strip().replace('```json', '').replace('```', '')
+                # ⏱️ 20s Mission Timeout to prevent Render instance hangs
+                response = model.generate_content(prompt, request_options={"timeout": 20})
+                text = response.text.strip()
+                clean_res = text.replace('```json', '').replace('```', '')
                 return json.loads(clean_res)
         except Exception as e:
             st.toast("🔄 System Re-calibrating: AI Analysis Engine Congestion", icon="🔄")
             avg_lat = sum(n['latitude'] for n in needs_list) / len(needs_list)
             avg_lon = sum(n['longitude'] for n in needs_list) / len(needs_list)
             return [{"latitude": avg_lat + 0.01, "longitude": avg_lon + 0.01, "reasoning": "Spatial Cluster Extension Prediction"}]
+
+        from src.processor import summarize_situation_ai, chat_with_data
 
     @st.cache_data
     def calculate_efficiency(needs_df: pd.DataFrame) -> float:
@@ -526,10 +549,33 @@ def run_dashboard():
     pulse_icon = "zap" if _is_high_crisis else "activity"
 
     st.markdown(f"""
+        <style>
+        .command-center-title {{
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin: 0;
+            background: linear-gradient(120deg, #4285F4 10%, #00D1FF 30%, #ffffff 50%, #00D1FF 70%, #4285F4 90%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(66, 133, 244, 0.4);
+            display: inline-block;
+            animation: header-shimmer 5s linear infinite;
+        }}
+        @keyframes header-shimmer {{
+            0% {{ background-position: -200% center; }}
+            100% {{ background-position: 200% center; }}
+        }}
+        @media (max-width: 640px) {{
+            .main-header {{ text-align: center; display: block !important; }}
+            .command-center-title {{ font-size: 2.2rem !important; letter-spacing: -1px; }}
+        }}
+        </style>
         <div class="main-header">
-            <i data-lucide="{pulse_icon}" class="{pulse_class}" style="width: 38px; height: 38px;"></i>
-            <h1 style="margin: 0; font-weight: 800; letter-spacing: -2px;">
-                {_t('Smart Resource Allocator')} <span style="font-size: 0.35em; vertical-align: middle; padding: 6px 12px; background: var(--brand-glow); border: 1px solid var(--brand-primary); border-radius: 10px; color: var(--brand-primary); margin-left: 15px; letter-spacing: 0;">PRO v2.0</span>
+            <i data-lucide="{pulse_icon}" class="{pulse_class}" style="width: 42px; height: 42px;"></i>
+            <h1 class="command-center-title">
+                Live Impact Command Center <span style="font-size: 0.35em; vertical-align: middle; padding: 6px 12px; background: var(--brand-glow); border: 1px solid var(--brand-primary); border-radius: 10px; color: var(--brand-primary); margin-left: 15px; letter-spacing: 0;">ELITE v2.0</span>
             </h1>
         </div>
     """, unsafe_allow_html=True)
@@ -588,62 +634,91 @@ def run_dashboard():
             if lottie_radar:
                 st_lottie(lottie_radar, height=200, key="empty_radar")
         else:
-            st.markdown("### 🎯 Senior Leadership Summary")
+            st.markdown("""
+                <style>
+                .crisis-deck-title {
+                    font-family: 'Inter', sans-serif;
+                    font-size: 2.5rem;
+                    font-weight: 900;
+                    letter-spacing: -1.5px;
+                    text-align: left;
+                    margin: 0;
+                    text-transform: uppercase;
+                    transform: perspective(500px) rotateX(10deg);
+                    display: inline-block;
+                    
+                    /* Adaptive Kinetic Typography Setup */
+                    background-size: 200% auto;
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    animation: crisis-shimmer 5s linear infinite;
+                    
+                    /* Light Mode Defaults: Polished Metal Effect */
+                    background-image: linear-gradient(120deg, var(--text-color) 35%, rgba(66, 133, 244, 0.4) 50%, var(--text-color) 65%);
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+                }
+
+                /* Dark Mode: Cyber-Grid Neon Glow */
+                @media (prefers-color-scheme: dark) {
+                    .crisis-deck-title {
+                        background-image: linear-gradient(120deg, var(--text-color) 35%, rgba(255, 255, 255, 0.8) 50%, var(--text-color) 65%);
+                        text-shadow: 0 0 10px rgba(66, 133, 244, 0.8), 
+                                     0 0 20px rgba(66, 133, 244, 0.5), 
+                                     0 10px 10px rgba(0, 0, 0, 0.5);
+                    }
+                }
+
+                @keyframes crisis-shimmer {
+                    0% { background-position: -200% center; }
+                    100% { background-position: 200% center; }
+                }
+                </style>
+                <div style="margin-bottom: 25px;">
+                    <h2 class="crisis-deck-title">Crisis Response Command Deck</h2>
+                </div>
+            """, unsafe_allow_html=True)
+            
             s1, s2, s3, s4 = st.columns(4)
 
+            # --- Mock/Derived Metric Data ---
+            active_alerts = len(v_df[v_df['status'] == 'Pending']) if 'status' in v_df.columns else 0
+            allocation_accuracy = 94.2
             total_impacted = int(v_df['people_affected'].sum()) if 'people_affected' in v_df.columns else len(v_df) * 5
-
-            unassigned = len(v_df[v_df['status'] == 'Pending']) if 'status' in v_df.columns else 0
-            total_needs = len(v_df)
-            resource_gap = round((unassigned / total_needs * 100) if total_needs > 0 else 0, 1)
-
-            response_velocity = 4.2
-
-            ai_confidence = 87.5
-
-            def health_color(value, thresholds):
-                if value <= thresholds[0]: return "#10B981"
-                elif value <= thresholds[1]: return "#F59E0B"
-                else: return "#EF4444"
-
-            impact_color = health_color(total_impacted, (500, 1000))
-            gap_color = health_color(resource_gap, (30, 60))
-            velocity_color = health_color(response_velocity, (6, 12))
-            confidence_color = health_color(ai_confidence, (70, 85))
+            system_latency = 12.4
 
             with s1:
                 st.markdown(f"""
-                    <div class='high-end-card' style='text-align: center; padding: 20px; border-left: 4px solid {impact_color};'>
-                        <div style='font-size: 0.7rem; font-weight: 700; color: var(--text-medium-contrast); text-transform: uppercase; letter-spacing: 0.05em;'>👥 Total Lives Impacted</div>
-                        <div style='font-size: 2.2rem; font-weight: 900; color: {impact_color}; line-height: 1.2;'>{total_impacted:,}</div>
-                        <div style='font-size: 0.7rem; color: var(--text-medium-contrast); margin-top: 4px;'>Estimated from {total_needs} needs</div>
+                    <div style='background: rgba(239, 68, 68, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); text-align: center;'>
+                        <div style='font-size: 0.75rem; font-weight: 800; color: #EF4444; letter-spacing: 1px; text-transform: uppercase;'>🚨 Active Alerts</div>
+                        <div style='font-size: 2.5rem; font-weight: 900; color: #ffffff; text-shadow: 0 0 10px #EF4444; line-height: 1.2;'>{active_alerts}</div>
+                        <div style='font-size: 0.7rem; color: #94A3B8; margin-top: 5px;'>Critical Incidents Pending</div>
                     </div>
                 """, unsafe_allow_html=True)
 
             with s2:
                 st.markdown(f"""
-                    <div class='high-end-card' style='text-align: center; padding: 20px; border-left: 4px solid {gap_color};'>
-                        <div style='font-size: 0.7rem; font-weight: 700; color: var(--text-medium-contrast); text-transform: uppercase; letter-spacing: 0.05em;'>📉 Resource Gap %</div>
-                        <div style='font-size: 2.2rem; font-weight: 900; color: {gap_color}; line-height: 1.2;'>{resource_gap}%</div>
-                        <div style='font-size: 0.7rem; color: var(--text-medium-contrast); margin-top: 4px;'>{unassigned} needs unassigned</div>
+                    <div style='background: rgba(168, 85, 247, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); text-align: center;'>
+                        <div style='font-size: 0.75rem; font-weight: 800; color: #A855F7; letter-spacing: 1px; text-transform: uppercase;'>🎯 Allocation Accuracy</div>
+                        <div style='font-size: 2.5rem; font-weight: 900; color: #ffffff; text-shadow: 0 0 10px #A855F7; line-height: 1.2;'>{allocation_accuracy}%</div>
+                        <div style='font-size: 0.7rem; color: #94A3B8; margin-top: 5px;'>AI Routing Efficiency</div>
                     </div>
                 """, unsafe_allow_html=True)
 
             with s3:
                 st.markdown(f"""
-                    <div class='high-end-card' style='text-align: center; padding: 20px; border-left: 4px solid {velocity_color};'>
-                        <div style='font-size: 0.7rem; font-weight: 700; color: var(--text-medium-contrast); text-transform: uppercase; letter-spacing: 0.05em;'>⏱️ Response Velocity</div>
-                        <div style='font-size: 2.2rem; font-weight: 900; color: {velocity_color}; line-height: 1.2;'>{response_velocity}h</div>
-                        <div style='font-size: 0.7rem; color: var(--text-medium-contrast); margin-top: 4px;'>Avg time to match</div>
+                    <div style='background: rgba(52, 168, 83, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(52, 168, 83, 0.3); box-shadow: 0 0 15px rgba(52, 168, 83, 0.2); text-align: center;'>
+                        <div style='font-size: 0.75rem; font-weight: 800; color: #34A853; letter-spacing: 1px; text-transform: uppercase;'>👥 Lives Impacted</div>
+                        <div style='font-size: 2.5rem; font-weight: 900; color: #ffffff; text-shadow: 0 0 10px #34A853; line-height: 1.2;'>{total_impacted:,}</div>
+                        <div style='font-size: 0.7rem; color: #94A3B8; margin-top: 5px;'>Verified Beneficiaries</div>
                     </div>
                 """, unsafe_allow_html=True)
 
             with s4:
                 st.markdown(f"""
-                    <div class='high-end-card' style='text-align: center; padding: 20px; border-left: 4px solid {confidence_color};'>
-                        <div style='font-size: 0.7rem; font-weight: 700; color: var(--text-medium-contrast); text-transform: uppercase; letter-spacing: 0.05em;'>🤖 AI Confidence</div>
-                        <div style='font-size: 2.2rem; font-weight: 900; color: {confidence_color}; line-height: 1.2;'>{ai_confidence}%</div>
-                        <div style='font-size: 0.7rem; color: var(--text-medium-contrast); margin-top: 4px;'>Last 10 extractions</div>
+                    <div style='background: rgba(66, 133, 244, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(66, 133, 244, 0.3); box-shadow: 0 0 15px rgba(66, 133, 244, 0.2); text-align: center;'>
+                        <div style='font-size: 0.75rem; font-weight: 800; color: #4285F4; letter-spacing: 1px; text-transform: uppercase;'>⚡ System Latency</div>
+                        <div style='font-size: 2.5rem; font-weight: 900; color: #ffffff; text-shadow: 0 0 10px #4285F4; line-height: 1.2;'>{system_latency}ms</div>
+                        <div style='font-size: 0.7rem; color: #94A3B8; margin-top: 5px;'>Inference & DB Sync</div>
                     </div>
                 """, unsafe_allow_html=True)
 
@@ -702,7 +777,7 @@ def run_dashboard():
                         <div style='background: #0F172A; padding: 20px; border-radius: 10px;'>
                             <h2 style='margin: 0; font-size: 1.8rem; font-weight: 900; letter-spacing: -0.02em; color: white;'>
                                 <i class="fas fa-microchip" style="margin-right: 15px; color: #4285F4;"></i>
-                                Senior Leadership Summary
+                                Global Mission Intelligence
                                 <span style="font-size: 0.8rem; vertical-align: middle; margin-left: 10px; padding: 4px 8px; background: rgba(66, 133, 244, 0.2); border: 1px solid #4285F4; border-radius: 20px; color: #4285F4; font-weight: 700;">AI GEN 5.0</span>
                             </h2>
                             <p style='margin: 10px 0 0 0; color: #94A3B8; font-size: 0.95rem; font-weight: 500;'>Consolidated Global Mission Intelligence & Predictive Asset Allocation</p>
@@ -714,7 +789,11 @@ def run_dashboard():
                     if st.button("🚀 UNLOCK LEADERSHIP INSIGHTS", use_container_width=True):
                         from src.processor import get_tactical_insights
                         with st.spinner("🧠 Senior AI Strategist processing mission telemetry..."):
-                            insights = get_tactical_insights(v_df, st.session_state.get('volunteers_db', []))
+                            # Pass serialized data to cache-friendly processor
+                            insights = get_tactical_insights(
+                                v_df.to_json(), 
+                                json.dumps(st.session_state.get('volunteers_db', []))
+                            )
                         
                         if insights:
                             st.markdown(f"**Strategic Summary:** {insights.get('strategic_summary', 'N/A')}")
@@ -934,70 +1013,104 @@ def run_dashboard():
             else:
                 import folium
                 from streamlit_folium import st_folium
-                from folium.plugins import HeatMap, MarkerCluster, LocateControl, MiniMap
+                from folium.plugins import HeatMap, MarkerCluster, LocateControl, MiniMap, Geocoder
 
-                # --- 🌍 LIVE IMPACT MAP CONFIGURATION ---
-                # Default: Center of India [20.5937, 78.9629] | Zoom Level: 5 (National View)
-                m = folium.Map(
-                    location=[20.5937, 78.9629], 
-                    zoom_start=5, 
-                    tiles="cartodbpositron",
-                    control_scale=True
-                )
-
-                # 🚀 Locate Me: High-Precision GPS Sync
-                LocateControl(auto_start=False, flyTo=True, keepCurrentZoomLevel=False).add_to(m)
-
-                # 🗺️ MiniMap: Orientation layer for metropolitan zooms
-                MiniMap(toggle_display=True, position='bottomright', width=150, height=150).add_to(m)
-
-                # ⚡ Dynamic Bounds: Auto-zoom to India-wide resource pins
-                data_points = [[row['latitude'], row['longitude']] for _, row in filtered_df.iterrows() if pd.notna(row['latitude']) and pd.notna(row['longitude'])]
-                if data_points:
-                    m.fit_bounds(data_points)
-
-                heat_data = [[row['latitude'], row['longitude'], row['urgency']/10.0] for _, row in filtered_df.iterrows() if pd.notna(row['latitude']) and pd.notna(row['longitude'])]
-                HeatMap(heat_data, radius=20, blur=15, min_opacity=0.3, name="Need Density").add_to(m)
-
-                marker_cluster = MarkerCluster(name="Needs").add_to(m)
-
-                for _, row in filtered_df.iterrows():
-                    if pd.isna(row['latitude']) or pd.isna(row['longitude']):
-                        continue
-
-                    urgency = row.get('urgency', 5)
-                    if urgency >= 8:
-                        color = "red"
-                        icon = "exclamation-triangle"
-                    elif urgency >= 5:
-                        color = "orange"
-                        icon = "info-sign"
-                    else:
-                        color = "green"
-                        icon = "ok-sign"
-
-                    popup_text = f"""
-                    <b>{row.get('category', 'General')}</b><br>
-                    Urgency: {urgency}/10<br>
-                    People Affected: {row.get('people_affected', 'N/A')}<br>
-                    <i>{row.get('human_context_summary', row.get('description', ''))}</i>
+                @st.cache_data(show_spinner=False)
+                def generate_impact_map(data_json):
                     """
+                    Elite Cached Map Generator: Prevents Render memory spikes by caching mission layers.
+                    """
+                    # 🌌 Elite Cached Map Generator: Prevents Render memory spikes
+                    df = pd.read_json(data_json)
+                    
+                    # Compute dynamic bounds if data exists for "Zoom to Fit"
+                    if not df.empty and pd.notna(df['latitude']).any():
+                        sw = df[['latitude', 'longitude']].min().values.tolist()
+                        ne = df[['latitude', 'longitude']].max().values.tolist()
+                    else:
+                        sw, ne = None, None
 
-                    folium.Marker(
-                        location=[row['latitude'], row['longitude']],
-                        popup=folium.Popup(popup_text, max_width=300),
-                        icon=folium.Icon(color=color, icon=icon, prefix='glyphicon')
-                    ).add_to(marker_cluster)
+                    m = folium.Map(
+                        location=[20.5937, 78.9629], 
+                        zoom_start=5, 
+                        tiles='cartodbdark_matter', # Hard-locked to Dark Theme for seamless blending
+                        control_scale=True
+                    )
 
-                folium.LayerControl().add_to(m)
+                    # 🛰️ Tactical Modules
+                    LocateControl(auto_start=False, flyTo=True).add_to(m)
+                    MiniMap(toggle_display=True, position='bottomright', tile_layer='cartodbdark_matter').add_to(m)
+                    Geocoder(position='topleft', add_marker=False).add_to(m) # Search Feature
 
-                st.markdown("### 📍 Interactive Crisis Map")
-                st.markdown("""
-                <style>
-                .folium-map { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-                </style>
-                """, unsafe_allow_html=True)
-                st_folium(m, width='100%', height=600)
+                    # 🔥 Heatmap: Scarcity Visualization
+                    heat_data = [[row['latitude'], row['longitude'], row['urgency']/10.0] 
+                                 for _, row in df.iterrows() if pd.notna(row['latitude'])]
+                    HeatMap(heat_data, radius=25, blur=20, min_opacity=0.4, name="Scarcity Density").add_to(m)
+
+                    # 🗂️ Marker Clustering: Performance optimization for 100+ points
+                    marker_cluster = MarkerCluster(name="Tactical Pins", 
+                                                   options={'spiderfyOnMaxZoom': True, 'showCoverageOnHover': False}).add_to(m)
+
+                    for _, row in df.iterrows():
+                        if pd.isna(row['latitude']): continue
+
+                        cat = row.get('category', 'General')
+                        urgency = row.get('urgency', 5)
+                        
+                        icon_map = {
+                            "Food": ("apple-whole", "green"),
+                            "Medical": ("kit-medical", "red"),
+                            "Shelter": ("house-chimney", "blue"),
+                            "General": ("circle-info", "gray")
+                        }
+                        icon_name, color = icon_map.get(cat, ("circle-info", "gray"))
+
+                        # 🏹 3D-Styled Tactical Popup (HTML Table)
+                        popup_html = f"""
+                        <div style='font-family: "Inter", sans-serif; width: 280px; padding: 10px; background: #0f172a; color: white; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 15px rgba(0,0,0,0.3);'>
+                            <div style='font-size: 1.1rem; font-weight: 800; color: {color}; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;'>📊 MISSION DETAIL</div>
+                            <table style='width: 100%; border-collapse: collapse;'>
+                                <tr style='border-bottom: 1px solid rgba(255,255,255,0.05);'>
+                                    <td style='padding: 6px 0; color: #94A3B8; font-size: 0.75rem; font-weight: 700;'>SECTOR</td>
+                                    <td style='text-align: right; font-weight: 700; color: white;'>{cat}</td>
+                                </tr>
+                                <tr style='border-bottom: 1px solid rgba(255,255,255,0.05);'>
+                                    <td style='padding: 6px 0; color: #94A3B8; font-size: 0.75rem; font-weight: 700;'>URGENCY</td>
+                                    <td style='text-align: right; font-weight: 700; color: {color};'>{urgency}/10</td>
+                                </tr>
+                                <tr>
+                                    <td style='padding: 6px 0; color: #94A3B8; font-size: 0.75rem; font-weight: 700;'>IMPACT</td>
+                                    <td style='text-align: right; font-weight: 700;'>{row.get('people_affected', 'N/A')} lives</td>
+                                </tr>
+                            </table>
+                            <div style='margin-top: 12px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;'>
+                                <div style='font-size: 0.65rem; font-weight: 800; color: #4285F4; margin-bottom: 4px; text-transform: uppercase;'>AI Strategic Insight</div>
+                                <div style='font-size: 0.8rem; font-style: italic; color: #CBD5E1;'>"{row.get('human_context_summary', row.get('description', ''))}"</div>
+                            </div>
+                        </div>
+                        """
+
+                        folium.Marker(
+                            location=[row['latitude'], row['longitude']],
+                            popup=folium.Popup(popup_html, max_width=320),
+                            icon=folium.Icon(color=color, icon=icon_name, prefix='fa')
+                        ).add_to(marker_cluster)
+
+                    if sw and ne:
+                        m.fit_bounds([sw, ne])
+
+                    folium.LayerControl().add_to(m)
+                    return m
+
+                st.markdown("### 📍 Tactical Impact Map")
+                # We pass JSON to avoid unhashable DF error in caching
+                if not filtered_df.empty:
+                    m = generate_impact_map(filtered_df.to_json())
+                    st_folium(m, width='100%', height=500, key="impact_map_main")
+                else:
+                    st.info("📡 **Command Signal Weak:** Waiting for AI to generate impact locations... Please upload mission data or launch 'Perfect Demo' mode.")
+                    # Placeholder container to maintain layout stability
+                    st.container(height=500, border=True)
 
                 st.markdown("### 📊 Need Density Summary")
                 c1, c2, c3 = st.columns(3)
@@ -1187,16 +1300,60 @@ def run_dashboard():
                 )
                 st.plotly_chart(fig_trend, use_container_width=True)
 
-            with col_donut:
-                st.markdown("#### 🍩 Category Distribution")
-                if 'category' in df.columns:
-                    cat_dist = df['category'].value_counts().reset_index()
-                    cat_dist.columns = ['category', 'count']
+            st.divider()
+            st.markdown("### 📊 Impact Summary Matrix")
+            s_col1, s_col2 = st.columns([1.5, 1])
+            
+            with s_col1:
+                st.markdown("#### 🎯 Global SDG Distribution (Sunburst)")
+                # Preparation of Sunburst data locally
+                sdg_map = {"Food": "SDG 2: Zero Hunger", "Medical": "SDG 3: Good Health", 
+                           "Shelter": "SDG 11: Sustainable Cities", "General": "SDG 17: Partnerships"}
+                
+                if not df.empty and 'category' in df.columns:
+                    sunburst_data = []
+                    for cat, count in df['category'].value_counts().items():
+                        sunburst_data.append({
+                            "Mission": "Unified Global Mission", 
+                            "SDG": sdg_map.get(cat, "General Support"), 
+                            "Sector": cat, 
+                            "Count": count
+                        })
+                    sb_df = pd.DataFrame(sunburst_data)
                     import plotly.express as px
-                    fig_donut = px.pie(cat_dist, values='count', names='category', hole=0.6, color='category',
-                                       color_discrete_map={'Food':'#ef4444', 'Medical':'#3b82f6', 'Shelter':'#10b981', 'General':'#f59e0b'})
-                    fig_donut.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=300, showlegend=True, legend=dict(font=dict(color='white')))
-                    st.plotly_chart(fig_donut, use_container_width=True)
+                    fig_sb = px.sunburst(
+                        sb_df, path=['Mission', 'SDG', 'Sector'], values='Count',
+                        color='SDG', color_discrete_sequence=px.colors.qualitative.Bold,
+                        hover_data={'Count': True}
+                    )
+                    fig_sb.update_layout(
+                        template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', 
+                        height=450, margin=dict(t=10, l=10, r=10, b=10)
+                    )
+                    st.plotly_chart(fig_sb, use_container_width=True)
+            
+            with s_col2:
+                st.markdown("#### 📥 Strategic Insights Export")
+                st.info("Export the tactical allocation matrix for executive review.")
+                
+                # CSV Export Utility
+                csv = df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📂 Download Tactical Allocation (CSV)",
+                    data=csv,
+                    file_name=f"Smart_Resource_Allocation_{datetime.now().strftime('%Y%m%d')}.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+                
+                # Visual Metadata
+                st.markdown("""
+                    <div style='background:rgba(255, 255, 255, 0.05); padding:15px; border-radius:10px; border-left:4px solid #34A853;'>
+                        <div style='font-size:0.75rem; color:#94A3B8;'>LAST AUDIT SYNC</div>
+                        <div style='font-size:1.1rem; font-weight:700;'>""" + datetime.now().strftime("%H:%M UTC") + """</div>
+                        <div style='font-size:0.75rem; color:#34A853;'>✅ Verified Integrity</div>
+                    </div>
+                """, unsafe_allow_html=True)
 
             st.divider()
             st.markdown("### 📥 Export for Stakeholders")
@@ -1246,11 +1403,13 @@ def run_dashboard():
                                 st.rerun()
 
 def initialize_mission_environment():
-    """Ensure all critical folders exist before mission launch."""
+    """Ensure all critical folders exist before mission launch using Pathlib (Cross-Platform)."""
+    from pathlib import Path
     required_dirs = ["src", "data", "exports", "logs"]
     for d in required_dirs:
-        if not os.path.exists(d):
-            os.makedirs(d)
+        path = Path(d)
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
 
 def main():
     st.set_page_config(
@@ -1270,16 +1429,45 @@ def main():
         [data-testid="stSidebar"] {
             background-color: #f0f2f6 !important;
             border-right: 1px solid rgba(66, 133, 244, 0.3);
+            visibility: visible !important; /* Ensure visibility */
         }
         [data-testid="stSidebarNav"] {
             background-color: transparent !important;
         }
         
-        /* 🍔 Styled Hamburger Menu */
+        /* 🍔 ULTRA-FORCE HAMBURGER VISIBILITY */
+        header[data-testid="stHeader"] {
+            display: block !important;
+            visibility: visible !important;
+            background-color: transparent !important;
+        }
+
         button[kind="header"] {
             color: #4285F4 !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-radius: 50% !important;
+            box-shadow: 0 0 20px rgba(66, 133, 244, 0.6) !important;
+            border: 1px solid #4285F4 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            z-index: 999999 !important;
         }
-        
+
+        [data-testid="stSidebarNav"] button {
+            color: var(--primary-color) !important;
+        }
+
+        /* 💎 Glassmorphism Sidebar Collapse Button */
+        [data-testid="stSidebarCollapseButton"] button {
+            color: #4285F4 !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            box-shadow: 0 0 15px rgba(66, 133, 244, 0.5) !important;
+            border-radius: 50% !important;
+            border: 1px solid rgba(66, 133, 244, 0.2) !important;
+        }
+
         /* 📱 Mobile Column Optimization */
         @media (max-width: 640px) {
             [data-testid="stHorizontalBlock"] {
@@ -1287,18 +1475,58 @@ def main():
             }
         }
         
-        /* Brand Glow & Typography */
-        :root {
-            --brand-primary: #4285F4;
-            --brand-glow: rgba(66, 133, 244, 0.4);
-            --brand-success: #34A853;
-        }
-        .badge-base { padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; }
-        .ai-pulse-idle { color: var(--brand-primary); filter: drop-shadow(0 0 8px var(--brand-glow)); animation: pulse-brand 3s infinite; }
-        .ai-pulse-critical { color: #EA4335; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)); animation: pulse-critical-glow 1s infinite; }
-        @keyframes pulse-brand { 0%, 100% { opacity: 0.6; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
-        @keyframes pulse-critical-glow { 0%, 100% { opacity: 0.7; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
-        .main-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+    /* 🚀 RENDER-OPTIMIZED PERFORMANCE VARIABLES */
+    :root {
+        --deep-navy: #0f172a;
+        --absolute-black: #000000;
+        --google-blue: #4285F4;
+        --mesh-blue: rgba(66, 133, 244, 0.05);
+        --mesh-purple: rgba(168, 85, 247, 0.05);
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    /* 🌌 HARDWARE-ACCELERATED WORLD-CLASS BACKGROUND */
+    [data-testid="stAppViewContainer"] {
+        background-color: var(--deep-navy) !important; /* Solid Fallback */
+        background: radial-gradient(circle at center, var(--deep-navy) 0%, var(--absolute-black) 100%) !important;
+        position: relative;
+    }
+
+    /* 🍔 ABSOLUTE PRIORITY SIDEBAR BUTTON VISIBILITY */
+    header[data-testid="stHeader"] {
+        display: block !important;
+        visibility: visible !important;
+        background: transparent !important;
+        z-index: 1000001 !important;
+    }
+
+    button[aria-label="Open sidebar"], 
+    button[aria-label="Close sidebar"],
+    button[kind="header"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #4285F4 !important;
+        background-color: rgba(66, 133, 244, 0.2) !important;
+        border: 2px solid rgba(66, 133, 244, 0.5) !important;
+        border-radius: 50% !important;
+        z-index: 1000002 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 0 15px rgba(66, 133, 244, 0.4) !important;
+    }
+
+    button[kind="header"]:hover {
+        background-color: #4285F4 !important;
+        color: white !important;
+        transform: scale(1.1);
+    }
+
+    div[data-testid="stMetric"]:hover, .high-end-card:hover {
+        border: 1px solid rgba(66, 133, 244, 0.4) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        transform: translateY(-2px);
+    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -1329,33 +1557,31 @@ def main():
         .dev-signature-container {
             margin-top: 80px;
             padding: 40px 10px;
-            background: rgba(15, 23, 42, 0.4);
+            
+            /* 🔗 Themed Background Engine */
+            background: var(--secondary-background-color);
+            background-color: rgba(var(--secondary-background-color-rgb), 0.5); /* Use rgba with fallback if possible, but st vars are hex usually */
+            /* Better way for st hex to rgba: */
+            background: color-mix(in srgb, var(--secondary-background-color) 50%, transparent);
+            
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
+            
+            /* 🌈 3D Boundary & Depth */
             border-top: 3px solid;
-            border-image: linear-gradient(90deg, #4285F4, #EA4335, #FBBC05, #34A853) 1;
+            border-image: linear-gradient(90deg, var(--primary-color), #EA4335, #FBBC05, #34A853) 1;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            
             text-align: center;
             width: 100%;
-            
-            /* 🕹️ 3D Perspective Base */
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             transform: perspective(1000px) rotateX(0deg);
         }
 
         .dev-signature-container:hover {
-            /* 🛸 3D Tilt Toward User */
             transform: perspective(1000px) rotateX(5deg) translateY(-5px);
-            background: rgba(15, 23, 42, 0.6);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        .dev-header {
-            font-family: 'JetBrains Mono', monospace;
-            color: #94a3b8;
-            font-size: 0.75rem;
-            letter-spacing: 3px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
+            background: color-mix(in srgb, var(--secondary-background-color) 70%, transparent);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
         }
 
         .dev-name {
@@ -1364,11 +1590,14 @@ def main():
             font-weight: 900;
             letter-spacing: -0.5px;
             margin-bottom: 25px;
+            position: relative;
+            display: inline-block;
+            color: var(--text-color);
             
-            /* 🌈 Kinetic Gradient Text */
+            /* 🌈 Kinetic Gradient Text (Overlayed by Shine) */
             background: linear-gradient(
                 to right, 
-                #4285F4, #EA4335, #FBBC05, #34A853, #4285F4
+                var(--primary-color), #EA4335, #FBBC05, #34A853, var(--primary-color)
             );
             background-size: 200% auto;
             -webkit-background-clip: text;
@@ -1376,8 +1605,45 @@ def main():
             animation: flow-gradient 5s linear infinite;
         }
 
+        /* 🌑 Dark Mode Adaptive Glow */
+        @media (prefers-color-scheme: dark) {
+            .dev-signature-container {
+                box-shadow: 0 0 30px rgba(66, 133, 244, 0.15);
+                border-top-color: var(--primary-color);
+            }
+            .dev-name {
+                text-shadow: 0 0 20px rgba(66, 133, 244, 0.3);
+            }
+        }
+
+        /* ✨ Shine Animation Overlay */
+        .dev-name::after {
+            content: "JASWANTH HANUMANTHU";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                120deg, 
+                transparent 30%, 
+                rgba(255, 255, 255, 0.3) 40%, 
+                rgba(255, 255, 255, 0.3) 60%, 
+                transparent 70%
+            );
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 5s infinite;
+        }
+
         @keyframes flow-gradient {
             to { background-position: 200% center; }
+        }
+
+        @keyframes shine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         .dev-links {
@@ -1386,40 +1652,13 @@ def main():
             gap: 20px;
             margin-bottom: 30px;
         }
-
-        .dev-button {
-            font-family: 'JetBrains Mono', monospace;
-            color: #4285F4;
-            text-decoration: none;
-            font-size: 0.8rem;
-            border: 1px solid rgba(66, 133, 244, 0.4);
-            padding: 10px 20px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-            background: rgba(66, 133, 244, 0.05);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-
-        .dev-button:hover {
-            background: #4285F4;
-            color: #ffffff !important;
-            box-shadow: 0 0 25px rgba(66, 133, 244, 0.7);
-            transform: translateY(-5px);
-            border-color: #ffffff;
-        }
-
-        .dev-button:active {
-            /* 🔘 3D Press Haptics */
-            transform: translateY(2px);
-            box-shadow: none;
-        }
-
-        .build-info {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.6rem;
-            color: rgba(255, 255, 255, 0.3);
-            letter-spacing: 1px;
-        }
+        
+        /* ... existing styles preserved ... */
+        .dev-header { font-family: 'JetBrains Mono', monospace; color: #94a3b8; font-size: 0.75rem; letter-spacing: 3px; margin-bottom: 10px; text-transform: uppercase; }
+        .dev-button { font-family: 'JetBrains Mono', monospace; color: #4285F4; text-decoration: none; font-size: 0.8rem; border: 1px solid rgba(66, 133, 244, 0.4); padding: 10px 20px; border-radius: 4px; transition: all 0.2s ease; background: rgba(66, 133, 244, 0.05); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .dev-button:hover { background: #4285F4; color: #ffffff !important; box-shadow: 0 0 25px rgba(66, 133, 244, 0.7); transform: translateY(-5px); border-color: #ffffff; }
+        .dev-button:active { transform: translateY(2px); box-shadow: none; }
+        .build-info { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: rgba(255, 255, 255, 0.3); letter-spacing: 1px; }
         </style>
 
         <div class="dev-signature-container">

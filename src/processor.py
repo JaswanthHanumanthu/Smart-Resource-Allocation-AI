@@ -2,8 +2,7 @@ import google.generativeai as genai
 import json
 import streamlit as st
 import pandas as pd
-import os
-
+from pathlib import Path
 from .utils.api_keys import get_google_api_key
 
 def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
@@ -60,7 +59,8 @@ def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
     Output strictly valid JSON and nothing else.
     """
     try:
-        response = model.generate_content(prompt)
+        # 🧪 Mission-Critical: 20s Timeout to ensure Render container stability
+        response = model.generate_content(prompt, request_options={"timeout": 20})
         text = response.text.strip()
         # Clean up possible markdown formatting
         if text.startswith("```json"):
@@ -212,10 +212,13 @@ def process_survey_image(pil_image, api_key: str = None) -> dict:
             "detected_language": "English"
         }
 
-def summarize_situation_ai(df: pd.DataFrame, api_key: str = None) -> str:
+@st.cache_data(show_spinner=False)
+def summarize_situation_ai(df_json: str, api_key: str = None) -> str:
     """
-    Uses Gemini to generate a fast 2-sentence executive summary of the CSV data/dataframe state.
+    Uses Gemini to generate a fast 2-sentence executive summary.
+    We pass JSON to the cache logic to avoid unhashable DF errors.
     """
+    df = pd.read_json(df_json)
     used_key = api_key or get_google_api_key()
     if not used_key:
         import time
@@ -310,7 +313,8 @@ def predict_depletion_zones(df: pd.DataFrame) -> list:
           {{"latitude": 37.0, "longitude": -122.0, "risk_level": "Extreme", "reasoning": "..."}}
         ]
         """
-        response = model.generate_content(prompt)
+        # --- ⏳ Mission Timeout Configuration ---
+        response = model.generate_content(prompt, request_options={"timeout": 20})
         text = response.text.replace('```json', '').replace('```', '').strip()
         return json.loads(text)
     except Exception as e:
@@ -617,7 +621,7 @@ def run_autonomous_matching(needs_df: pd.DataFrame, volunteers: list) -> list:
             })
         return results
 
-@st.cache_data(ttl=86400)
+@st.cache_data(ttl=86400, show_spinner=False)
 def translate_text(text: str, target_lang: str) -> str:
     """Uses Gemini to translate dashboard labels for field workers."""
     if target_lang == "English":
@@ -666,11 +670,13 @@ def process_voice_command(audio_data: bytes) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
-def get_tactical_insights(df: pd.DataFrame, volunteers: list, api_key: str = None) -> dict:
+@st.cache_data(show_spinner=False)
+def get_tactical_insights(df_json: str, volunteers_json: str, api_key: str = None) -> dict:
     """
-    Advanced Structured Output Engine.
-    Returns a TacticalInsight JSON object used for automated UI elements.
+    Advanced Structured Output Engine: Cached for massive Render speedups.
     """
+    df = pd.read_json(df_json)
+    volunteers = json.loads(volunteers_json)
     try:
         used_key = api_key or get_google_api_key()
         if not used_key:
