@@ -1329,17 +1329,24 @@ def main():
         .dev-signature-container {
             margin-top: 80px;
             padding: 40px 10px;
-            /* 🔗 Glassmorphism Core */
             background: rgba(15, 23, 42, 0.4);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            
-            /* 🌈 3D Gradient Border Top */
             border-top: 3px solid;
             border-image: linear-gradient(90deg, #4285F4, #EA4335, #FBBC05, #34A853) 1;
-            
             text-align: center;
             width: 100%;
+            
+            /* 🕹️ 3D Perspective Base */
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: perspective(1000px) rotateX(0deg);
+        }
+
+        .dev-signature-container:hover {
+            /* 🛸 3D Tilt Toward User */
+            transform: perspective(1000px) rotateX(5deg) translateY(-5px);
+            background: rgba(15, 23, 42, 0.6);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
         .dev-header {
@@ -1353,13 +1360,24 @@ def main():
 
         .dev-name {
             font-family: 'Inter', sans-serif;
-            color: #ffffff;
-            font-size: 1.5rem;
-            font-weight: 800;
+            font-size: 1.8rem;
+            font-weight: 900;
             letter-spacing: -0.5px;
             margin-bottom: 25px;
-            /* ✨ Ethereal Text Glow */
-            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+            
+            /* 🌈 Kinetic Gradient Text */
+            background: linear-gradient(
+                to right, 
+                #4285F4, #EA4335, #FBBC05, #34A853, #4285F4
+            );
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: flow-gradient 5s linear infinite;
+        }
+
+        @keyframes flow-gradient {
+            to { background-position: 200% center; }
         }
 
         .dev-links {
@@ -1377,19 +1395,23 @@ def main():
             border: 1px solid rgba(66, 133, 244, 0.4);
             padding: 10px 20px;
             border-radius: 4px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
             background: rgba(66, 133, 244, 0.05);
-            /* 💡 Initial Neon Glow */
-            box-shadow: 0 0 5px rgba(66, 133, 244, 0.2);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
         .dev-button:hover {
             background: #4285F4;
             color: #ffffff !important;
-            /* 🔥 Intensified Neon Glow on Hover */
-            box-shadow: 0 0 25px rgba(66, 133, 244, 0.7), 0 0 45px rgba(66, 133, 244, 0.3);
+            box-shadow: 0 0 25px rgba(66, 133, 244, 0.7);
             transform: translateY(-5px);
             border-color: #ffffff;
+        }
+
+        .dev-button:active {
+            /* 🔘 3D Press Haptics */
+            transform: translateY(2px);
+            box-shadow: none;
         }
 
         .build-info {
