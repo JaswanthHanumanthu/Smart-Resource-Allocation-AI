@@ -71,6 +71,36 @@ def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
+def generate_mock_impact_data() -> pd.DataFrame:
+    """
+    Strategic Simulation: Generates 50+ randomized crisis nodes for the 'Perfect Demo' mode.
+    """
+    import random
+    import numpy as np
+    
+    categories = ["Food", "Medical", "Shelter", "Water", "Power"]
+    statuses = ["Pending", "Verified", "Escalated", "Critical", "Stabilizing"]
+    
+    mock_data = []
+    for i in range(55):
+        lat = random.uniform(-40, 60)
+        lng = random.uniform(-150, 150)
+        urg = random.randint(3, 10)
+        mock_data.append({
+            "id": f"MOCK_{i}",
+            "category": random.choice(categories),
+            "urgency": urg,
+            "latitude": lat,
+            "longitude": lng,
+            "city": f"Tactical Node {i}",
+            "description": f"AI detected supply disruption at sector {i}. Life-cycle risk level: {urg}.",
+            "people_affected": random.randint(50, 25000),
+            "status": random.choice(statuses),
+            "verified": random.choice([True, False]),
+            "human_context_summary": f"Cluster showing {random.randint(5,15)}% increase in resource scarcity."
+        })
+    return pd.DataFrame(mock_data)
+
 def process_field_audio(audio_data: bytes, api_key: str = None) -> dict:
     """Transcription and extraction from a field audio memo."""
     if st.session_state.get('high_traffic'):

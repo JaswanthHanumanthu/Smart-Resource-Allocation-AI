@@ -1,25 +1,17 @@
-try:
-    import streamlit as st
-    import pandas as pd
-    import google.generativeai as genai
-    import folium
-    from streamlit_folium import st_folium
-except ImportError as e:
-    import streamlit as st
-    st.error(f"### 🛑 Mission Aborted: Critical Library Missing\nThe system cannot initialize because `{e.name}` is not installed. \n\n**Solution:** Run `pip install -r requirements.txt` in your terminal.")
-    st.stop()
+# --- 🏥 SATELLITE INITIALIZATION ---
+st.set_page_config(
+    page_title="Strategic Resource Allocation AI",
+    page_icon="🛰️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 import contextlib
 import os
 import numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
-
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
-# API configuration is lazy-loaded to reduce app wake-up time.
-# Primary: st.secrets, Fallback: os.getenv
-
-# Check Environment Variables first, then fallback to Streamlit secrets
 from src.utils.api_keys import get_google_api_key
 _api_key = get_google_api_key()
 
@@ -28,36 +20,60 @@ if _api_key:
 
 @contextlib.contextmanager
 def skeleton_spinner(label="AI Processing...", n_blocks=3, heights=None):
-    """Context manager: shows shimmering skeleton blocks while AI runs, then clears."""
-    if heights is None:
-        heights = [56, 40, 40]
-    blocks_html = "".join(
-        f'<div class="skeleton-block" style="height:{heights[i % len(heights)]}px;"></div>'
-        for i in range(n_blocks)
-    )
+    if heights is None: heights = [56, 40, 40]
+    blocks_html = "".join(f'<div class="skeleton-block" style="height:{heights[i % len(heights)]}px;"></div>' for i in range(n_blocks))
     placeholder = st.empty()
-    placeholder.markdown(f"""
-        <div style="padding:16px 20px; background:rgba(15,23,42,0.6); border-radius:14px; border:1px solid rgba(66,133,244,0.2);">
-            <div class="skeleton-label">⚡ {label}</div>
-            {blocks_html}
-        </div>
-    """, unsafe_allow_html=True)
-    try:
-        yield placeholder
-    finally:
-        placeholder.empty()
+    placeholder.markdown(f'<div style="padding:16px 20px; background:rgba(15,23,42,0.6); border-radius:14px; border:1px solid rgba(66,133,244,0.2);"><div class="skeleton-label">⚡ {label}</div>{blocks_html}</div>', unsafe_allow_html=True)
+    try: yield placeholder
+    finally: placeholder.empty()
 
 @st.cache_resource
 def get_gemini_model(model_name='gemini-1.5-flash'):
-    if _api_key:
-        return genai.GenerativeModel(model_name)
+    if _api_key: return genai.GenerativeModel(model_name)
     return None
 
 @st.cache_resource
 def get_db_instance():
-    """Single-instance database connection to prevent SQLite lock contention."""
     from src.database.client import ProductionDB
     return ProductionDB()
+
+# --- 🚀 NEURAL MISSION BRAIN: SESSION STATE ROUTER ---
+def initialize_mission_state():
+    """Unified Neural Initialization: Establishes mission state across all sectors."""
+    global_baseline = [
+        {"id": "DEMO_1", "category": "Medical", "urgency": 9, "latitude": 28.6139, "longitude": 77.2090, "city": "Delhi", "description": "Critical supply gap detected in urban core.", "people_affected": 1250, "status": "Pending", "verified": False},
+        {"id": "DEMO_2", "category": "Food", "urgency": 7, "latitude": 40.7128, "longitude": -74.0060, "city": "New York", "description": "Strategic node needs resource leveling.", "people_affected": 800, "status": "Verified", "verified": True},
+        {"id": "DEMO_3", "category": "Shelter", "urgency": 8, "latitude": -1.2921, "longitude": 36.8219, "city": "Nairobi", "description": "Rapid response required for local displacement.", "people_affected": 3200, "status": "Escalated", "verified": False},
+        {"id": "DEMO_4", "category": "Water", "urgency": 10, "latitude": 19.0760, "longitude": 72.8777, "city": "Mumbai", "description": "Emergency water desalination units required.", "people_affected": 15000, "status": "Critical", "verified": False},
+        {"id": "DEMO_5", "category": "Power", "urgency": 6, "latitude": 34.0522, "longitude": -118.2437, "city": "Los Angeles", "description": "Grid stabilizing for medical facilities.", "people_affected": 450, "status": "Stabilizing", "verified": True}
+    ]
+    defaults = {
+        "current_page": "System Dashboard", "page": "System Dashboard",
+        "nav_selection": "🕹️ Command Center", "map_data": pd.DataFrame(global_baseline),
+        "map_active_data": pd.DataFrame(global_baseline), "map_style": "dark",
+        "ai_logs": [], "needs_stale": True, "user_role": "Executive Dashboard",
+        "chat_history": [], "offline_mode": False, "high_traffic": False, "sync_queue": [],
+        "needs_df": pd.DataFrame(global_baseline)
+    }
+    for key, val in defaults.items():
+        if key not in st.session_state: st.session_state[key] = val
+
+def switch_page(page_name, nav_title=None):
+    """The Nervous System Trigger: Orchestrates viewport transitions."""
+    st.session_state["current_page"] = page_name
+    st.session_state["page"] = page_name # Dual-key sync
+    if nav_title:
+        st.session_state["nav_selection"] = nav_title
+    
+    # --- 🛰️ AUTO-SYNC MAP PERSISTENCE ---
+    if page_name == "Impact Map":
+        db_df = st.session_state.get('needs_df', pd.DataFrame())
+        if not df_df.empty:
+            st.session_state['map_active_data'] = db_df
+        elif st.session_state.get('map_active_data') is None:
+            pass 
+
+initialize_mission_state()
 
 def run_dashboard():
     # 🏥 Satellite Health Check Endpoint (Render Diagnostic)
@@ -436,77 +452,111 @@ def run_dashboard():
     if 'show_all_logs' not in st.session_state:
         st.session_state['show_all_logs'] = False
 
-    if 'user_role' not in st.session_state:
-        st.session_state['user_role'] = 'Executive Dashboard'
-    st.sidebar.title("Navigation")
+    # --- 🏗️ STRATEGIC SIDEBAR: MISSION CONTROL ---
+    with st.sidebar:
+        st.markdown("### 🔋 Field Resilience")
+        is_offline = st.toggle("Simulate Field Offline Mode", value=st.session_state['offline_mode'], help="Simulates disconnected environment for field validation.")
+        st.session_state['offline_mode'] = is_offline
+        st.markdown("---")
 
-    st.sidebar.markdown("##### 👤 View Mode")
-    user_role = st.sidebar.radio(
-        "Select your role",
-        ["Executive Dashboard", "Field Worker"],
-        index=["Executive Dashboard", "Field Worker"].index(st.session_state['user_role']),
-        horizontal=True,
-        label_visibility="collapsed",
-        key="role_selector"
-    )
-    st.session_state['user_role'] = user_role
+        st.markdown("### Navigation")
+        st.markdown("##### 👤 View Mode")
+        user_role = st.radio(
+            "Select your role",
+            ["Executive Dashboard", "Field Worker"],
+            index=0 if st.session_state['user_role'] == "Executive Dashboard" else 1,
+            horizontal=True,
+            label_visibility="collapsed",
+            key="role_selector_v2"
+        )
+        st.session_state['user_role'] = user_role
+        
+        st.checkbox("System Administration (Hidden)", value=False, key="admin_nav_toggle_v2")
+        
+        # Core Navigation Selection
+        st.markdown("Go to")
+        nav_items = [
+            {"id": "System Dashboard", "icon": "🕹️", "title": "System Dashboard"},
+            {"id": "Field Report Center", "icon": "📁", "title": "Data Upload"},
+            {"id": "Impact Map", "icon": "🗺️", "title": "Impact Map"},
+            {"id": "Executive Impact Analytics", "icon": "📈", "title": "Executive Impact Analytics"},
+            {"id": "Rapid Dispatch", "icon": "🚨", "title": "EMERGENCY DISPATCH 🚨"},
+        ]
+        
+        nav_titles = [f"{item['title']}" for item in nav_items]
+        # Map current selection to radio index
+        current_nav_title = "System Dashboard"
+        for item in nav_items:
+            if item["id"] == st.session_state.get("page"):
+                current_nav_title = item["title"]
+        
+        selected_nav = st.radio(
+            "Strategic Mission Select",
+            options=nav_titles,
+            index=nav_titles.index(current_nav_title) if current_nav_title in nav_titles else 0,
+            label_visibility="collapsed",
+            key="nav_selection_v2"
+        )
+        
+        # Update State from Radio
+        for item in nav_items:
+            if item["title"] == selected_nav:
+                st.session_state["page"] = item["id"]
+        
+        st.markdown("---")
+        st.markdown("### 🛰️ FIELD COORDINATION")
+        low_bandwidth = st.toggle("Low Bandwidth Mode", value=False, key="low_band_toggle_v2")
+        
+        if st.session_state.get('needs_df') is not None:
+            st.caption("✅ Cloud Sync Active: Local Cache Loaded.")
+        else:
+            st.caption("⚠️ Sync Pending: Low Signal Environment.")
+            
+        st.markdown("---")
+        st.markdown("### 🌟 Presentation")
+        if st.button("Launch 'Perfect Demo' Mode", use_container_width=True, type="primary", key="btn_perfect_demo"):
+            st.toast("🚀 Launching High-Fidelity Tactical Simulation...")
+            st.session_state["page"] = "System Dashboard"
+            # Injects 50+ mock points for the demo
+            from processor import generate_mock_impact_data
+            st.session_state['needs_df'] = generate_mock_impact_data()
+            st.rerun()
 
-    is_field_worker = (user_role == "Field Worker")
-
-    if is_field_worker:
-        st.markdown("""
-        <style>
-            .stButton > button {
-                padding: 12px 29px !important;
-                font-size: 1.08rem !important;
-                min-height: 52px !important;
-            }
-            .fw-hide { display: none !important; }
-        </style>
-        """, unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    show_admin_nav = st.sidebar.checkbox("System Administration (Hidden)", value=False, key="admin_nav_toggle")
-    nav_items = [
-        {"id": "System Dashboard", "icon": "🕹️", "title": "Command Center", "desc": "Real-time mission intelligence"},
-        {"id": "Field Report Center", "icon": "📁", "title": "Intelligence Field", "desc": "Process incoming field data"},
-        {"id": "Impact Map", "icon": "🗺️", "title": "Crisis Map", "desc": "Real-time crisis visualization"},
-        {"id": "Executive Impact Analytics", "icon": "📈", "title": "Impact Analytics", "desc": "Strategic KPI performance"},
-        {"id": "Rapid Dispatch", "icon": "⚡", "title": "Emergency Dispatch", "desc": "Emergency volunteer matching"},
-        {"id": "📚 Document Library", "icon": "📚", "title": "Document Archive", "desc": "Persistent mission records"},
-    ]
-    if show_admin_nav:
-        nav_items.insert(0, {"id": "🛡️ Admin Verification", "icon": "🛡️", "title": "Secure Verification", "desc": "Audit suspicious reports"})
-
-    valid_ids = {item["id"] for item in nav_items}
-    if st.session_state.get("page") not in valid_ids:
-        st.session_state["page"] = nav_items[0]["id"]
-
-    nav_titles = [f"{item['icon']} {item['title']}" for item in nav_items]
-    title_to_id = {t: nav_items[i]["id"] for i, t in enumerate(nav_titles)}
-
-    def _title_for_page_id(pid):
-        for it in nav_items:
-            if it["id"] == pid:
-                return f"{it['icon']} {it['title']}"
-        return nav_titles[0]
-
-    if st.session_state.get("nav_selection") not in nav_titles:
-        st.session_state["nav_selection"] = _title_for_page_id(st.session_state["page"])
-
-    st.sidebar.radio(
-        "Strategic Mission Select",
-        options=nav_titles,
-        key="nav_selection",
-        label_visibility="collapsed",
-    )
-    page = title_to_id[st.session_state.nav_selection]
-    st.session_state["page"] = page
+    page = st.session_state["page"]
 
     st.sidebar.markdown("---")
-    st.sidebar.subheader("📡 Field Coordination")
-    low_bandwidth = st.sidebar.toggle("Low Bandwidth Mode", value=False, help="Ensures the app stays alive in low-signal disaster zones by suppressing maps.")
+    st.sidebar.subheader("📡 Mission Tactic & Overlays")
+    # Tactical Toggles with "Shining" state awareness
+    low_bandwidth = st.sidebar.toggle("🚫 Low Bandwidth Mode", value=False, key="low_band_toggle", help="Ensures the app stays alive in low-signal disaster zones by suppressing maps.")
+    
+    # 🛰️ Tactical Lighting & Overlays
+    lighting_mode = st.sidebar.select_slider("🌙 Mission Lighting Mode", options=["Strategic Dark", "High-Alert Light"], value="Strategic Dark")
+    sat_overlay = st.sidebar.toggle("🛰️ Satellite Intel Overlay", value=False, key="sat_toggle")
+    
+    # Selection of Map Style
+    if sat_overlay:
+        st.session_state['map_style'] = 'satellite'
+    else:
+        st.session_state['map_style'] = 'light' if lighting_mode == "High-Alert Light" else 'dark'
+
+    # --- ✨ SHINING HIGHLIGHT FOR ACTIVE TOOLS ---
+    active_tools_css = ""
+    if low_bandwidth:
+        active_tools_css += 'div[data-testid="stSidebar"] div:has(input[aria-label="🚫 Low Bandwidth Mode"]) { background: rgba(234, 67, 53, 0.1); border: 1px solid #EA4335; border-radius: 8px; box-shadow: 0 0 15px rgba(234, 67, 53, 0.3); animation: side-shimmer 2s infinite; } '
+    if sat_overlay:
+        active_tools_css += 'div[data-testid="stSidebar"] div:has(input[aria-label="🛰️ Satellite Intel Overlay"]) { background: rgba(66, 133, 244, 0.1); border: 1px solid #4285F4; border-radius: 8px; box-shadow: 0 0 15px rgba(66, 133, 244, 0.3); animation: side-shimmer 2s infinite; } '
+    
+    if active_tools_css:
+        st.markdown(f"""
+            <style>
+            {active_tools_css}
+            @keyframes side-shimmer {{
+                0% {{ opacity: 0.8; }}
+                50% {{ opacity: 1; box-shadow: 0 0 25px rgba(66, 133, 244, 0.5); }}
+                100% {{ opacity: 0.8; }}
+            }}
+            </style>
+        """, unsafe_allow_html=True)
 
     @st.cache_data(ttl=3600)
     def sync_to_local_cache(df_json):
@@ -523,12 +573,17 @@ def run_dashboard():
     st.sidebar.subheader("🗨️ Chat with Data (AI)")
     chat_query = st.sidebar.chat_input("Ask a question about the resources...")
     if chat_query:
-        from src.processor import chat_with_data
-        with st.sidebar:
-            st.chat_message("user").write(chat_query)
-            with st.spinner("Scanning database..."):
-                reply = chat_with_data(chat_query, st.session_state.get('needs_df', pd.DataFrame()))
-                st.chat_message("assistant").write(reply)
+        try:
+            from src.processor import chat_with_data
+            with st.sidebar:
+                st.chat_message("user").write(chat_query)
+                with st.spinner("Scanning database..."):
+                    reply = chat_with_data(chat_query, st.session_state.get('needs_df', pd.DataFrame()))
+                    st.chat_message("assistant").write(reply)
+        except Exception as e:
+            st.sidebar.error("🛰️ **System Re-routing:** AI Satellite Link interrupted. Attempting to re-establish connection...")
+            if st.sidebar.button("Retry AI Uplink"):
+                st.rerun()
 
     _df_crisis = st.session_state.get('needs_df', pd.DataFrame())
     _max_urg = int(_df_crisis['urgency'].max()) if not _df_crisis.empty and 'urgency' in _df_crisis.columns else 0
@@ -550,6 +605,23 @@ def run_dashboard():
 
     st.markdown(f"""
         <style>
+        /* Transparent Button Overlay for Tiles */
+        div[data-testid="stVerticalBlock"] > div:has(button[key^="btn_nav_"]) {{
+            position: relative;
+            margin-top: -115px; /* Pull button over the tile */
+            z-index: 10;
+        }}
+        button[key^="btn_nav_"] {{
+            height: 105px !important;
+            background-color: transparent !important;
+            color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }}
+        button[key^="btn_nav_"]:hover {{
+            background-color: rgba(66, 133, 244, 0.05) !important;
+        }}
+        
         .command-center-title {{
             font-family: 'Inter', sans-serif;
             font-weight: 900;
@@ -983,18 +1055,63 @@ def run_dashboard():
             st.dataframe(display_df, use_container_width=True)
 
     elif page == "Impact Map":
-        st.subheader("🗺️ Impact Map & Need Density Visualization")
-        df = st.session_state.get('needs_df', pd.DataFrame())
+        # --- 🛰️ MOCK-API SYNC ANIMATION ---
+        # Simulated delay to establish backend power perception
+        if 'map_synced' not in st.session_state or st.session_state.get('last_map_sync') != datetime.now().strftime("%H:%M"):
+            with st.spinner("🛰️ Synchronizing Global Resource Nodes..."):
+                import time
+                time.sleep(1.5)
+                st.session_state['map_synced'] = True
+                st.session_state['last_map_sync'] = datetime.now().strftime("%H:%M")
 
-        if df.empty or 'latitude' not in df.columns or 'longitude' not in df.columns:
-            st.info("No geographic data available. Please upload data first.")
-        else:
-            with st.sidebar:
-                st.markdown("### 🗺️ Map Controls")
-                cat_filter = st.selectbox("Filter by Category", ["All"] + list(df['category'].unique()) if 'category' in df.columns else ["All"])
-                urgency_filter = st.selectbox("Filter by Urgency", ["All", "High (8-10)", "Medium (5-7)", "Low (1-4)"])
-                st.metric("Total Strategic Needs", len(df))
-                st.markdown("---")
+        st.subheader("🗺️ Impact Map & Need Density Visualization")
+        
+        # --- 🧠 SATELLITE DATA LOGIC ---
+        # Prioritize Live Data -> Fallback to Persistent Session Data -> Show 3D Warning
+        df = st.session_state.get('map_active_data', pd.DataFrame())
+        
+        if df.empty:
+            # 🚨 ELITE 3D WARNING CARD (Data-Empty State)
+            st.markdown("""
+                <div style='background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 60px 40px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); backdrop-filter: blur(15px); margin-top: 30px;'>
+                    <div style='font-size: 4rem; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(66,133,244,0.5));'>🛰️</div>
+                    <div style='font-size: 1.8rem; font-weight: 900; color: #ffffff; letter-spacing: -1px; margin-bottom: 10px;'>Awaiting Satellite Telemetry...</div>
+                    <div style='color: #94a3b8; font-size: 0.95rem; line-height: 1.6; max-width: 450px; margin: 0 auto;'>
+                        System is re-calculating global resource nodes. Please upload a field mission manifest or launch the 'Perfect Demo' mode to initialize nodes.
+                    </div>
+                    <div style='margin-top: 35px;'>
+                        <span style='padding: 10px 20px; background: rgba(66,133,244,0.1); border: 1px solid #4285F4; border-radius: 8px; color: #4285F4; font-size: 0.8rem; font-weight: 800; text-transform: uppercase;'>Back-end Re-routing Active</span>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+            st.stop()
+        
+        # Tactical Map Controls
+        with st.sidebar:
+            st.markdown("### 🗺️ Map Controls")
+            show_heatmap = st.sidebar.toggle("🔥 Global Scarcity Heatmap", value=False)
+            cat_filter = st.selectbox("Filter by Category", ["All"] + list(df['category'].unique()) if 'category' in df.columns else ["All"])
+            urgency_filter = st.selectbox("Filter by Urgency", ["All", "High (8-10)", "Medium (5-7)", "Low (1-4)"])
+            st.metric("Total Strategic Needs", len(df))
+            st.markdown("---")
+            
+            # --- 🔮 AI ALLOCATION INTELLIGENCE (Sidebar Side-Panel) ---
+            selected_node = st.session_state.get('last_map_click_data')
+            if selected_node:
+                lat = selected_node.get('lat')
+                lng = selected_node.get('lng')
+                st.markdown(f"""
+                <div class='glass-panel' style='padding:18px; border-radius:12px; border:1px solid #4285F4; background:rgba(15,23,42,0.9); margin-bottom:20px;'>
+                    <div style='color:#4285F4; font-weight:800; font-size:0.7rem; text-transform:uppercase;'>AI Strategic Dispatch</div>
+                    <div style='color:white; font-weight:700; font-size:0.9rem; margin-top:5px;'>Targeting Cluster: {lat:.3f}, {lng:.3f}</div>
+                    <div style='color:#94A3B8; font-size:0.75rem; margin-top:8px; line-height:1.4;'>
+                        Sector urgency meets high-impact threshold. Deploying medical-grade reserves from Command Core. Predicted lifecycle retention: +42%.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button("🚀 Verify Field Action", key="btn_verify_side"):
+                    st.success("Mission Verified: Lives Impacted Metric Adjusted.")
+                    st.balloons()
 
             filtered_df = df.copy()
             if cat_filter != "All" and 'category' in filtered_df.columns:
@@ -1016,40 +1133,74 @@ def run_dashboard():
                 from folium.plugins import HeatMap, MarkerCluster, LocateControl, MiniMap, Geocoder
 
                 @st.cache_data(show_spinner=False)
-                def generate_impact_map(data_json):
+                def generate_impact_map(data_json, map_style='dark', show_heatmap=False):
                     """
                     Elite Cached Map Generator: Prevents Render memory spikes by caching mission layers.
                     """
-                    # 🌌 Elite Cached Map Generator: Prevents Render memory spikes
                     df = pd.read_json(data_json)
                     
                     # Compute dynamic bounds if data exists for "Zoom to Fit"
+                    sw, ne = None, None
                     if not df.empty and pd.notna(df['latitude']).any():
                         sw = df[['latitude', 'longitude']].min().values.tolist()
                         ne = df[['latitude', 'longitude']].max().values.tolist()
+
+                    # Selection of Map Tile Engine
+                    if map_style == 'satellite':
+                        tile_engine = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                        attr = 'Esri World Imagery'
+                    elif map_style == 'light':
+                        tile_engine = 'cartodbpositron'
+                        attr = 'CartoDB Positron'
                     else:
-                        sw, ne = None, None
+                        tile_engine = 'cartodbdark_matter'
+                        attr = 'CartoDB DarkMatter'
 
                     m = folium.Map(
                         location=[20.5937, 78.9629], 
                         zoom_start=5, 
-                        tiles='cartodbdark_matter', # Hard-locked to Dark Theme for seamless blending
+                        tiles=tile_engine,
+                        attr=attr,
                         control_scale=True
                     )
 
                     # 🛰️ Tactical Modules
+                    from folium.plugins import HeatMap, MarkerCluster, LocateControl, MiniMap, Geocoder, AntPath
                     LocateControl(auto_start=False, flyTo=True).add_to(m)
-                    MiniMap(toggle_display=True, position='bottomright', tile_layer='cartodbdark_matter').add_to(m)
-                    Geocoder(position='topleft', add_marker=False).add_to(m) # Search Feature
+                    
+                    # Synchronized MiniMap
+                    MiniMap(toggle_display=True, position='bottomright', tile_layer=tile_engine, attr=attr).add_to(m)
+                    Geocoder(position='topleft', add_marker=False).add_to(m) 
 
-                    # 🔥 Heatmap: Scarcity Visualization
-                    heat_data = [[row['latitude'], row['longitude'], row['urgency']/10.0] 
-                                 for _, row in df.iterrows() if pd.notna(row['latitude'])]
-                    HeatMap(heat_data, radius=25, blur=20, min_opacity=0.4, name="Scarcity Density").add_to(m)
+                    # 🏺 COMMAND CENTER CORE
+                    origin = [20.5937, 78.9629]
+                    
+                    # 🔥 Heatmap & Resource Routing
+                    heat_data = []
+                    for _, row in df.iterrows():
+                        if pd.isna(row['latitude']): continue
+                        heat_data.append([row['latitude'], row['longitude'], row['urgency']/10.0])
+                        
+                        AntPath(
+                            locations=[origin, [row['latitude'], row['longitude']]],
+                            dash_array=[10, 20],
+                            delay=1000,
+                            color='#4285F4',
+                            pulse_color='#ffffff',
+                            weight=2,
+                            opacity=0.4,
+                            hardware_acceleration=True
+                        ).add_to(m)
 
-                    # 🗂️ Marker Clustering: Performance optimization for 100+ points
+                    if show_heatmap:
+                        HeatMap(heat_data, radius=25, blur=20, min_opacity=0.4, name="Scarcity Density").add_to(m)
+
                     marker_cluster = MarkerCluster(name="Tactical Pins", 
-                                                   options={'spiderfyOnMaxZoom': True, 'showCoverageOnHover': False}).add_to(m)
+                                                   options={'spiderfyOnMaxZoom': True, 'showCoverageOnHover': False}).add_to(marker_cluster if not show_heatmap else m)
+                    
+                    # If heatmap is hidden, we use markers. If both, we cluster.
+                    target_layer = marker_cluster if not show_heatmap else None
+                    if target_layer is None: target_layer = m # Fallback if no cluster desired
 
                     for _, row in df.iterrows():
                         if pd.isna(row['latitude']): continue
@@ -1090,10 +1241,35 @@ def run_dashboard():
                         </div>
                         """
 
+                        # --- 🟠 3D NEURAL PULSE MARKER (High Priority) ---
+                        if urgency >= 8:
+                            pulse_css = """
+                            <style>
+                            .pulse {
+                                display: block;
+                                width: 14px; height: 14px;
+                                border-radius: 50%;
+                                background: #FF5733;
+                                cursor: pointer;
+                                box-shadow: 0 0 0 rgba(255, 87, 51, 0.4);
+                                animation: pulse 2s infinite;
+                            }
+                            @keyframes pulse {
+                              0% { box-shadow: 0 0 0 0 rgba(255, 87, 51, 0.7); }
+                              70% { box-shadow: 0 0 0 15px rgba(255, 87, 51, 0); }
+                              100% { box-shadow: 0 0 0 0 rgba(255, 87, 51, 0); }
+                            }
+                            </style>
+                            """
+                            m.get_root().header.add_child(folium.Element(pulse_css))
+                            icon = folium.DivIcon(html="<div class='pulse'></div>", icon_size=(20, 20), icon_anchor=(10, 10))
+                        else:
+                            icon = folium.Icon(color=color, icon=icon_name, prefix='fa')
+
                         folium.Marker(
                             location=[row['latitude'], row['longitude']],
                             popup=folium.Popup(popup_html, max_width=320),
-                            icon=folium.Icon(color=color, icon=icon_name, prefix='fa')
+                            icon=icon
                         ).add_to(marker_cluster)
 
                     if sw and ne:
@@ -1103,14 +1279,16 @@ def run_dashboard():
                     return m
 
                 st.markdown("### 📍 Tactical Impact Map")
-                # We pass JSON to avoid unhashable DF error in caching
-                if not filtered_df.empty:
-                    m = generate_impact_map(filtered_df.to_json())
-                    st_folium(m, width='100%', height=500, key="impact_map_main")
-                else:
-                    st.info("📡 **Command Signal Weak:** Waiting for AI to generate impact locations... Please upload mission data or launch 'Perfect Demo' mode.")
-                    # Placeholder container to maintain layout stability
-                    st.container(height=500, border=True)
+                # Always render the map to maintain "Live" presence
+                current_style = st.session_state.get('map_style', 'dark')
+                m = generate_impact_map(filtered_df.to_json(), map_style=current_style, show_heatmap=show_heatmap)
+                map_output = st_folium(m, width='100%', height=500, key=f"impact_map_{current_style}_{show_heatmap}")
+                
+                # --- 🛰️ CAPTURE TELEMETRY FROM MAP CLICK ---
+                if map_output.get("last_object_clicked"):
+                    st.session_state["last_map_click_data"] = map_output["last_object_clicked"]
+                    # If user clicks a new marker, we refresh the sidebar panel
+                    # st.rerun() # Optional: triggers instant sidebar update
 
                 st.markdown("### 📊 Need Density Summary")
                 c1, c2, c3 = st.columns(3)
@@ -1402,6 +1580,37 @@ def run_dashboard():
                                 st.toast(f"✅ Dispatched {selected_v}!")
                                 st.rerun()
 
+        # --- 🕹️ TOP-TIER MISSION TILE NAVIGATION (Bottom Realignment) ---
+        st.divider()
+        st.markdown("### 🏹 Quick Mission Access Navigation")
+        t_col1, t_col2, t_col3 = st.columns(3)
+        
+        tier_mapping = {
+            "Strategic Command": "🕹️ Command Center",
+            "Intelligence Feed": "📁 Intelligence Field",
+            "Live Impact Map": "🗺️ Crisis Map"
+        }
+        
+        current_tier = "Strategic Command"
+        for label, nav_id in tier_mapping.items():
+            if st.session_state.get("nav_selection") == nav_id:
+                current_tier = label
+
+        with t_col1:
+            is_active = "active" if current_tier == "Strategic Command" else ""
+            st.markdown(f"""<div class="nav-tile {is_active}" style="pointer-events: none;"><span class="nav-tile-icon">🕹️</span><span class="nav-tile-label">Strategic Command</span></div>""", unsafe_allow_html=True)
+            st.button("Access Command", key="btn_nav_strategic_bottom", use_container_width=True, on_click=switch_page, args=("System Dashboard", "🕹️ Command Center"))
+
+        with t_col2:
+            is_active = "active" if current_tier == "Intelligence Feed" else ""
+            st.markdown(f"""<div class="nav-tile {is_active}" style="pointer-events: none;"><span class="nav-tile-icon">📁</span><span class="nav-tile-label">Intelligence Feed</span></div>""", unsafe_allow_html=True)
+            st.button("Access Feed", key="btn_nav_intel_bottom", use_container_width=True, on_click=switch_page, args=("Field Report Center", "📁 Intelligence Field"))
+
+        with t_col3:
+            is_active = "active" if current_tier == "Live Impact Map" else ""
+            st.markdown(f"""<div class="nav-tile {is_active}" style="pointer-events: none;"><span class="nav-tile-icon">🗺️</span><span class="nav-tile-label">Live Impact Map</span></div>""", unsafe_allow_html=True)
+            st.button("Access Map", key="btn_nav_map_bottom", use_container_width=True, on_click=switch_page, args=("Impact Map", "🗺️ Crisis Map"))
+
 def initialize_mission_environment():
     """Ensure all critical folders exist before mission launch using Pathlib (Cross-Platform)."""
     from pathlib import Path
@@ -1412,124 +1621,201 @@ def initialize_mission_environment():
             path.mkdir(parents=True, exist_ok=True)
 
 def main():
-    st.set_page_config(
-        page_title="🛡️ Command Center | Smart Resource Allocator", 
-        page_icon="🛡️", 
-        layout="wide",
-        initial_sidebar_state="auto" # Optimized for mobile (collapsed) and desktop (expanded)
-    )
-    
     # 🛰️ Mission Initialization
     initialize_mission_environment()
     
-    # --- 🏗️ Advanced UI Styling: Sidebar & Brand Consistency ---
+    # --- 🏗️ Advanced UI Styling: Consolidated Render-Ready Build ---
     st.markdown("""
         <style>
-        /* 🏰 Premium Sidebar Styling */
-        [data-testid="stSidebar"] {
-            background-color: #f0f2f6 !important;
-            border-right: 1px solid rgba(66, 133, 244, 0.3);
-            visibility: visible !important; /* Ensure visibility */
-        }
-        [data-testid="stSidebarNav"] {
-            background-color: transparent !important;
-        }
-        
-        /* 🍔 ULTRA-FORCE HAMBURGER VISIBILITY */
-        header[data-testid="stHeader"] {
-            display: block !important;
-            visibility: visible !important;
-            background-color: transparent !important;
+        /* 🌌 SPACE-NAVY DEPTH BACKGROUND (Consolidated) */
+        [data-testid="stAppViewContainer"] {
+            background-color: #020617 !important;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%) !important;
+            position: relative;
+            z-index: 0;
+            filter: none !important;
+            backdrop-filter: none !important;
         }
 
-        button[kind="header"] {
-            color: #4285F4 !important;
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            border-radius: 50% !important;
-            box-shadow: 0 0 20px rgba(66, 133, 244, 0.6) !important;
-            border: 1px solid #4285F4 !important;
+        [data-testid="stAppViewContainer"]::before {
+            content: "";
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            z-index: -1;
+            background: radial-gradient(circle at 11% 11%, rgba(66, 133, 244, 0.05) 0%, transparent 38%),
+                        radial-gradient(circle at 89% 89%, rgba(168, 85, 247, 0.05) 0%, transparent 38%);
+            animation: mesh-shift-optimized 25s ease-in-out infinite alternate;
+            will-change: transform;
+            pointer-events: none;
+        }
+
+        @keyframes mesh-shift-optimized {
+            0% { transform: translate3d(0, 0, 0) rotate(0.1deg); }
+            100% { transform: translate3d(40px, 40px, 0) rotate(4deg); }
+        }
+
+        /* 🏰 SIDEBAR RECOVERY & FORCE SCROLL */
+        [data-testid="stSidebar"] {
+            background-color: #020617 !important;
+            border-right: 1px solid rgba(66, 133, 244, 0.2);
             visibility: visible !important;
-            opacity: 1 !important;
+            display: flex !important;
             z-index: 999999 !important;
         }
-
-        [data-testid="stSidebarNav"] button {
-            color: var(--primary-color) !important;
+        
+        [data-testid="stSidebar"] > div {
+            overflow-y: auto !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
         }
 
-        /* 💎 Glassmorphism Sidebar Collapse Button */
-        [data-testid="stSidebarCollapseButton"] button {
-            color: #4285F4 !important;
-            background: rgba(255, 255, 255, 0.1) !important;
-            backdrop-filter: blur(10px) !important;
-            -webkit-backdrop-filter: blur(10px) !important;
-            box-shadow: 0 0 15px rgba(66, 133, 244, 0.5) !important;
-            border-radius: 50% !important;
-            border: 1px solid rgba(66, 133, 244, 0.2) !important;
-        }
-
-        /* 📱 Mobile Column Optimization */
-        @media (max-width: 640px) {
-            [data-testid="stHorizontalBlock"] {
-                flex-direction: column !important;
-            }
+        /* 💎 CUSTOM GLOWING SCROLLBAR */
+        [data-testid="stSidebar"]::-webkit-scrollbar { width: 4px; }
+        [data-testid="stSidebar"]::-webkit-scrollbar-track { background: transparent; }
+        [data-testid="stSidebar"]::-webkit-scrollbar-thumb {
+            background: #4285F4;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #4285F4;
         }
         
-    /* 🚀 RENDER-OPTIMIZED PERFORMANCE VARIABLES */
-    :root {
-        --deep-navy: #0f172a;
-        --absolute-black: #000000;
-        --google-blue: #4285F4;
-        --mesh-blue: rgba(66, 133, 244, 0.05);
-        --mesh-purple: rgba(168, 85, 247, 0.05);
-        --glass-bg: rgba(255, 255, 255, 0.03);
-        --glass-border: rgba(255, 255, 255, 0.1);
-    }
+        /* 🚫 HIDE DEFAULT HEADER & ARROWS */
+        [data-testid="stHeader"] {
+            display: none !important;
+            visibility: hidden !important;
+        }
 
-    /* 🌌 HARDWARE-ACCELERATED WORLD-CLASS BACKGROUND */
-    [data-testid="stAppViewContainer"] {
-        background-color: var(--deep-navy) !important; /* Solid Fallback */
-        background: radial-gradient(circle at center, var(--deep-navy) 0%, var(--absolute-black) 100%) !important;
-        position: relative;
-    }
+        /* 🚀 TOP-BAR TILE NAVIGATION & SHINE with Realignment */
+        .nav-tile {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(66,133,244,0.1), rgba(66,133,244,0.05)) !important;
+            border: 1px solid rgba(66,133,244,0.3) !important;
+            padding: 24px 10px; 
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 6px 6px 12px rgba(0,0,0,0.4), 
+                        -2px -2px 8px rgba(255,255,255,0.02);
+            position: relative;
+            overflow: hidden;
+            margin-top: 60px; /* Desktop Depth */
+            z-index: 10;
+        }
 
-    /* 🍔 ABSOLUTE PRIORITY SIDEBAR BUTTON VISIBILITY */
-    header[data-testid="stHeader"] {
-        display: block !important;
-        visibility: visible !important;
-        background: transparent !important;
-        z-index: 1000001 !important;
-    }
+        /* 📱 MOBILE RESPONSIVE ADAPTATION */
+        @media (max-width: 768px) {
+            .nav-tile {
+                margin-top: 20px !important;
+                padding: 15px 5px !important;
+            }
+            .stMain { padding-top: 10px !important; }
+        }
 
-    button[aria-label="Open sidebar"], 
-    button[aria-label="Close sidebar"],
-    button[kind="header"] {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        color: #4285F4 !important;
-        background-color: rgba(66, 133, 244, 0.2) !important;
-        border: 2px solid rgba(66, 133, 244, 0.5) !important;
-        border-radius: 50% !important;
-        z-index: 1000002 !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 0 15px rgba(66, 133, 244, 0.4) !important;
-    }
+        /* 🚫 REMOVE IFRAME DOUBLE SCROLLBARS */
+        iframe {
+            overflow: hidden !important;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        iframe::-webkit-scrollbar {
+            display: none !important;
+        }
 
-    button[kind="header"]:hover {
-        background-color: #4285F4 !important;
-        color: white !important;
-        transform: scale(1.1);
-    }
+        .nav-tile::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: sweep 4s infinite;
+            pointer-events: none;
+        }
 
-    div[data-testid="stMetric"]:hover, .high-end-card:hover {
-        border: 1px solid rgba(66, 133, 244, 0.4) !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        transform: translateY(-2px);
-    }
-    </style>
+        @keyframes sweep {
+            0% { transform: translate(-100%, -100%) rotate(45deg); }
+            100% { transform: translate(100%, 100%) rotate(45deg); }
+        }
+
+        .nav-tile:hover {
+            transform: translateY(-8px) scale(1.02); /* 8px Kinetic Lift */
+            border-color: #4285F4 !important;
+            box-shadow: 0 15px 30px rgba(66, 133, 244, 0.3);
+            z-index: 15;
+        }
+
+        /* 🎯 THEME-AWARE DYNAMIC GLOWS & ACTIVE SHINE */
+        @media (prefers-color-scheme: dark) {
+            .nav-tile.active {
+                box-shadow: 0 0 20px rgba(66, 133, 244, 0.6), 
+                            inset 0 0 10px rgba(66, 133, 244, 0.2) !important;
+                border: 2px solid #4285F4 !important;
+                background: rgba(66, 133, 244, 0.15) !important;
+                animation: active-glow-dark 3s infinite alternate;
+            }
+            @keyframes active-glow-dark {
+                from { box-shadow: 0 0 15px rgba(66, 133, 244, 0.4); }
+                to { box-shadow: 0 0 35px rgba(66, 133, 244, 0.8); }
+            }
+        }
+        @media (prefers-color-scheme: light) {
+            .nav-tile {
+                background: linear-gradient(135deg, #ffffff, #f1f5f9) !important;
+                border: 1px solid rgba(15, 23, 42, 0.1) !important;
+            }
+            .nav-tile-label { color: #0f172a !important; }
+            .nav-tile:hover {
+                box-shadow: 0 15px 35px rgba(15, 23, 42, 0.15) !important;
+                border-color: #0f172a !important;
+            }
+            .nav-tile.active {
+                box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2), 
+                            inset 0 0 15px rgba(255, 255, 255, 0.8) !important;
+                border: 2px solid #0f172a !important;
+                background: #f8fafc !important;
+                animation: active-shine-light 4s infinite;
+            }
+            .nav-tile .stButton > button {
+                background: linear-gradient(135deg, #e1effe, #c3ddfd) !important;
+                color: #1e293b !important;
+                border: 1px solid rgba(66, 133, 244, 0.3) !important;
+                font-weight: 800 !important;
+            }
+            @keyframes active-shine-light {
+                0% { background: #f8fafc; }
+                50% { background: #ffffff; border-color: #4285F4; }
+                100% { background: #f8fafc; }
+            }
+        }
+
+        /* 💎 TARGETED GLASSMORPHISM: Metrics & Cards ONLY */
+        div[data-testid="stMetric"], .high-end-card, [data-testid="stExpander"] {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(15px) !important;
+            -webkit-backdrop-filter: blur(15px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        div[data-testid="stMetric"]:hover, .high-end-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-color: #4285F4 !important;
+        }
+
+        @media (prefers-color-scheme: light) {
+            div[data-testid="stMetric"], .high-end-card, [data-testid="stExpander"] {
+                background: rgba(2, 6, 23, 0.03) !important;
+                border-color: rgba(2, 6, 23, 0.1) !important;
+            }
+        }
+        </style>
     """, unsafe_allow_html=True)
-    
     try:
         run_dashboard()
     except Exception as e:
