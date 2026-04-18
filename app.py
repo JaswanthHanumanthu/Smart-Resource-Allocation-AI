@@ -1257,11 +1257,50 @@ def main():
         page_title="🛡️ Command Center | Smart Resource Allocator", 
         page_icon="🛡️", 
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="auto" # Optimized for mobile (collapsed) and desktop (expanded)
     )
     
     # 🛰️ Mission Initialization
     initialize_mission_environment()
+    
+    # --- 🏗️ Advanced UI Styling: Sidebar & Brand Consistency ---
+    st.markdown("""
+        <style>
+        /* 🏰 Premium Sidebar Styling */
+        [data-testid="stSidebar"] {
+            background-color: #f0f2f6 !important;
+            border-right: 1px solid rgba(66, 133, 244, 0.3);
+        }
+        [data-testid="stSidebarNav"] {
+            background-color: transparent !important;
+        }
+        
+        /* 🍔 Styled Hamburger Menu */
+        button[kind="header"] {
+            color: #4285F4 !important;
+        }
+        
+        /* 📱 Mobile Column Optimization */
+        @media (max-width: 640px) {
+            [data-testid="stHorizontalBlock"] {
+                flex-direction: column !important;
+            }
+        }
+        
+        /* Brand Glow & Typography */
+        :root {
+            --brand-primary: #4285F4;
+            --brand-glow: rgba(66, 133, 244, 0.4);
+            --brand-success: #34A853;
+        }
+        .badge-base { padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; }
+        .ai-pulse-idle { color: var(--brand-primary); filter: drop-shadow(0 0 8px var(--brand-glow)); animation: pulse-brand 3s infinite; }
+        .ai-pulse-critical { color: #EA4335; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)); animation: pulse-critical-glow 1s infinite; }
+        @keyframes pulse-brand { 0%, 100% { opacity: 0.6; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
+        @keyframes pulse-critical-glow { 0%, 100% { opacity: 0.7; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+        .main-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+    </style>
+    """, unsafe_allow_html=True)
     
     try:
         run_dashboard()
