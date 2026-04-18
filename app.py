@@ -44,9 +44,19 @@ def get_gemini_model(model_name='gemini-1.5-flash'):
         return genai.GenerativeModel(model_name)
     return None
 
-def run_dashboard():
+@st.cache_resource
+def get_db_instance():
+    """Single-instance database connection to prevent SQLite lock contention."""
     from src.database.client import ProductionDB
-    db = ProductionDB()
+    return ProductionDB()
+
+def run_dashboard():
+    # 🏥 Satellite Health Check Endpoint (Render Diagnostic)
+    if "health" in st.query_params:
+        st.write("🟢 MISSION_STATUS: NOMINAL")
+        st.stop()
+        
+    db = get_db_instance()
 
     if not _api_key:
         st.error('⚠️ Mission-Critical Status: Missing GOOGLE_API_KEY. Vision & AI extraction tiers are currently inhibited. Please set GOOGLE_API_KEY in your environment variables or Streamlit secrets.')

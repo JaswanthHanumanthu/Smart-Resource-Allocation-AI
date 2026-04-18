@@ -9,10 +9,24 @@ import streamlit as st
 
 from ..utils.api_keys import get_google_api_key
 
+import logging
+from pathlib import Path
+
+# 🔍 Enterprise Logging Configuration
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 class ProductionDB:
-    def __init__(self, db_path="data/mission_critical.db"):
-        self.db_path = db_path
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+    def __init__(self, db_path=None):
+        if db_path is None:
+            # Using Pathlib for Linux/Windows cross-compatibility
+            project_root = Path(__file__).resolve().parent.parent.parent
+            self.db_path = project_root / "data" / "mission_critical.db"
+        else:
+            self.db_path = Path(db_path)
+            
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.info(f"🛰️ Initializing Database Connection: {self.db_path}")
         self.init_db()
 
     def init_db(self):
