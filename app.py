@@ -1173,6 +1173,13 @@ def run_dashboard():
                                 st.toast(f"✅ Dispatched {selected_v}!")
                                 st.rerun()
 
+def initialize_mission_environment():
+    """Ensure all critical folders exist before mission launch."""
+    required_dirs = ["src", "data", "exports", "logs"]
+    for d in required_dirs:
+        if not os.path.exists(d):
+            os.makedirs(d)
+
 def main():
     st.set_page_config(
         page_title="🛡️ Command Center | Smart Resource Allocator", 
@@ -1180,12 +1187,29 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded"
     )
+    
+    # 🛰️ Mission Initialization
+    initialize_mission_environment()
+    
     try:
         run_dashboard()
     except Exception as e:
         import traceback
-        st.error(f"🚨 Operational Error: {str(e)}")
-        st.expander("Diagnostic Traceback").code(traceback.format_exc())
+        st.error("### 🚨 Mission-Critical System Failure")
+        st.markdown(f"""
+        **The system encountered an unanticipated tactical error.** 
+        This is most likely due to a brief interruption in the AI satellite link or the mission database.
+        
+        **Recommended Recovery Actions:**
+        1. 🔄 **Refresh your browser** to re-establish the encrypted session.
+        2. 🔑 **Verify API Secrets**: Ensure your `GOOGLE_API_KEY` is correctly configured in your environment.
+        3. 📂 **Check File Integrity**: If you were uploading a file, verify the format and try again.
+        
+        *Technicians can view the detailed telemetry pulse below.*
+        """)
+        
+        with st.expander("🛠️ Tactical Diagnostic Pulse (Technical Traceback)"):
+            st.code(f"Error Type: {type(e).__name__}\nMessage: {str(e)}\n\n{traceback.format_exc()}")
 
     st.markdown("""
     <div style="margin-top: 80px; padding: 40px 10px; border-top: 1px solid rgba(66, 133, 244, 0.3); text-align: center;">
