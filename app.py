@@ -1322,12 +1322,83 @@ def main():
         with st.expander("🛠️ Tactical Diagnostic Pulse (Technical Traceback)"):
             st.code(f"Error Type: {type(e).__name__}\nMessage: {str(e)}\n\n{traceback.format_exc()}")
 
+    # --- ENGINEERING ATTRIBUTION COMPONENT ---
     st.markdown("""
-    <div style="margin-top: 80px; padding: 40px 10px; border-top: 1px solid rgba(66, 133, 244, 0.3); text-align: center;">
-        <div style="font-family: monospace; color: #94a3b8; font-size: 0.75rem; letter-spacing: 3px;">Lead System Architect</div>
-        <div style="color: #ffffff; font-size: 1.5rem; font-weight: 800;">JASWANTH HANUMANTHU</div>
-        <div style="color: #4285F4; font-size: 0.7rem; font-weight: 600; margin-top: 5px;">MISSION-CRITICAL HUMANITARIAN AI</div>
-    </div>
+        <style>
+        /* Professional Developer Footer Styling */
+        .dev-signature-container {
+            margin-top: 80px;
+            padding: 40px 10px;
+            border-top: 1px solid rgba(66, 133, 244, 0.3);
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            width: 100%;
+        }
+
+        .dev-header {
+            font-family: 'JetBrains Mono', monospace;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .dev-name {
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 25px;
+        }
+
+        .dev-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dev-button {
+            font-family: 'JetBrains Mono', monospace;
+            color: #4285F4;
+            text-decoration: none;
+            font-size: 0.8rem;
+            border: 1px solid rgba(66, 133, 244, 0.4);
+            padding: 10px 20px;
+            border-radius: 4px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(66, 133, 244, 0.05);
+        }
+
+        .dev-button:hover {
+            background: #4285F4;
+            color: #ffffff !important;
+            box-shadow: 0 0 20px rgba(66, 133, 244, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .build-info {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 1px;
+        }
+        </style>
+
+        <div class="dev-signature-container">
+            <div class="dev-header">Lead System Architect</div>
+            <div class="dev-name">JASWANTH HANUMANTHU</div>
+            <div class="dev-links">
+                <a href="https://www.linkedin.com/in/jaswanth-hanumanthu" target="_blank" class="dev-button">LINKEDIN_CORE</a>
+                <a href="https://github.com/JaswanthHanumanthu/Smart-Resource-Allocation" target="_blank" class="dev-button">GITHUB_SOURCE</a>
+            </div>
+            <div class="build-info">
+                STABLE RELEASE V2.0 // GOOGLE SOLUTION CHALLENGE 2026 // VISAKHAPATNAM, IN
+            </div>
+        </div>
     """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
