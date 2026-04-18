@@ -21,3 +21,17 @@ class Volunteer(BaseModel):
     latitude: float
     longitude: float
     availability: bool = True
+
+class StrategicAllocation(BaseModel):
+    need_id: int
+    volunteer_name: str
+    reasoning: str
+    impact_projection: str
+
+class TacticalInsight(BaseModel):
+    strategic_summary: str = Field(..., description="High-level overview of the current resource landscape.")
+    allocations: List[StrategicAllocation]
+    chart_labels: List[str] = Field(..., description="Categories for Plotly charts (e.g., sectors).")
+    chart_values: List[float] = Field(..., description="Numerical values corresponding to chart_labels.")
+    social_roi_score: int = Field(..., ge=0, le=100)
+    reasoning_log: str = Field(..., description="Detailed AI logic for the suggested distribution.")

@@ -690,6 +690,43 @@ def run_dashboard():
                 total_impacted = v_df['people_affected'].sum() if 'people_affected' in v_df.columns else len(v_df)*5
                 st.info(f"💡 **Strategic Snapshot:** {int(total_impacted):,} lives secured across the current operation.")
 
+                # --- AI UNIFIED TACTICAL INSIGHT ---
+                st.markdown("### 🛰️ AI Strategic Intelligence Pulse")
+                with st.container(border=True):
+                    if st.button("Generate Tactical Intelligence Report", use_container_width=True):
+                        from src.processor import get_tactical_insights
+                        with st.spinner("🤖 Consolidating multi-sector telemetry..."):
+                            insights = get_tactical_insights(v_df, st.session_state.get('volunteers_db', []))
+                        
+                        if insights:
+                            st.markdown(f"**Strategic Summary:** {insights.get('strategic_summary', 'N/A')}")
+                            
+                            t_col1, t_col2 = st.columns([1, 1])
+                            with t_col1:
+                                # Automated Plotly Chart
+                                import plotly.express as px
+                                chart_df = pd.DataFrame({
+                                    'Sector': insights.get('chart_labels', []),
+                                    'Intensity': insights.get('chart_values', [])
+                                })
+                                if not chart_df.empty:
+                                    fig = px.bar(chart_df, x='Sector', y='Intensity', color='Intensity', 
+                                                 color_continuous_scale='Reds', title="AI-Prioritized Sector Intensity")
+                                    fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=300)
+                                    st.plotly_chart(fig, use_container_width=True)
+                            
+                            with t_col2:
+                                st.metric("Social ROI Projection", f"{insights.get('social_roi_score', 0)}%")
+                                st.markdown("#### 🧠 Strategic Reasoning Log")
+                                st.info(insights.get('reasoning_log', 'Strategic alignment verified.'))
+                            
+                            st.markdown("#### 🎯 AI-Suggested Strategic Allocations")
+                            for alloc in insights.get('allocations', []):
+                                with st.expander(f"Need ID {alloc.get('need_id')} → {alloc.get('volunteer_name')}"):
+                                    st.write(f"**Reasoning:** {alloc.get('reasoning')}")
+                                    st.caption(f"Impact Projection: {alloc.get('impact_projection')}")
+                st.divider()
+
                 sel_idx = st.session_state.get('selected_idx')
 
                 col1, col2, col3 = st.columns([1, 1.2, 1.8])
