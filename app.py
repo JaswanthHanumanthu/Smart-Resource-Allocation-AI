@@ -1393,7 +1393,7 @@ def main():
             <div class="dev-name">JASWANTH HANUMANTHU</div>
             <div class="dev-links">
                 <a href="https://www.linkedin.com/in/jaswanth-hanumanthu" target="_blank" class="dev-button">LINKEDIN_CORE</a>
-                <a href="https://github.com/JaswanthHanumanthu/Smart-Resource-Allocation" target="_blank" class="dev-button">GITHUB_SOURCE</a>
+                <a href="https://github.com/JaswanthHanumanthu/Smart-Resource-Allocation-AI" target="_blank" class="dev-button">GITHUB_SOURCE</a>
             </div>
             <div class="build-info">
                 STABLE RELEASE V2.0 // GOOGLE SOLUTION CHALLENGE 2026 // VISAKHAPATNAM, IN
