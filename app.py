@@ -68,10 +68,17 @@ def switch_page(page_name, nav_title=None):
     # --- 🛰️ AUTO-SYNC MAP PERSISTENCE ---
     if page_name == "Impact Map":
         db_df = st.session_state.get('needs_df', pd.DataFrame())
-        if not df_df.empty:
+        if not db_df.empty:
             st.session_state['map_active_data'] = db_df
-        elif st.session_state.get('map_active_data') is None:
-            pass 
+        else:
+            global_baseline = [
+                {"id": "DEMO_1", "category": "Medical", "urgency": 9, "latitude": 28.6139, "longitude": 77.2090, "city": "Delhi", "description": "Critical supply gap detected in urban core.", "people_affected": 1250, "status": "Pending", "verified": False},
+                {"id": "DEMO_2", "category": "Food", "urgency": 7, "latitude": 40.7128, "longitude": -74.0060, "city": "New York", "description": "Strategic node needs resource leveling.", "people_affected": 800, "status": "Verified", "verified": True},
+                {"id": "DEMO_3", "category": "Shelter", "urgency": 8, "latitude": -1.2921, "longitude": 36.8219, "city": "Nairobi", "description": "Rapid response required for local displacement.", "people_affected": 3200, "status": "Escalated", "verified": False},
+                {"id": "DEMO_4", "category": "Water", "urgency": 10, "latitude": 19.0760, "longitude": 72.8777, "city": "Mumbai", "description": "Emergency water desalination units required.", "people_affected": 15000, "status": "Critical", "verified": False},
+                {"id": "DEMO_5", "category": "Power", "urgency": 6, "latitude": 34.0522, "longitude": -118.2437, "city": "Los Angeles", "description": "Grid stabilizing for medical facilities.", "people_affected": 450, "status": "Stabilizing", "verified": True}
+            ]
+            st.session_state['map_active_data'] = pd.DataFrame(global_baseline)
 
 initialize_mission_state()
 
@@ -1581,6 +1588,7 @@ def run_dashboard():
                                 st.rerun()
 
         # --- 🕹️ TOP-TIER MISSION TILE NAVIGATION (Bottom Realignment) ---
+        st.markdown("<div style='height: 100px'></div>", unsafe_allow_html=True)
         st.divider()
         st.markdown("### 🏹 Quick Mission Access Navigation")
         t_col1, t_col2, t_col3 = st.columns(3)
@@ -1664,12 +1672,14 @@ def main():
             visibility: visible !important;
             display: flex !important;
             z-index: 999999 !important;
+            overflow-y: auto !important;
         }
         
         [data-testid="stSidebar"] > div {
             overflow-y: auto !important;
             height: 100vh !important;
             max-height: 100vh !important;
+            overflow-x: hidden !important;
         }
 
         /* 💎 CUSTOM GLOWING SCROLLBAR */
@@ -1785,9 +1795,9 @@ def main():
                 font-weight: 800 !important;
             }
             @keyframes active-shine-light {
-                0% { background: #f8fafc; }
-                50% { background: #ffffff; border-color: #4285F4; }
-                100% { background: #f8fafc; }
+                0% { background: #f8fafc; box-shadow: 0 0 15px rgba(66, 133, 244, 0.2); }
+                50% { background: #ffffff; border-color: #4285F4; box-shadow: 0 0 30px rgba(66, 133, 244, 0.6); }
+                100% { background: #f8fafc; box-shadow: 0 0 15px rgba(66, 133, 244, 0.2); }
             }
         }
 
