@@ -1,19 +1,31 @@
-streamlit==1.47.1
-pandas==2.0.3
-google-generativeai==0.3.1
+# Core framework
+streamlit>=1.31.0
+
+# Mapping
+streamlit-folium==0.17.0
 folium==0.15.1
-streamlit-folium==0.26.2
-branca==0.7.0
-numpy==1.23.5
-Pillow==10.0.1
-plotly==5.17.0
-streamlit-lottie==0.0.5
-requests==2.32.4
-python-dotenv==1.0.0
-pydantic==2.11.7
-pypdf==6.9.2
-fpdf2==2.7.6
-gunicorn==21.2.0
-uvicorn==0.24.0
-geopy==2.4.1
-geocoder==1.38.1
+
+# AI / LLM
+google-generativeai>=0.5.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.26.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# UI extras
+streamlit-lottie>=0.0.5
+plotly>=5.18.0
+
+# HTTP
+requests>=2.31.0
+
+# PDF generation (used in src/utils/pdf_generator.py)
+fpdf2>=2.7.9
+
+# PDF reading (used in src/processor.py for uploaded PDFs)
+pypdf>=4.0.0
+
+# SQLite is built into Python — no extra package needed

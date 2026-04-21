@@ -169,6 +169,7 @@ def process_field_image(image_bytes: bytes) -> dict:
         img = {"mime_type": "image/jpeg", "data": image_bytes}
         response = model.generate_content([prompt, img])
         clean_res = response.text.replace('```json', '').replace('```', '').strip()
+        return json.loads(clean_res)  # BUG FIX: was missing this return
     except Exception:
         # Emergency evaluation fallback — ensures no UI crash
         return {
@@ -306,14 +307,14 @@ User Query: {query}"""
     except Exception as e:
         return f"Sorry, I encountered an issue checking the data: {str(e)}"
 
-@st.cache_data
-def predict_depletion_zones(df: pd.DataFrame) -> list:
+@st.cache_data(show_spinner=False)
+def predict_depletion_zones(df_json: str) -> list:
     """
-    Feeds recent historical resource data to Gemini API to predict high-risk zones 
-    for resource depletion.
+    Feeds recent historical resource data to Gemini API to predict high-risk zones
+    for resource depletion. Accepts JSON string for cache compatibility.
     """
-    import json
     try:
+        df = pd.read_json(df_json)
         used_key = get_google_api_key()
         if not used_key:
             raise Exception("No API Key Provided")
@@ -322,7 +323,8 @@ def predict_depletion_zones(df: pd.DataFrame) -> list:
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Sample recent data to fit prompt limits
-        sample_df = df.tail(30)[['category', 'urgency', 'latitude', 'longitude', 'status']]
+        cols = [c for c in ['category', 'urgency', 'latitude', 'longitude', 'status'] if c in df.columns]
+        sample_df = df.tail(30)[cols]
         data_json = sample_df.to_dict(orient='records')
         
         prompt = f"""
@@ -343,11 +345,10 @@ def predict_depletion_zones(df: pd.DataFrame) -> list:
           {{"latitude": 37.0, "longitude": -122.0, "risk_level": "Extreme", "reasoning": "..."}}
         ]
         """
-        # --- ⏳ Mission Timeout Configuration ---
-        response = model.generate_content(prompt, request_options={"timeout": 20})
+        response = model.generate_content(prompt, request_options={"timeout": 15})
         text = response.text.replace('```json', '').replace('```', '').strip()
         return json.loads(text)
-    except Exception as e:
+    except Exception:
         # Fallback for prototype stability
         return [
             {"latitude": 37.760, "longitude": -122.435, "risk_level": "Extreme", "reasoning": "Historical data shows a 45% increase in unmet requests in this sector over 30 days."},
@@ -564,17 +565,16 @@ def generate_elite_report(uploaded_file, current_df: pd.DataFrame, api_key: str 
             "data_quality_notes": "AI response parsing failed."
         }
 
-@st.cache_data
-def run_autonomous_matching(needs_df: pd.DataFrame, volunteers: list) -> list:
+@st.cache_data(show_spinner=False)
+def run_autonomous_matching(needs_df_json: str, volunteers_json: str) -> list:
     """
-    AI-Autonomous Matching Engine.
-    Scans the needs database against the volunteer database to find elite pairings.
+    AI-Autonomous Matching Engine. Accepts JSON strings for st.cache_data compatibility.
     Returns: List of suggested matches with Confidence Score and AI Reasoning.
     """
-    import json
-    import math
+    needs_df = pd.read_json(needs_df_json)
+    volunteers = json.loads(volunteers_json)
     
-    pending_needs = needs_df[needs_df['status'] == 'Pending'].to_dict(orient='records')
+    pending_needs = needs_df[needs_df['status'] == 'Pending'].to_dict(orient='records') if 'status' in needs_df.columns else needs_df.to_dict(orient='records')
     if not pending_needs or not volunteers:
         return []
 
@@ -722,10 +722,10 @@ def get_tactical_insights(df_json: str, volunteers_json: str, api_key: str = Non
         Analyze this humanitarian operational landscape.
         
         SITUATIONAL DATA (Top 10 Needs):
-        {{needs_summary}}
+        {needs_summary}
         
         AVAILABLE ASSETS (Volunteers):
-        {{vol_summary}}
+        {vol_summary}
         
         Generate a Tactical Insight Report including optimal allocations and visualization data.
         Respond ONLY with a JSON object matching this schema:
@@ -740,9 +740,9 @@ def get_tactical_insights(df_json: str, volunteers_json: str, api_key: str = Non
                     "sdg_alignment": "string (e.g. SDG 3: Good Health)"
                 }}
             ],
-            "chart_labels": ["Sector Name", ...],
-            "chart_values": [urgent_count, ...],
-            "social_roi_score": integer (0-100),
+            "chart_labels": ["Sector Name", "..."],
+            "chart_values": ["urgent_count", "..."],
+            "social_roi_score": "integer (0-100)",
             "reasoning_log": "markdown summary of allocation philosophy"
         }}
         """
