@@ -2,7 +2,7 @@
 
 A high-fidelity, professional-grade mission control dashboard for NGOs to manage community needs, volunteer matching, and crisis forecasting. Built for **speed, privacy, and field resilience**.
 
-**Live Link :- https://jaswanthhanumanthu-smart-resource-allocation-app-i2k7ts.streamlit.app/**
+**Live Link :- https://jaswanthhanumanthu-smart-resource-allocation-ai-build-web-app.streamlit.app/**
 
 [![AI Powered](https://img.shields.io/badge/AI-Gemini%201.5%20Flash-blue?style=for-the-badge&logo=google-gemini)](https://ai.google.dev/)
 [![Privacy First](https://img.shields.io/badge/Privacy-PII%20Redacted-green?style=for-the-badge)](https://github.com/JaswanthHanumanthu/Smart-Resource-Allocation#%EF%B8%8F-ethical-ai-usage--data-privacy)
