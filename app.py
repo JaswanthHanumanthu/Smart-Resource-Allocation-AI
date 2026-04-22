@@ -1,5 +1,15 @@
 import streamlit as st
+
+# --- 🏥 SATELLITE INITIALIZATION ---
+st.set_page_config(
+    page_title="Strategic Resource Allocation AI",
+    page_icon="🛰️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 import pandas as pd
+import io
 import google.generativeai as genai
 import contextlib
 import sys
@@ -12,14 +22,6 @@ from pathlib import Path
 
 # Ensure src/ is importable from deployment root
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-# --- 🏥 SATELLITE INITIALIZATION ---
-st.set_page_config(
-    page_title="Strategic Resource Allocation AI",
-    page_icon="🛰️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
 try:
     _api_key = st.secrets.get("GOOGLE_API_KEY")
@@ -121,7 +123,7 @@ def run_dashboard():
     st.markdown("""
         <style>
         .block-container {
-            padding-top: 120px !important;
+            padding-top: 130px !important;
         }
         div[data-testid="stMetric"] {
             background: rgba(255, 255, 255, 0.05);
@@ -203,7 +205,25 @@ def run_dashboard():
     if 'needs_stale' not in st.session_state: st.session_state['needs_stale'] = True
 
     # --- 🧭 PROFESSIONAL SAAS NAVIGATION (User Image Structure) ---
+    st.sidebar.markdown("""
+        <style>
+        /* 🍔 FORCE SIDEBAR TOGGLE VISIBILITY */
+        [data-testid="collapsedControl"], .st-emotion-cache-18ni7ve {
+            z-index: 999999 !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-radius: 50% !important;
+            padding: 5px !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     st.sidebar.title("🛡️ Command Center")
+    st.sidebar.markdown("""
+        <div style="display: flex; align-items: center; padding: 6px 12px; background: rgba(52, 168, 83, 0.1); border-radius: 20px; border: 1px solid rgba(52, 168, 83, 0.2); margin-bottom: 20px;">
+            <span class="pulse-dot"></span>
+            <span style="color: #34A853; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.1em;">🛰️ SAT-LINK: ACTIVE</span>
+        </div>
+    """, unsafe_allow_html=True)
     st.sidebar.caption("Mission-Critical Release V2.0")
     st.sidebar.markdown("---")
 
@@ -213,62 +233,46 @@ def run_dashboard():
 
     # 1. Expanders Grouping
     with st.sidebar:
-        with st.expander("🛰️ Strategic Command", expanded=True):
-            st.session_state['offline_mode'] = st.toggle("📡 Simulate Field Offline Mode", value=st.session_state.get('offline_mode', False))
-            show_admin = st.checkbox("🛡️ System Administration (Hidden)", value=False)
-            nav_options = ["🕹️ System Dashboard", "📡 Data Upload", "🗺️ Impact Map", "📈 Executive Impact Analytics", "🚨 EMERGENCY DISPATCH 🚨"]
-            page_map = {"🕹️ System Dashboard": "System Dashboard", "📡 Data Upload": "Field Report Center", "🗺️ Impact Map": "Impact Map", "📈 Executive Impact Analytics": "Executive Impact Analytics", "🚨 EMERGENCY DISPATCH 🚨": "Rapid Dispatch"}
+        with st.expander("🔥 Crisis Ops", expanded=True):
+            nav_options = ["🕹️ System Dashboard", "📡 Data Upload", "🗺️ Impact Map", "🚨 EMERGENCY DISPATCH 🚨"]
+            page_map = {"🕹️ System Dashboard": "System Dashboard", "📡 Data Upload": "Field Report Center", "🗺️ Impact Map": "Impact Map", "🚨 EMERGENCY DISPATCH 🚨": "Rapid Dispatch"}
             _sel = st.radio("Go to", nav_options, index=0, label_visibility="collapsed")
-            if show_admin:
-                st.session_state["page"] = "🛡️ Admin Verification"
-            else:
-                st.session_state["page"] = page_map[_sel]
+            st.session_state["page"] = page_map[_sel]
             
-            if st.button("🚀 Launch 'Perfect Demo' Mode", use_container_width=True, type="primary"):
-                epicenter_lat, epicenter_lon = 28.6139, 77.2090
+            if st.button("🚀 Launch 'Perfect Demo' Mode", use_container_width=True, type="primary", help="Initializes the mission database with 50+ tactical crisis nodes."):
                 st.session_state['demo_active'] = True
-                demo_records = []
-                for i in range(20):
-                    demo_records.append({"urgency": random.randint(8, 10), "category": random.choice(["Medical", "Food", "Shelter"]), "latitude": epicenter_lat + random.uniform(-0.05, 0.05), "longitude": epicenter_lon + random.uniform(-0.05, 0.05), "description": f"Demo #{i+100}", "people_affected": random.randint(10, 100), "status": "Pending", "verified": True})
-                st.session_state['needs_df'] = pd.concat([st.session_state.get('needs_df', pd.DataFrame()), pd.DataFrame(demo_records)], ignore_index=True)
-                st.toast("🚀 Perfect Demo Mode Activated.")
                 st.rerun()
 
-        with st.expander("📊 Intelligence Center"):
+        with st.expander("📊 Intelligence"):
+            if st.button("📈 Executive Analytics", use_container_width=True):
+                st.session_state["page"] = "Executive Impact Analytics"
+                st.rerun()
+            if st.button("🕵️ Run Logistical Audit", use_container_width=True):
+                st.session_state["page"] = "Field Report Center"
+                st.session_state["run_audit_now"] = True
+                st.rerun()
             st.session_state['high_traffic'] = st.toggle("📈 Simulate High Traffic", value=st.session_state.get('high_traffic', False))
             _df = st.session_state.get('needs_df', pd.DataFrame())
-            _total_impact = int(_df['people_affected'].sum()) if not _df.empty and 'people_affected' in _df.columns else len(_df) * 5
-            
-            try:
-                if not _df.empty:
-                    _active_crisis = "CRITICAL" if not _df[_df['urgency'] >= 9].empty else "STABLE"
-                else:
-                    _active_crisis = "STABLE"
-            except Exception:
-                _active_crisis = "STABLE"
-                
-            st.markdown(f'<div style="padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">Impact: {_total_impact:,}<br>Status: {_active_crisis}</div>', unsafe_allow_html=True)
-            if st.session_state.get('sync_queue'):
-                st.warning(f"🔄 {len(st.session_state['sync_queue'])} Reports Pending Sync")
+            _total_impact = int(_df['people_affected'].sum()) if not _df.empty and 'people_affected' in _df.columns else 0
+            st.markdown(f'<div style="padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:0.8rem;">Impact: {_total_impact:,} lives<br>Status: MISSION ACTIVE</div>', unsafe_allow_html=True)
 
         from src.processor import process_voice_command, translate_text
-        with st.expander("🛠️ Field Logistics"):
-            st.session_state['lang'] = st.selectbox("🌐 UI Language", ["English", "Hindi", "Telugu"])
-            is_light = st.toggle("☀️ Minimalist Light Mode")
+        with st.expander("🛠️ Resource Tools"):
+            st.session_state['offline_mode'] = st.toggle("📡 Field Offline Mode", value=st.session_state.get('offline_mode', False))
+            st.session_state['lang'] = st.selectbox("🌐 Language", ["English", "Hindi", "Telugu"])
+            is_light = st.toggle("☀️ Light Mode")
             st.session_state['theme_mode'] = "Apple-Light" if is_light else "Cyber-Dark"
-            low_bandwidth = st.toggle("🚫 Low Bandwidth Mode", value=False)
-            sat_overlay = st.toggle("🛰️ Satellite Intel Overlay", value=False)
+            low_bandwidth = st.toggle("🚫 Low Bandwidth", value=False)
+            sat_overlay = st.toggle("🛰️ Satellite Intel", value=False)
             st.session_state['map_style'] = 'satellite' if sat_overlay else 'dark'
             
-            # Fix 14: Safety fallback for unstable st.audio_input
             try:
-                voice_input = st.audio_input("🎤 Satellite Voice Command")
+                voice_input = st.audio_input("🎤 Voice Command")
                 if voice_input:
                     cmd = process_voice_command(voice_input.read())
-                    if "error" not in cmd: st.success("✅ Voice Processed")
-                    else: st.error("⚠️ Voice Error")
+                    if "error" not in cmd: st.success("✅ Processed")
             except Exception:
-                st.info("🎤 Audio input not available in this deployment.")
+                st.info("🎤 Audio N/A")
     page = st.session_state["page"]
     active_tools_css = ""
     if low_bandwidth:
@@ -432,7 +436,10 @@ def run_dashboard():
         v_df = df[df['verified'] == True] if 'verified' in df.columns else df
 
         if v_df.empty:
-            st.info("Awaiting verified mission data.")
+            st.info("🛰️ **System Standby:** Awaiting verified mission data to populate the dashboard.")
+            if st.button("🚀 Simulate Mission Data", key="btn_sim_dash"):
+                st.session_state['demo_active'] = True
+                st.rerun()
             if lottie_radar:
                 st_lottie(lottie_radar, height=200, key="empty_radar")
         else:
@@ -813,6 +820,9 @@ def run_dashboard():
                     </div>
                 </div>
             """, unsafe_allow_html=True)
+            if st.button("🚀 Launch 'Perfect Demo' Mode", key="btn_sim_map", use_container_width=True, type="primary"):
+                st.session_state['demo_active'] = True
+                st.rerun()
             st.stop()
         
         # Tactical Map Controls
@@ -866,7 +876,7 @@ def run_dashboard():
                     """
                     Elite Cached Map Generator: Prevents Render memory spikes by caching mission layers.
                     """
-                    df = pd.read_json(data_json)
+                    df = pd.read_json(io.StringIO(data_json))
                     
                     # Compute dynamic bounds if data exists for "Zoom to Fit"
                     sw, ne = None, None
@@ -1036,7 +1046,10 @@ def run_dashboard():
         df = st.session_state.get('needs_df', pd.DataFrame())
         df = df[df['verified'] == True] if 'verified' in df.columns else df
         if df.empty:
-            st.warning("No verified data available.")
+            st.warning("📊 **Analytics Inhibited:** No verified mission data available for executive review.")
+            if st.button("🚀 Simulate Analytical Payload", key="btn_sim_analytics"):
+                st.session_state['demo_active'] = True
+                st.rerun()
         else:
             total_impacted = int(df['people_affected'].sum()) if 'people_affected' in df.columns else len(df)*5
             avg_response_time = 4.2
@@ -1284,7 +1297,10 @@ def run_dashboard():
         v_df = needs_df[needs_df['verified'] == True] if 'verified' in needs_df.columns else needs_df
 
         if v_df.empty:
-            st.warning("Needs database is currently empty.")
+            st.warning("🤝 **Dispatch Offline:** Mission database is currently empty. Awaiting field signal.")
+            if st.button("🚀 Initialize Demo Dispatch Fleet", key="btn_sim_dispatch"):
+                st.session_state['demo_active'] = True
+                st.rerun()
         else:
             volunteers = st.session_state['volunteers_db']
             selected_v = st.selectbox("Select Available Field Unit", [v['name'] for v in volunteers])
@@ -1420,10 +1436,27 @@ def main():
             box-shadow: 0 0 10px #4285F4;
         }
         
-        /* 🚫 HIDE DEFAULT HEADER & ARROWS */
+        /* 🏗️ RESTORE SIDEBAR TOGGLE & HEADER */
         [data-testid="stHeader"] {
-            display: none !important;
-            visibility: hidden !important;
+            background: transparent !important;
+            height: 60px !important;
+            z-index: 99999 !important;
+        }
+        
+        [data-testid="collapsedControl"] {
+            background: rgba(66, 133, 244, 0.2) !important;
+            border-radius: 50% !important;
+            color: #4285F4 !important;
+            left: 20px !important;
+            top: 20px !important;
+            z-index: 999999 !important;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(66, 133, 244, 0.4) !important;
+        }
+
+        [data-testid="collapsedControl"]:hover {
+            background: rgba(66, 133, 244, 0.2) !important;
+            transform: scale(1.05);
         }
 
         /* 🚀 TOP-BAR TILE NAVIGATION & SHINE with Realignment */
@@ -1480,10 +1513,25 @@ def main():
         }
 
         .nav-tile:hover {
-            transform: translateY(-8px) scale(1.02); /* 8px Kinetic Lift */
+            transform: translateY(-5px) !important;
             border-color: #4285F4 !important;
             box-shadow: 0 15px 30px rgba(66, 133, 244, 0.3);
             z-index: 15;
+        }
+
+        /* 🟢 SAT-LINK PULSE ANIMATION */
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 168, 83, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(52, 168, 83, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 168, 83, 0); }
+        }
+        .pulse-dot {
+            width: 8px; height: 8px;
+            background: #34A853;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse-green 2s infinite;
         }
 
         /* 🎯 THEME-AWARE DYNAMIC GLOWS & ACTIVE SHINE */
@@ -1501,32 +1549,54 @@ def main():
             }
         }
         @media (prefers-color-scheme: light) {
-            .nav-tile {
-                background: linear-gradient(135deg, #ffffff, #f1f5f9) !important;
-                border: 1px solid rgba(15, 23, 42, 0.1) !important;
+            /* 🔵 GOOGLE BLUE HEADER CONTRAST */
+            h1, h2, h3, h4, h5, h6, .nav-tile-label, .kpi-label, .crisis-deck-title {
+                color: #1A73E8 !important;
+                -webkit-text-fill-color: #1A73E8 !important;
             }
-            .nav-tile-label { color: #0f172a !important; }
-            .nav-tile:hover {
-                box-shadow: 0 15px 35px rgba(15, 23, 42, 0.15) !important;
-                border-color: #0f172a !important;
+            body, [data-testid="stAppViewContainer"], .main, .stMarkdown, p, span, label {
+                color: #2c3e50 !important;
             }
-            .nav-tile.active {
-                box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2), 
-                            inset 0 0 15px rgba(255, 255, 255, 0.8) !important;
-                border: 2px solid #0f172a !important;
-                background: #f8fafc !important;
-                animation: active-shine-light 4s infinite;
+
+            .command-center-title {
+                background: linear-gradient(120deg, #1A73E8 10%, #4285F4 90%) !important;
+                -webkit-background-clip: text !important;
+                -webkit-text-fill-color: transparent !important;
             }
-            .nav-tile .stButton > button {
-                background: linear-gradient(135deg, #e1effe, #c3ddfd) !important;
-                color: #1e293b !important;
-                border: 1px solid rgba(66, 133, 244, 0.3) !important;
-                font-weight: 800 !important;
+
+            /* 💎 UNIVERSAL 3D GLASSMORPHISM: LIGHT MODE */
+            .nav-tile, .high-end-card, div[data-testid="stMetric"], [data-testid="stExpander"] {
+                background: rgba(255, 255, 255, 0.8) !important;
+                backdrop-filter: blur(15px) !important;
+                -webkit-backdrop-filter: blur(15px) !important;
+                border: 1px solid rgba(0, 0, 0, 0.1) !important;
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15) !important;
             }
-            @keyframes active-shine-light {
-                0% { background: #f8fafc; box-shadow: 0 0 15px rgba(66, 133, 244, 0.2); }
-                50% { background: #ffffff; border-color: #4285F4; box-shadow: 0 0 30px rgba(66, 133, 244, 0.6); }
-                100% { background: #f8fafc; box-shadow: 0 0 15px rgba(66, 133, 244, 0.2); }
+
+            .nav-tile:hover, .high-end-card:hover, div[data-testid="stMetric"]:hover {
+                transform: translateY(-5px) !important;
+                box-shadow: 0 15px 45px rgba(31, 38, 135, 0.25) !important;
+                border-color: #4285F4 !important;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            /* 👻 GHOST WHITE AUTOMATIC CONTRAST */
+            h1, h2, h3, h4, h5, h6, .nav-tile-label, .kpi-label, .kpi-massive, .crisis-deck-title {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+            }
+
+            .nav-tile, .high-end-card, div[data-testid="stMetric"], [data-testid="stExpander"] {
+                background: rgba(255, 255, 255, 0.03) !important;
+                backdrop-filter: blur(12px) !important;
+                -webkit-backdrop-filter: blur(12px) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            }
+
+            .nav-tile:hover, .high-end-card:hover, div[data-testid="stMetric"]:hover {
+                transform: translateY(-5px) !important;
+                box-shadow: 0 0 20px rgba(66, 133, 244, 0.4) !important;
             }
         }
 
@@ -1542,16 +1612,9 @@ def main():
         }
 
         div[data-testid="stMetric"]:hover, .high-end-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             border-color: #4285F4 !important;
-        }
-
-        @media (prefers-color-scheme: light) {
-            div[data-testid="stMetric"], .high-end-card, [data-testid="stExpander"] {
-                background: rgba(2, 6, 23, 0.03) !important;
-                border-color: rgba(2, 6, 23, 0.1) !important;
-            }
         }
         </style>
     """, unsafe_allow_html=True)

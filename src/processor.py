@@ -2,6 +2,7 @@ import google.generativeai as genai
 import json
 import streamlit as st
 import pandas as pd
+import io
 from pathlib import Path
 from .utils.api_keys import get_google_api_key
 
@@ -249,7 +250,7 @@ def summarize_situation_ai(df_json: str, api_key: str = None) -> str:
     Uses Gemini to generate a fast 2-sentence executive summary.
     We pass JSON to the cache logic to avoid unhashable DF errors.
     """
-    df = pd.read_json(df_json)
+    df = pd.read_json(io.StringIO(df_json))
     used_key = api_key or get_google_api_key()
     if not used_key:
         import time
@@ -314,7 +315,7 @@ def predict_depletion_zones(df_json: str) -> list:
     for resource depletion. Accepts JSON string for cache compatibility.
     """
     try:
-        df = pd.read_json(df_json)
+        df = pd.read_json(io.StringIO(df_json))
         used_key = get_google_api_key()
         if not used_key:
             raise Exception("No API Key Provided")
@@ -571,7 +572,7 @@ def run_autonomous_matching(needs_df_json: str, volunteers_json: str) -> list:
     AI-Autonomous Matching Engine. Accepts JSON strings for st.cache_data compatibility.
     Returns: List of suggested matches with Confidence Score and AI Reasoning.
     """
-    needs_df = pd.read_json(needs_df_json)
+    needs_df = pd.read_json(io.StringIO(needs_df_json))
     volunteers = json.loads(volunteers_json)
     
     pending_needs = needs_df[needs_df['status'] == 'Pending'].to_dict(orient='records') if 'status' in needs_df.columns else needs_df.to_dict(orient='records')
@@ -705,7 +706,7 @@ def get_tactical_insights(df_json: str, volunteers_json: str, api_key: str = Non
     """
     Advanced Structured Output Engine: Cached for massive Render speedups.
     """
-    df = pd.read_json(df_json)
+    df = pd.read_json(io.StringIO(df_json))
     volunteers = json.loads(volunteers_json)
     try:
         used_key = api_key or get_google_api_key()
