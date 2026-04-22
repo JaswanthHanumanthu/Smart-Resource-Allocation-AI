@@ -240,7 +240,27 @@ def run_dashboard():
             st.session_state["page"] = page_map[_sel]
             
             if st.button("🚀 Launch 'Perfect Demo' Mode", use_container_width=True, type="primary", help="Initializes the mission database with 50+ tactical crisis nodes."):
+                epicenter_lat, epicenter_lon = 28.6139, 77.2090
                 st.session_state['demo_active'] = True
+                demo_records = []
+                for i in range(50):
+                    demo_records.append({
+                        "id": f"DEMO_{i+10}",
+                        "urgency": random.randint(7, 10),
+                        "category": random.choice(["Medical", "Food", "Shelter", "Water", "Power"]),
+                        "latitude": epicenter_lat + random.uniform(-0.1, 0.1),
+                        "longitude": epicenter_lon + random.uniform(-0.1, 0.1),
+                        "description": f"Tactical Alert #{i+100}: Resource leveling required.",
+                        "people_affected": random.randint(50, 5000),
+                        "status": "Pending",
+                        "verified": True
+                    })
+                st.session_state['needs_df'] = pd.concat([st.session_state.get('needs_df', pd.DataFrame()), pd.DataFrame(demo_records)], ignore_index=True)
+                st.toast("🚀 50+ Tactical Nodes Synchronized.")
+                st.rerun()
+
+            if st.button("🛡️ Admin Review Portal", use_container_width=True):
+                st.session_state["page"] = "🛡️ Admin Verification"
                 st.rerun()
 
         with st.expander("📊 Intelligence"):
