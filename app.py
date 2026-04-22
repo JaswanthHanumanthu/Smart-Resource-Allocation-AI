@@ -123,7 +123,7 @@ def run_dashboard():
     st.markdown("""
         <style>
         .block-container {
-            padding-top: 130px !important;
+            margin-top: 130px !important;
         }
         div[data-testid="stMetric"] {
             background: rgba(255, 255, 255, 0.05);
