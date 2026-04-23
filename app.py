@@ -148,7 +148,12 @@ def run_dashboard():
         
         .block-container {
             margin-top: 130px !important;
-            animation: fadeInSurfacing 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            animation: heroFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        @keyframes heroFadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
 
         /* 3D Card Depth & Glassmorphism Refinement */
@@ -451,6 +456,27 @@ def run_dashboard():
     pulse_class = "ai-pulse-critical" if _is_high_crisis else "ai-pulse-idle"
     pulse_icon = "zap" if _is_high_crisis else "activity"
 
+    # --- 🏗️ HERO SECTION: SYSTEM PULSE & JUDGE'S GUIDE ---
+    st.markdown("""
+        <div style='display: flex; justify-content: space-between; align-items: center; background: rgba(66, 133, 244, 0.05); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(66, 133, 244, 0.1); margin-bottom: 25px;'>
+            <div style='display: flex; gap: 25px;'>
+                <span style='font-size: 0.7rem; font-weight: 800; color: #34A853;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #34A853; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🛰️ Satellite Link: Active</span>
+                <span style='font-size: 0.7rem; font-weight: 800; color: #4285F4;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #4285F4; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🧠 AI Core: Operational</span>
+                <span style='font-size: 0.7rem; font-weight: 800; color: #FBBC05;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #FBBC05; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 📍 Global Nodes: Online</span>
+            </div>
+            <div style='font-size: 0.65rem; font-weight: 800; color: #5F6368; text-transform: uppercase; letter-spacing: 2px;'>System Status: OPTIMAL</div>
+        </div>
+        <style>
+            @keyframes statusPulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.2); opacity: 0.5; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.info("👋 **Judge's Guide:** Start by selecting a tool from the **🛰️ Strategic Command** expander in the sidebar to begin the mission simulation.")
+    
     st.markdown(f"""
         <style>
         /* Transparent Button Overlay for Tiles */
