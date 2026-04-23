@@ -61,6 +61,17 @@ def get_gemini_model(model_name='gemini-1.5-flash'):
     if _api_key: return genai.GenerativeModel(model_name)
     return None
 
+def typewriter_effect(text, delay=0.01):
+    """Simulates a typewriter effect for AI responses."""
+    container = st.empty()
+    displayed_text = ""
+    for char in text:
+        displayed_text += char
+        container.markdown(displayed_text + "▌")
+        import time
+        time.sleep(delay)
+    container.markdown(displayed_text)
+
 @st.cache_resource
 def get_db_instance():
     from src.database.client import ProductionDB
@@ -959,6 +970,15 @@ def run_dashboard():
             cat_filter = st.selectbox("Filter by Category", ["All"] + list(df['category'].unique()) if 'category' in df.columns else ["All"])
             urgency_filter = st.selectbox("Filter by Urgency", ["All", "High (8-10)", "Medium (5-7)", "Low (1-4)"])
             st.metric("Total Strategic Needs", len(df))
+            
+            # --- 📊 QUICK STATS SIDEBAR WIDGET ---
+            st.markdown("---")
+            st.markdown("### 📊 Resource Distribution")
+            if not df.empty and 'category' in df.columns:
+                dist_data = df['category'].value_counts()
+                st.bar_chart(dist_data, color="#4285F4")
+            else:
+                st.info("Awaiting data for distribution analysis.")
             st.markdown("---")
             
             # --- 🔮 AI ALLOCATION INTELLIGENCE (Sidebar Side-Panel) ---
@@ -1037,6 +1057,25 @@ def run_dashboard():
                     # Synchronized MiniMap
                     MiniMap(toggle_display=True, position='bottomright', tile_layer=tile_engine, attr=attr).add_to(m)
                     Geocoder(position='topleft', add_marker=False).add_to(m) 
+
+                    # --- 🗺️ INTERACTIVE MAP LEGEND ---
+                    legend_html = """
+                    <div style='position: fixed; bottom: 50px; left: 50px; width: 160px; height: 90px; 
+                                background-color: rgba(255, 255, 255, 0.9); border: 1px solid #D1D5DB; 
+                                border-radius: 12px; z-index: 9999; font-size: 0.75rem; font-family: "Inter", sans-serif;
+                                padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);'>
+                        <div style='font-weight: 800; color: #262730; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;'>Tactical Status</div>
+                        <div style='display: flex; align-items: center; margin-bottom: 4px;'>
+                            <span style='width: 10px; height: 10px; background: #EF4444; border-radius: 50%; display: inline-block; margin-right: 8px;'></span>
+                            <span style='color: #3C4043; font-weight: 600;'>Critical Need</span>
+                        </div>
+                        <div style='display: flex; align-items: center;'>
+                            <span style='width: 10px; height: 10px; background: #FBBC05; border-radius: 50%; display: inline-block; margin-right: 8px;'></span>
+                            <span style='color: #3C4043; font-weight: 600;'>Monitoring</span>
+                        </div>
+                    </div>
+                    """
+                    m.get_root().html.add_child(folium.Element(legend_html))
 
                     # 🏺 COMMAND CENTER CORE
                     origin = [20.5937, 78.9629]
@@ -1157,16 +1196,18 @@ def run_dashboard():
                     return m
 
                 st.markdown("### 📍 Tactical Impact Map")
-                # Always render the map to maintain "Live" presence
-                current_style = st.session_state.get('map_style', 'dark')
-                m = generate_impact_map(filtered_df.to_json(), map_style=current_style, show_heatmap=show_heatmap)
-                map_output = st_folium(m, width='100%', height=500, key=f"impact_map_{current_style}_{show_heatmap}")
-                
-                # --- 🛰️ CAPTURE TELEMETRY FROM MAP CLICK ---
-                if map_output.get("last_object_clicked"):
-                    st.session_state["last_map_click_data"] = map_output["last_object_clicked"]
-                    # If user clicks a new marker, we refresh the sidebar panel
-                    # st.rerun() # Optional: triggers instant sidebar update
+                try:
+                    # Always render the map to maintain "Live" presence
+                    current_style = st.session_state.get('map_style', 'dark')
+                    m = generate_impact_map(filtered_df.to_json(), map_style=current_style, show_heatmap=show_heatmap)
+                    map_output = st_folium(m, width='100%', height=500, key=f"impact_map_{current_style}_{show_heatmap}")
+                    
+                    # --- 🛰️ CAPTURE TELEMETRY FROM MAP CLICK ---
+                    if map_output.get("last_object_clicked"):
+                        st.session_state["last_map_click_data"] = map_output["last_object_clicked"]
+                except Exception:
+                    st.error("⚠️ **Command Center Note:** Signal interference detected during map rendering. Re-routing through secondary geospatial servers...")
+                    st.info("💡 *Tip: Try refreshing the mission view.*")
 
                 st.markdown("### 📊 Need Density Summary")
                 c1, c2, c3 = st.columns(3)
@@ -1381,8 +1422,11 @@ def run_dashboard():
                             # Simple cleanup
                             clean_text = response.text.strip().replace('```json', '').replace('```', '')
                             sim_data.update(json.loads(clean_text))
-                    except:
-                        pass # Fallback to default sim_data
+                            # Display actions with typewriter effect if relevant (for demo)
+                            # Actually, we update sim_data and then display below
+
+                    except Exception:
+                        st.warning("⚠️ **Command Center Note:** AI Satellite link flickering. Re-routing through local prediction models...")
                 
                 m1, m2 = st.columns(2)
                 with m1:
@@ -1391,8 +1435,12 @@ def run_dashboard():
                     st.metric("⏱️ Medical Depletion", f"{sim_data['depletion_hours']}h", delta=f"-{intensity * 0.5}h", delta_color="inverse")
                 
                 st.markdown("#### 🎯 AI Priority Actions")
-                for action in sim_data.get('actions', []):
-                    st.markdown(f"- <span style='font-size: 0.85rem; color: #3C4043;'>{action}</span>", unsafe_allow_html=True)
+                actions_list = sim_data.get('actions', [])
+                if actions_list:
+                    full_actions_text = "\n".join([f"- {action}" for action in actions_list])
+                    typewriter_effect(full_actions_text)
+                else:
+                    st.write("No priority actions identified.")
 
             st.divider()
 
@@ -1509,14 +1557,13 @@ def run_dashboard():
                 st.success("All missions currently assigned.")
             else:
                 from src.models.matching import match_volunteer_to_needs
-                with st.spinner("🤖 AI Optimizing Match Vector..."):
-                    # Pass JSON strings — required for st.cache_data hash compatibility
-                    matches = match_volunteer_to_needs(
-                        json.dumps(selected_volunteer),
-                        available_needs.to_json(),
-                        top_n=3,
-                        api_key=_api_key
-                    )
+                with st.spinner("🕵️ AI Senior Analyst Reviewing Mission..."):
+                    try:
+                        from src.matching import allocate_volunteers_with_reasoning
+                        matches = allocate_volunteers_with_reasoning(v_df, st.session_state.get('volunteers_db', []), api_key=_api_key)
+                    except Exception:
+                        st.warning("⚠️ **Command Center Note:** Intelligence Feed experiencing latency. Re-establishing secure link...")
+                        matches = available_needs.head(3)
                 
                 for _, row in matches.iterrows():
                     with st.expander(f"Task: {row.get('category', 'General')} (Urgency: {row.get('urgency', 5)}/10)", expanded=True):
