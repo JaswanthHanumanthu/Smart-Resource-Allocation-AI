@@ -20,18 +20,21 @@ import numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Ensure src/ is importable from deployment root
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-# --- 🛰️ PERSISTENT MISSION INITIALIZATION (HARD START) ---
+# --- 🛰️ PERSISTENT MISSION INITIALIZATION (MUMBAI HARD START) ---
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
-    st.session_state.map_data = pd.DataFrame([
-        {"id": "IND_1", "category": "Medical", "urgency": 9, "latitude": 28.6139, "longitude": 77.2090, "city": "Delhi", "description": "Critical supply gap in regional hospitals.", "people_affected": 12000, "status": "Critical", "verified": True, "human_context_summary": "Delhi: Urgent medical resupply needed for core trauma centers."},
-        {"id": "IND_2", "category": "Water", "urgency": 10, "latitude": 19.0760, "longitude": 72.8777, "city": "Mumbai", "description": "Severe water scarcity in urban districts.", "people_affected": 25000, "status": "Critical", "verified": True, "human_context_summary": "Mumbai: Emergency water desalination units required immediately."},
-        {"id": "IND_3", "category": "Food", "urgency": 7, "latitude": 12.9716, "longitude": 77.5946, "city": "Bangalore", "description": "Logistics bottleneck in food distribution networks.", "people_affected": 5500, "status": "Pending", "verified": True, "human_context_summary": "Bangalore: Strategic node needs resource leveling for community kitchens."}
-    ])
-    st.session_state.intel_feed = "🛰️ **System Alert:** Intelligence channels synchronized. Monitoring global resource nodes. Mission status: OPTIMAL."
+    st.session_state['mumbai_coords'] = [19.0760, 72.8777] # Center Mumbai
+    mumbai_data = [
+        {"id": "MUM_1", "category": "Medical", "urgency": 9, "latitude": 18.9067, "longitude": 72.8147, "city": "Colaba", "description": "Emergency Center 1: Critical supply gap.", "people_affected": 5000, "status": "Critical", "verified": True, "human_context_summary": "Colaba: Urgent medical resupply needed for coastal trauma center."},
+        {"id": "MUM_2", "category": "Food", "urgency": 7, "latitude": 19.0596, "longitude": 72.8295, "city": "Bandra", "description": "Supply Hub A: Bandra Logistics Hub.", "people_affected": 2500, "status": "Pending", "verified": True, "human_context_summary": "Bandra: Priority Sector 4. Resource nodes at 85% capacity."},
+        {"id": "MUM_3", "category": "Water", "urgency": 10, "latitude": 19.1050, "longitude": 72.8267, "city": "Juhu", "description": "Emergency Center 2: Water desalination needed.", "people_affected": 8000, "status": "Critical", "verified": True, "human_context_summary": "Juhu: Moderate flood risk detected in coastal sectors."},
+        {"id": "MUM_4", "category": "Shelter", "urgency": 8, "latitude": 19.1136, "longitude": 72.8697, "city": "Andheri", "description": "Supply Hub B: Temporary housing.", "people_affected": 12000, "status": "Escalated", "verified": True, "human_context_summary": "Andheri: Shelter capacity reached; overflow deployment required."},
+        {"id": "MUM_5", "category": "General", "urgency": 6, "latitude": 19.2183, "longitude": 72.9781, "city": "Thane", "description": "Emergency Center 3: Regional coordination.", "people_affected": 1500, "status": "Stabilizing", "verified": True, "human_context_summary": "Thane: Monitoring regional resource balancing operations."}
+    ]
+    st.session_state.map_data = pd.DataFrame(mumbai_data)
+    st.session_state.map_active_data = pd.DataFrame(mumbai_data)
+    st.session_state.needs_df = pd.DataFrame(mumbai_data)
+    st.session_state.intel_feed = "🛰️ Intelligence Synced: Moderate flood risk detected in Mumbai coastal sectors. Resource nodes at 85% capacity. Priority: Sector 4 (Bandra Logistics Hub)."
 
 
 # --- 🚀 INITIAL MISSION TELEMETRY (WARM START) ---
@@ -779,14 +782,7 @@ def run_dashboard():
                     st.markdown("### 📋 Context Feed")
                     with st.container(height=650):
                         if v_df.empty:
-                            st.info(st.session_state.get('intel_feed', "🛰️ **System Alert:** Intelligence channels synchronized. Monitoring global resource nodes..."))
-                            st.info("""
-                            🛰️ **Global Situation Summary**
-                            *   ⚠️ **Medical supply chain delay** detected in northern logistics clusters.
-                            *   🟢 **Water purification rollout** successful in southern coastal zones.
-                            *   🟠 **Food security alert** issued for central distribution nodes.
-                            *   📡 **Satellite link operational** across all global mission sectors.
-                            """)
+                            st.info(st.session_state.get('intel_feed', "🛰️ Intelligence Synced: Moderate flood risk detected in Mumbai coastal sectors. Resource nodes at 85% capacity."))
                         else:
                             for idx, row in v_df.iterrows():
                                 urg_glow = "card-critical" if row.get('urgency', 0) >= 8 else "card-warning" if row.get('urgency', 0) >= 5 else "card-safe"
@@ -958,7 +954,7 @@ def run_dashboard():
                     <div style='font-size: 4rem; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(66,133,244,0.5));'>🛰️</div>
                     <div style='font-size: 1.8rem; font-weight: 900; color: #ffffff; letter-spacing: -1px; margin-bottom: 10px;'>Awaiting Satellite Telemetry...</div>
                     <div style='color: #94a3b8; font-size: 0.95rem; line-height: 1.6; max-width: 450px; margin: 0 auto;'>
-                        System is re-calculating global resource nodes. Please upload a field mission manifest or launch the 'Perfect Demo' mode to initialize nodes.
+                        System is re-calculating global resource nodes in Mumbai. Please upload a field mission manifest or launch the 'Perfect Demo' mode to initialize nodes.
                     </div>
                     <div style='margin-top: 35px;'>
                         <span style='padding: 10px 20px; background: rgba(66,133,244,0.1); border: 1px solid #4285F4; border-radius: 8px; color: #4285F4; font-size: 0.8rem; font-weight: 800; text-transform: uppercase;'>Back-end Re-routing Active</span>
@@ -1050,8 +1046,8 @@ def run_dashboard():
                         attr = 'CartoDB DarkMatter'
 
                     m = folium.Map(
-                        location=[20.5937, 78.9629], 
-                        zoom_start=5, 
+                        location=list(st.session_state['mumbai_coords']), 
+                        zoom_start=11, 
                         tiles=tile_engine,
                         attr=attr,
                         control_scale=True
@@ -1085,7 +1081,7 @@ def run_dashboard():
                     m.get_root().html.add_child(folium.Element(legend_html))
 
                     # 🏺 COMMAND CENTER CORE
-                    origin = [20.5937, 78.9629]
+                    origin = list(st.session_state['mumbai_coords'])
                     
                     # 🔥 Heatmap & Resource Routing
                     heat_data = []
@@ -1398,7 +1394,7 @@ def run_dashboard():
                         <div style='font-size: 0.8rem; font-weight: 800; color: #EA4335; text-transform: uppercase; letter-spacing: 1px;'>Active Simulation State</div>
                         <div style='font-size: 2.2rem; font-weight: 900; color: #3C4043; line-height: 1.2;'>Level {intensity} Intensity</div>
                         <p style='font-size: 0.9rem; color: #5F6368; margin-top: 10px;'>
-                            AI is projecting cascading failures and resource depletion vectors based on a <b>{intensity}x</b> disaster escalation factor.
+                            AI is projecting cascading failures and resource depletion vectors based on a <b>{intensity}x</b> disaster escalation factor in Mumbai.
                         </p>
                         <div style='background: rgba(234, 67, 53, 0.1); padding: 10px; border-radius: 8px; font-size: 0.75rem; color: #EA4335; font-weight: 700;'>
                             ⚠️ WARNING: Strategic Reserves at Risk
