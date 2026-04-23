@@ -22,6 +22,15 @@ from pathlib import Path
 
 # Ensure src/ is importable from deployment root
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+
+# --- 🚀 INITIAL MISSION TELEMETRY (WARM START) ---
+initial_markers = [
+    {"id": "NY_01", "city": "New York", "lat": 40.7128, "lng": -74.0060, "urgency": 9, "cat": "Medical"},
+    {"id": "LDN_01", "city": "London", "lat": 51.5074, "lng": -0.1278, "urgency": 7, "cat": "Food"},
+    {"id": "MUM_01", "city": "Mumbai", "lat": 19.0760, "lng": 72.8777, "urgency": 10, "cat": "Water"},
+    {"id": "TOK_01", "city": "Tokyo", "lat": 35.6762, "lng": 139.6503, "urgency": 8, "cat": "Shelter"},
+    {"id": "NRB_01", "city": "Nairobi", "lat": -1.2921, "lng": 36.8219, "urgency": 6, "cat": "General"}
+]
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
 try:
     _api_key = st.secrets.get("GOOGLE_API_KEY")
@@ -69,11 +78,11 @@ is_field_worker = False
 def initialize_mission_state():
     """Unified Neural Initialization: Establishes mission state across all sectors."""
     global_baseline = [
-        {"id": "DEMO_1", "category": "Medical", "urgency": 9, "latitude": 28.6139, "longitude": 77.2090, "city": "Delhi", "description": "Critical supply gap detected in urban core.", "people_affected": 1250, "status": "Pending", "verified": False},
-        {"id": "DEMO_2", "category": "Food", "urgency": 7, "latitude": 40.7128, "longitude": -74.0060, "city": "New York", "description": "Strategic node needs resource leveling.", "people_affected": 800, "status": "Verified", "verified": True},
-        {"id": "DEMO_3", "category": "Shelter", "urgency": 8, "latitude": -1.2921, "longitude": 36.8219, "city": "Nairobi", "description": "Rapid response required for local displacement.", "people_affected": 3200, "status": "Escalated", "verified": False},
-        {"id": "DEMO_4", "category": "Water", "urgency": 10, "latitude": 19.0760, "longitude": 72.8777, "city": "Mumbai", "description": "Emergency water desalination units required.", "people_affected": 15000, "status": "Critical", "verified": False},
-        {"id": "DEMO_5", "category": "Power", "urgency": 6, "latitude": 34.0522, "longitude": -118.2437, "city": "Los Angeles", "description": "Grid stabilizing for medical facilities.", "people_affected": 450, "status": "Stabilizing", "verified": True}
+        {"id": "ZONE_1", "category": "Medical", "urgency": 9, "latitude": 40.7128, "longitude": -74.0060, "city": "New York", "description": "Critical supply gap in urban hospitals.", "people_affected": 5000, "status": "Critical", "verified": True, "human_context_summary": "NYC: Urgent medical resupply needed for core trauma centers."},
+        {"id": "ZONE_2", "category": "Food", "urgency": 7, "latitude": 51.5074, "longitude": -0.1278, "city": "London", "description": "Logistics backlog affecting food distribution.", "people_affected": 2500, "status": "Pending", "verified": True, "human_context_summary": "London: Supply chain bottleneck detected in central hubs."},
+        {"id": "ZONE_3", "category": "Shelter", "urgency": 8, "latitude": 35.6762, "longitude": 139.6503, "city": "Tokyo", "description": "Emergency housing required for displaced residents.", "people_affected": 8000, "status": "Escalated", "verified": True, "human_context_summary": "Tokyo: Shelter capacity reached; overflow housing deployment required."},
+        {"id": "ZONE_4", "category": "Water", "urgency": 10, "latitude": 19.0760, "longitude": 72.8777, "city": "Mumbai", "description": "Massive water purification units needed immediately.", "people_affected": 20000, "status": "Critical", "verified": True, "human_context_summary": "Mumbai: Severe water scarcity in densely populated districts."},
+        {"id": "ZONE_5", "category": "General", "urgency": 6, "latitude": -1.2921, "longitude": 36.8219, "city": "Nairobi", "description": "Resource leveling across local community centers.", "people_affected": 1200, "status": "Stabilizing", "verified": True, "human_context_summary": "Nairobi: Coordinating regional resource balancing operations."}
     ]
     defaults = {
         "current_page": "System Dashboard", "page": "System Dashboard",
@@ -122,58 +131,57 @@ def run_dashboard():
 
     st.markdown("""
         <style>
-        /* Force Light Theme */
-        .stApp {
+        /* Force Global Light Mode Reset */
+        [data-testid="stAppViewContainer"], [data-testid="stHeader"], .stApp {
             background-color: #FFFFFF !important;
-            color: #3C4043 !important;
+            background-image: none !important;
         }
-        .block-container {
-            margin-top: 130px !important;
+        [data-testid="stSidebar"] {
+            background-color: #F0F2F6 !important;
+            background-image: none !important;
         }
         
-        /* Glassmorphism Cards & Metrics */
+        /* Global Text Contrast */
+        .stApp, .stApp p, .stApp span, .stApp div, .stApp label {
+            color: #262730 !important;
+        }
+        
+        .block-container {
+            margin-top: 130px !important;
+            animation: fadeInSurfacing 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        /* 3D Card Depth & Glassmorphism Refinement */
         .high-end-card, div[data-testid="stMetric"], .stMetric {
-            background: rgba(255, 255, 255, 0.7) !important;
+            background: rgba(255, 255, 255, 0.9) !important;
             backdrop-filter: blur(10px) !important;
             -webkit-backdrop-filter: blur(10px) !important;
-            border: 1px solid rgba(66, 133, 244, 0.3) !important;
-            box-shadow: 0 10px 30px rgba(31, 38, 135, 0.1) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
             border-radius: 16px !important;
             padding: 20px !important;
             transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
-            color: #3C4043 !important;
+            color: #262730 !important;
         }
         
         .high-end-card:hover, div[data-testid="stMetric"]:hover {
             transform: translateY(-8px) !important;
-            box-shadow: 0 20px 40px rgba(31, 38, 135, 0.2) !important;
-            border: 1px solid rgba(66, 133, 244, 0.5) !important;
+            box-shadow: 0 12px 24px rgba(31, 38, 135, 0.15) !important;
+            border: 1px solid rgba(66, 133, 244, 0.3) !important;
         }
 
-        /* Typography */
+        /* Typography Reset */
         h1, h2, h3, .command-center-title, .crisis-deck-title, .kpi-massive {
             color: #1A73E8 !important;
             background: none !important;
             -webkit-text-fill-color: #1A73E8 !important;
-        }
-        
-        body, p, span, div {
-            color: #3C4043;
-        }
-
-        /* Lottie-style Fade-In Animation */
-        @keyframes fadeInSurfacing {
-            0% { opacity: 0; transform: translateY(15px); filter: blur(5px); }
-            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
-        }
-        .block-container {
-            animation: fadeInSurfacing 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            text-shadow: none !important;
         }
 
         /* Sidebar Aesthetics */
         [data-testid="stSidebar"] [data-testid="stExpander"] {
-            background-color: #f8f9fa !important;
-            border: 1px solid #e0e0e0 !important;
+            background-color: #FFFFFF !important;
+            border: 1px solid #D1D5DB !important;
             border-radius: 12px !important;
             margin-bottom: 8px !important;
         }
@@ -182,10 +190,10 @@ def run_dashboard():
             font-weight: 700 !important;
         }
 
-        /* Shining/Glow Removal for Light Mode */
-        .neon-border-safe, .neon-border-critical {
-            border: 1px solid rgba(66, 133, 244, 0.3) !important;
-            box-shadow: 0 10px 30px rgba(31, 38, 135, 0.1) !important;
+        /* Lottie-style Fade-In Animation */
+        @keyframes fadeInSurfacing {
+            0% { opacity: 0; transform: translateY(15px); filter: blur(5px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
 
         /* Urgent Banner & Nav Tiles */
@@ -193,7 +201,7 @@ def run_dashboard():
             background: rgba(239, 68, 68, 0.1) !important;
             backdrop-filter: blur(10px) !important;
             border-left: 5px solid #EF4444 !important;
-            color: #3C4043 !important;
+            color: #262730 !important;
             padding: 20px !important;
             border-radius: 12px !important;
             margin-bottom: 25px !important;
@@ -203,17 +211,17 @@ def run_dashboard():
         }
 
         .nav-tile {
-            background: rgba(255, 255, 255, 0.7) !important;
-            backdrop-filter: blur(10px) !important;
-            border: 1px solid rgba(66, 133, 244, 0.3) !important;
+            background: #FFFFFF !important;
+            border: 1px solid #D1D5DB !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
             padding: 15px !important;
             border-radius: 12px !important;
             transition: all 0.3s ease !important;
-            color: #3C4043 !important;
+            color: #262730 !important;
         }
         .nav-tile.active {
             border: 1px solid #1A73E8 !important;
-            background: rgba(26, 115, 232, 0.1) !important;
+            background: rgba(26, 115, 232, 0.05) !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -467,17 +475,11 @@ def run_dashboard():
             font-weight: 900;
             letter-spacing: -2px;
             margin: 0;
-            background: linear-gradient(120deg, #4285F4 10%, #00D1FF 30%, #ffffff 50%, #00D1FF 70%, #4285F4 90%);
-            background-size: 200% auto;
+            background: linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 15px rgba(66, 133, 244, 0.4);
+            text-shadow: none !important;
             display: inline-block;
-            animation: header-shimmer 5s linear infinite;
-        }}
-        @keyframes header-shimmer {{
-            0% {{ background-position: -200% center; }}
-            100% {{ background-position: 200% center; }}
         }}
         @media (max-width: 640px) {{
             .main-header {{ text-align: center; display: block !important; }}
@@ -487,7 +489,7 @@ def run_dashboard():
         <div class="main-header">
             <i data-lucide="{pulse_icon}" class="{pulse_class}" style="width: 42px; height: 42px;"></i>
             <h1 class="command-center-title">
-                Live Impact Command Center <span style="font-size: 0.35em; vertical-align: middle; padding: 6px 12px; background: var(--brand-glow); border: 1px solid var(--brand-primary); border-radius: 10px; color: var(--brand-primary); margin-left: 15px; letter-spacing: 0;">ELITE v2.0</span>
+                Smart Resource Allocation <span style="font-size: 0.35em; vertical-align: middle; padding: 6px 12px; background: rgba(66, 133, 244, 0.1); border: 1px solid #1A73E8; border-radius: 10px; color: #1A73E8; margin-left: 15px; letter-spacing: 0;">ELITE v2.0</span>
             </h1>
         </div>
     """, unsafe_allow_html=True)
@@ -551,7 +553,7 @@ def run_dashboard():
         else:
             st.markdown("""
                 <style>
-                .crisis-deck-title {
+                .crisis-deck-title {{
                     font-family: 'Inter', sans-serif;
                     font-size: 2.5rem;
                     font-weight: 900;
@@ -559,34 +561,11 @@ def run_dashboard():
                     text-align: left;
                     margin: 0;
                     text-transform: uppercase;
-                    transform: perspective(500px) rotateX(10deg);
-                    display: inline-block;
-                    
-                    /* Adaptive Kinetic Typography Setup */
-                    background-size: 200% auto;
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    animation: crisis-shimmer 5s linear infinite;
-                    
-                    /* Light Mode Defaults: Polished Metal Effect */
-                    background-image: linear-gradient(120deg, var(--text-color) 35%, rgba(66, 133, 244, 0.4) 50%, var(--text-color) 65%);
-                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-                }
-
-                /* Dark Mode: Cyber-Grid Neon Glow */
-                @media (prefers-color-scheme: dark) {
-                    .crisis-deck-title {
-                        background-image: linear-gradient(120deg, var(--text-color) 35%, rgba(255, 255, 255, 0.8) 50%, var(--text-color) 65%);
-                        text-shadow: 0 0 10px rgba(66, 133, 244, 0.8), 
-                                     0 0 20px rgba(66, 133, 244, 0.5), 
-                                     0 10px 10px rgba(0, 0, 0, 0.5);
-                    }
-                }
-
-                @keyframes crisis-shimmer {
-                    0% { background-position: -200% center; }
-                    100% { background-position: 200% center; }
-                }
+                    color: #1A73E8 !important;
+                    background: none !important;
+                    -webkit-text-fill-color: #1A73E8 !important;
+                    text-shadow: none !important;
+                }}
                 </style>
                 <div style="margin-bottom: 25px;">
                     <h2 class="crisis-deck-title">Crisis Response Command Deck</h2>
@@ -688,14 +667,14 @@ def run_dashboard():
 
                 # --- 🏦 SENIOR LEADERSHIP SUMMARY: PREMIER INTELLIGENCE ---
                 st.markdown("""
-                    <div class='high-end-card' style='background: linear-gradient(90deg, #4285F4 0%, #34A853 100%); padding: 2px; border-radius: 12px; margin-bottom: 20px;'>
-                        <div class='high-end-card' style='padding: 20px; border-radius: 10px;'>
+                    <div class='high-end-card' style='border-left: 5px solid #4285F4 !important; margin-bottom: 20px;'>
+                        <div style='padding: 5px;'>
                             <h2 style='margin: 0; font-size: 1.8rem; font-weight: 900; letter-spacing: -0.02em; color: #1A73E8;'>
                                 <i class="fas fa-microchip" style="margin-right: 15px; color: #4285F4;"></i>
                                 Global Mission Intelligence
-                                <span style="font-size: 0.8rem; vertical-align: middle; margin-left: 10px; padding: 4px 8px; background: rgba(66, 133, 244, 0.2); border: 1px solid #4285F4; border-radius: 20px; color: #4285F4; font-weight: 700;">AI GEN 5.0</span>
+                                <span style="font-size: 0.8rem; vertical-align: middle; margin-left: 10px; padding: 4px 8px; background: rgba(66, 133, 244, 0.1); border: 1px solid #4285F4; border-radius: 20px; color: #1A73E8; font-weight: 700;">AI GEN 5.0</span>
                             </h2>
-                            <p style='margin: 10px 0 0 0; color: #94A3B8; font-size: 0.95rem; font-weight: 500;'>Consolidated Global Mission Intelligence & Predictive Asset Allocation</p>
+                            <p style='margin: 10px 0 0 0; color: #5F6368; font-size: 0.95rem; font-weight: 500;'>Consolidated Global Mission Intelligence & Predictive Asset Allocation</p>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
@@ -751,24 +730,40 @@ def run_dashboard():
                 with col1:
                     st.markdown("### 📋 Context Feed")
                     with st.container(height=650):
-                        for idx, row in v_df.iterrows():
-                            urg_glow = "card-critical" if row.get('urgency', 0) >= 8 else "card-warning" if row.get('urgency', 0) >= 5 else "card-safe"
-                            is_active = (sel_idx == idx)
-
-                            narrative = row.get('human_context_summary', 'Coordinating community relief.')
-                            card_html = f"""
-                                <div class='high-end-card {urg_glow if is_active else ""}' style='padding: 16px; border-radius: 16px; margin-bottom: 12px; cursor: pointer;'>
-                                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;'>
-                                        <span style='font-size: 0.65rem; color: var(--text-medium-contrast); text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;'>{row.get('category', 'General')}</span>
-                                        <span style='font-size: 0.65rem; font-weight: 800; color: var(--impact-{urg_glow.split('-')[1] if '-' in urg_glow else 'green'});'>{f'VOLUNTEERS NEEDED' if row.get('urgency', 0) >= 8 else 'STABLE'}</span>
+                        if v_df.empty:
+                            st.markdown("""
+                                <div class='high-end-card' style='padding: 20px; border-left: 5px solid #4285F4;'>
+                                    <div style='font-size: 0.8rem; font-weight: 800; color: #4285F4; text-transform: uppercase; letter-spacing: 1px;'>💡 AI Insight of the Hour</div>
+                                    <div style='font-size: 1.1rem; font-weight: 700; color: #3C4043; margin-top: 12px;'>Global Resource Trend Analysis</div>
+                                    <p style='font-size: 0.9rem; color: #5F6368; margin-top: 10px; line-height: 1.5;'>
+                                        <b>Current Snapshot:</b> Global resource networks are showing high stability with a 14% increase in logistical efficiency over the last 24 hours. 
+                                        <b>AI Prediction:</b> Regional hubs in Southeast Asia are projected to require medical-grade power backups by 04:00 UTC. 
+                                        <i>Satellite status is currently OPTIMAL.</i>
+                                    </p>
+                                    <div style='background: rgba(66, 133, 244, 0.05); padding: 10px; border-radius: 8px; font-size: 0.75rem; color: #4285F4; font-weight: 700; margin-top: 15px;'>
+                                        🛰️ AI SYNAPSE: ANALYZING GLOBAL TELEMETRY
                                     </div>
-                                    <div style='font-weight: 700; font-size: 0.95rem; color: var(--text-high-contrast); line-height: 1.4;'>{narrative}</div>
                                 </div>
-                            """
-                            st.markdown(card_html, unsafe_allow_html=True)
-                            if st.button(f"Mission Insight {idx}", key=f"sel_{idx}", use_container_width=True, type="secondary" if not is_active else "primary"):
-                                st.session_state['selected_idx'] = idx
-                                st.rerun()
+                            """, unsafe_allow_html=True)
+                        else:
+                            for idx, row in v_df.iterrows():
+                                urg_glow = "card-critical" if row.get('urgency', 0) >= 8 else "card-warning" if row.get('urgency', 0) >= 5 else "card-safe"
+                                is_active = (sel_idx == idx)
+
+                                narrative = row.get('human_context_summary', 'Coordinating community relief.')
+                                card_html = f"""
+                                    <div class='high-end-card {urg_glow if is_active else ""}' style='padding: 16px; border-radius: 16px; margin-bottom: 12px; cursor: pointer;'>
+                                        <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;'>
+                                            <span style='font-size: 0.65rem; color: #5F6368; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;'>{row.get('category', 'General')}</span>
+                                            <span style='font-size: 0.65rem; font-weight: 800; color: {'#EA4335' if row.get('urgency', 0) >= 8 else '#34A853'};'>{f'VOLUNTEERS NEEDED' if row.get('urgency', 0) >= 8 else 'STABLE'}</span>
+                                        </div>
+                                        <div style='font-weight: 700; font-size: 0.95rem; color: #262730; line-height: 1.4;'>{narrative}</div>
+                                    </div>
+                                """
+                                st.markdown(card_html, unsafe_allow_html=True)
+                                if st.button(f"Mission Insight {idx}", key=f"sel_{idx}", use_container_width=True, type="secondary" if not is_active else "primary"):
+                                    st.session_state['selected_idx'] = idx
+                                    st.rerun()
 
                 with col2:
                     st.markdown("### 📖 Detail View")
@@ -1216,7 +1211,7 @@ def run_dashboard():
                         labels={'crisis_score': 'Crisis Score (0-100)', 'category': 'Community Sector'}
                     )
                     fig_bar.update_layout(
-                        template="plotly_dark", 
+                        template="plotly_white", 
                         paper_bgcolor='rgba(0,0,0,0)', 
                         plot_bgcolor='rgba(0,0,0,0)',
                         height=350,
@@ -1265,9 +1260,9 @@ def run_dashboard():
                     }
                 ))
                 fig_gauge.update_layout(
-                    template="plotly_dark", 
+                    template="plotly_white", 
                     paper_bgcolor='rgba(0,0,0,0)', 
-                    font={'color': "white", 'family': "Arial"},
+                    font={'color': "#262730", 'family': "Arial"},
                     height=250,
                     margin=dict(l=20, r=20, t=50, b=20)
                 )
@@ -1389,10 +1384,10 @@ def run_dashboard():
                 fig_trend.add_trace(go.Scatter(x=dates, y=needs_reported, name='Needs Reported', mode='lines+markers', line=dict(color='#ef4444', width=3)))
                 fig_trend.add_trace(go.Scatter(x=dates, y=resources_allocated, name='Resources Allocated', mode='lines+markers', fill='tozeroy', line=dict(color='#10b981', width=3)))
                 fig_trend.update_layout(
-                    template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                    template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                     margin=dict(l=0, r=0, t=20, b=0), height=350,
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                    xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)')
+                    xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)')
                 )
                 st.plotly_chart(fig_trend, use_container_width=True)
 
@@ -1423,7 +1418,7 @@ def run_dashboard():
                         hover_data={'Count': True}
                     )
                     fig_sb.update_layout(
-                        template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', 
+                        template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', 
                         height=450, margin=dict(t=10, l=10, r=10, b=10)
                     )
                     st.plotly_chart(fig_sb, use_container_width=True)
@@ -1553,43 +1548,24 @@ def main():
     # 🛰️ Mission Initialization
     initialize_mission_environment()
     
-    # --- 🏗️ Advanced UI Styling: Consolidated Render-Ready Build ---
+    /* --- 🏗️ Advanced UI Styling: Consolidated Light Mode Build --- */
     st.markdown("""
         <style>
-        /* 🌌 SPACE-NAVY DEPTH BACKGROUND (Consolidated) */
-        [data-testid="stAppViewContainer"] {
-            background-color: #020617 !important;
-            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%) !important;
-            position: relative;
-            z-index: 0;
-            filter: none !important;
-            backdrop-filter: none !important;
+        /* ⚪ MASTER LIGHT MODE BACKGROUND */
+        [data-testid="stAppViewContainer"], [data-testid="stHeader"], .stApp {
+            background-color: #FFFFFF !important;
+            background-image: none !important;
+            color: #262730 !important;
         }
 
         [data-testid="stAppViewContainer"]::before {
-            content: "";
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            top: -50%;
-            left: -50%;
-            z-index: -1;
-            background: radial-gradient(circle at 11% 11%, rgba(66, 133, 244, 0.05) 0%, transparent 38%),
-                        radial-gradient(circle at 89% 89%, rgba(168, 85, 247, 0.05) 0%, transparent 38%);
-            animation: mesh-shift-optimized 25s ease-in-out infinite alternate;
-            will-change: transform;
-            pointer-events: none;
-        }
-
-        @keyframes mesh-shift-optimized {
-            0% { transform: translate3d(0, 0, 0) rotate(0.1deg); }
-            100% { transform: translate3d(40px, 40px, 0) rotate(4deg); }
+            display: none !important;
         }
 
         /* 🏰 SIDEBAR RECOVERY & FORCE SCROLL */
         [data-testid="stSidebar"] {
-            background-color: #020617 !important;
-            border-right: 1px solid rgba(66, 133, 244, 0.2);
+            background-color: #F0F2F6 !important;
+            border-right: 1px solid #D1D5DB;
             visibility: visible !important;
             display: flex !important;
             z-index: 999999 !important;
@@ -1603,36 +1579,35 @@ def main():
             overflow-x: hidden !important;
         }
 
-        /* 💎 CUSTOM GLOWING SCROLLBAR */
-        [data-testid="stSidebar"]::-webkit-scrollbar { width: 4px; }
+        /* 💎 CUSTOM CLEAN SCROLLBAR */
+        [data-testid="stSidebar"]::-webkit-scrollbar { width: 6px; }
         [data-testid="stSidebar"]::-webkit-scrollbar-track { background: transparent; }
         [data-testid="stSidebar"]::-webkit-scrollbar-thumb {
-            background: #4285F4;
+            background: #D1D5DB;
             border-radius: 10px;
-            box-shadow: 0 0 10px #4285F4;
         }
         
         /* 🏗️ RESTORE SIDEBAR TOGGLE & HEADER */
         [data-testid="stHeader"] {
-            background: transparent !important;
+            background: #FFFFFF !important;
             height: 60px !important;
             z-index: 99999 !important;
         }
         
         [data-testid="collapsedControl"] {
-            background: rgba(66, 133, 244, 0.2) !important;
+            background: rgba(255, 255, 255, 0.8) !important;
             border-radius: 50% !important;
-            color: #4285F4 !important;
+            color: #1A73E8 !important;
             left: 20px !important;
             top: 20px !important;
-            z-index: 999999 !important;
+            z-index: 1000001 !important;
             transition: all 0.3s ease;
-            box-shadow: 0 0 15px rgba(66, 133, 244, 0.4) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
         }
 
         [data-testid="collapsedControl"]:hover {
-            background: rgba(66, 133, 244, 0.2) !important;
-            transform: scale(1.05);
+            transform: scale(1.1);
+            background: #FFFFFF !important;
         }
 
         /* 🚀 TOP-BAR TILE NAVIGATION & SHINE with Realignment */
@@ -1776,21 +1751,20 @@ def main():
             }
         }
 
-        /* 💎 TARGETED GLASSMORPHISM: Metrics & Cards ONLY */
+        /* 💎 TARGETED GLASSMORPHISM: Light Mode Refinement */
         div[data-testid="stMetric"], .high-end-card, [data-testid="stExpander"] {
-            background: rgba(255, 255, 255, 0.03) !important;
-            backdrop-filter: blur(15px) !important;
-            -webkit-backdrop-filter: blur(15px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            background: #FFFFFF !important;
+            border: 1px solid #D1D5DB !important;
             border-radius: 16px !important;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
             transition: all 0.3s ease;
+            color: #262730 !important;
         }
 
         div[data-testid="stMetric"]:hover, .high-end-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border-color: #4285F4 !important;
+            box-shadow: 0 12px 24px rgba(31, 38, 135, 0.1);
+            border-color: #1A73E8 !important;
         }
         </style>
     """, unsafe_allow_html=True)
