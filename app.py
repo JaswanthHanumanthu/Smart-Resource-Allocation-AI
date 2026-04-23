@@ -1448,7 +1448,6 @@ def run_dashboard():
             with col_trend:
                 st.markdown("#### 📉 Needs Reported vs Resources Allocated")
                 import plotly.graph_objects as go
-                from datetime import datetime, timedelta
 
                 dates = [datetime.now() - timedelta(days=7-i) for i in range(7)]
                 needs_reported = [random.randint(10, 50) + i*3 for i in range(7)]
