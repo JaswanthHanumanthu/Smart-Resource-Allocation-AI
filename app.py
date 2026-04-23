@@ -1621,7 +1621,7 @@ def main():
     # 🛰️ Mission Initialization
     initialize_mission_environment()
     
-    /* --- 🏗️ Advanced UI Styling: Consolidated Light Mode Build --- */
+    # --- 🏗️ Advanced UI Styling: Consolidated Light Mode Build ---
     st.markdown("""
         <style>
         /* ⚪ MASTER LIGHT MODE BACKGROUND */
