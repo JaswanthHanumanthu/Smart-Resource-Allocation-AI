@@ -89,11 +89,11 @@ is_field_worker = False
 def initialize_mission_state():
     """Unified Neural Initialization: Establishes mission state across all sectors."""
     global_baseline = [
-        {"id": "ZONE_1", "category": "Medical", "urgency": 9, "latitude": 40.7128, "longitude": -74.0060, "city": "New York", "description": "Critical supply gap in urban hospitals.", "people_affected": 5000, "status": "Critical", "verified": True, "human_context_summary": "NYC: Urgent medical resupply needed for core trauma centers."},
-        {"id": "ZONE_2", "category": "Food", "urgency": 7, "latitude": 51.5074, "longitude": -0.1278, "city": "London", "description": "Logistics backlog affecting food distribution.", "people_affected": 2500, "status": "Pending", "verified": True, "human_context_summary": "London: Supply chain bottleneck detected in central hubs."},
-        {"id": "ZONE_3", "category": "Shelter", "urgency": 8, "latitude": 35.6762, "longitude": 139.6503, "city": "Tokyo", "description": "Emergency housing required for displaced residents.", "people_affected": 8000, "status": "Escalated", "verified": True, "human_context_summary": "Tokyo: Shelter capacity reached; overflow housing deployment required."},
-        {"id": "ZONE_4", "category": "Water", "urgency": 10, "latitude": 19.0760, "longitude": 72.8777, "city": "Mumbai", "description": "Massive water purification units needed immediately.", "people_affected": 20000, "status": "Critical", "verified": True, "human_context_summary": "Mumbai: Severe water scarcity in densely populated districts."},
-        {"id": "ZONE_5", "category": "General", "urgency": 6, "latitude": -1.2921, "longitude": 36.8219, "city": "Nairobi", "description": "Resource leveling across local community centers.", "people_affected": 1200, "status": "Stabilizing", "verified": True, "human_context_summary": "Nairobi: Coordinating regional resource balancing operations."}
+        {"id": "IND_1", "category": "Medical", "urgency": 9, "latitude": 28.6139, "longitude": 77.2090, "city": "Delhi", "description": "Critical supply gap in regional hospitals.", "people_affected": 12000, "status": "Critical", "verified": True, "human_context_summary": "Delhi: Urgent medical resupply needed for core trauma centers."},
+        {"id": "IND_2", "category": "Water", "urgency": 10, "latitude": 19.0760, "longitude": 72.8777, "city": "Mumbai", "description": "Severe water scarcity in urban districts.", "people_affected": 25000, "status": "Critical", "verified": True, "human_context_summary": "Mumbai: Emergency water desalination units required immediately."},
+        {"id": "IND_3", "category": "Food", "urgency": 7, "latitude": 12.9716, "longitude": 77.5946, "city": "Bangalore", "description": "Logistics bottleneck in food distribution networks.", "people_affected": 5500, "status": "Pending", "verified": True, "human_context_summary": "Bangalore: Strategic node needs resource leveling for community kitchens."},
+        {"id": "GLB_1", "category": "Shelter", "urgency": 8, "latitude": 1.3521, "longitude": 103.8198, "city": "Singapore", "description": "Temporary housing deployment for regional refugees.", "people_affected": 3200, "status": "Escalated", "verified": True, "human_context_summary": "Singapore: Mission-critical shelter expansion underway."},
+        {"id": "GLB_2", "category": "General", "urgency": 6, "latitude": -33.8688, "longitude": 151.2093, "city": "Sydney", "description": "Resource balancing across tactical zones.", "people_affected": 1800, "status": "Stabilizing", "verified": True, "human_context_summary": "Sydney: Coordinating regional resource balancing operations."}
     ]
     defaults = {
         "current_page": "System Dashboard", "page": "System Dashboard",
@@ -768,20 +768,13 @@ def run_dashboard():
                     st.markdown("### 📋 Context Feed")
                     with st.container(height=650):
                         if v_df.empty:
-                            st.markdown("""
-                                <div class='high-end-card' style='padding: 20px; border-left: 5px solid #4285F4;'>
-                                    <div style='font-size: 0.8rem; font-weight: 800; color: #4285F4; text-transform: uppercase; letter-spacing: 1px;'>💡 AI Insight of the Hour</div>
-                                    <div style='font-size: 1.1rem; font-weight: 700; color: #3C4043; margin-top: 12px;'>Global Resource Trend Analysis</div>
-                                    <p style='font-size: 0.9rem; color: #5F6368; margin-top: 10px; line-height: 1.5;'>
-                                        <b>Current Snapshot:</b> Global resource networks are showing high stability with a 14% increase in logistical efficiency over the last 24 hours. 
-                                        <b>AI Prediction:</b> Regional hubs in Southeast Asia are projected to require medical-grade power backups by 04:00 UTC. 
-                                        <i>Satellite status is currently OPTIMAL.</i>
-                                    </p>
-                                    <div style='background: rgba(66, 133, 244, 0.05); padding: 10px; border-radius: 8px; font-size: 0.75rem; color: #4285F4; font-weight: 700; margin-top: 15px;'>
-                                        🛰️ AI SYNAPSE: ANALYZING GLOBAL TELEMETRY
-                                    </div>
-                                </div>
-                            """, unsafe_allow_html=True)
+                            st.info("""
+                            🛰️ **Global Situation Summary**
+                            *   ⚠️ **Medical supply chain delay** detected in northern logistics clusters.
+                            *   🟢 **Water purification rollout** successful in southern coastal zones.
+                            *   🟠 **Food security alert** issued for central distribution nodes.
+                            *   📡 **Satellite link operational** across all global mission sectors.
+                            """)
                         else:
                             for idx, row in v_df.iterrows():
                                 urg_glow = "card-critical" if row.get('urgency', 0) >= 8 else "card-warning" if row.get('urgency', 0) >= 5 else "card-safe"
@@ -1412,6 +1405,19 @@ def run_dashboard():
                 }
                 
                 if _api_key:
+                    scan_placeholder = st.empty()
+                    scan_placeholder.markdown("""
+                        <div style='padding: 15px; background: rgba(66, 133, 244, 0.1); border: 1px solid #4285F4; border-radius: 10px; text-align: center; color: #4285F4; font-weight: 800; animation: scanPulse 2s infinite;'>
+                            🛰️ SCANNING SATELLITE FEEDS & ANALYZING TELEMETRY...
+                        </div>
+                        <style>
+                            @keyframes scanPulse {
+                                0% { opacity: 0.6; }
+                                50% { opacity: 1; }
+                                100% { opacity: 0.6; }
+                            }
+                        </style>
+                    """, unsafe_allow_html=True)
                     try:
                         # Attempt to use Gemini for a more dynamic prediction if available
                         model = get_gemini_model()
@@ -1419,6 +1425,7 @@ def run_dashboard():
                             # Using a very short prompt for speed
                             prompt = f"Predict disaster impact: Intensity {intensity}/10. Load: {len(df)} cases. Return JSON: risk_score (0-100), depletion_hours, actions (list of 3)."
                             response = model.generate_content(prompt)
+                            scan_placeholder.empty()
                             # Simple cleanup
                             clean_text = response.text.strip().replace('```json', '').replace('```', '')
                             sim_data.update(json.loads(clean_text))
