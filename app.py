@@ -23,6 +23,17 @@ from pathlib import Path
 # Ensure src/ is importable from deployment root
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
+# --- 🛰️ PERSISTENT MISSION INITIALIZATION (HARD START) ---
+if 'initialized' not in st.session_state:
+    st.session_state.initialized = True
+    st.session_state.map_data = pd.DataFrame([
+        {"id": "IND_1", "category": "Medical", "urgency": 9, "latitude": 28.6139, "longitude": 77.2090, "city": "Delhi", "description": "Critical supply gap in regional hospitals.", "people_affected": 12000, "status": "Critical", "verified": True, "human_context_summary": "Delhi: Urgent medical resupply needed for core trauma centers."},
+        {"id": "IND_2", "category": "Water", "urgency": 10, "latitude": 19.0760, "longitude": 72.8777, "city": "Mumbai", "description": "Severe water scarcity in urban districts.", "people_affected": 25000, "status": "Critical", "verified": True, "human_context_summary": "Mumbai: Emergency water desalination units required immediately."},
+        {"id": "IND_3", "category": "Food", "urgency": 7, "latitude": 12.9716, "longitude": 77.5946, "city": "Bangalore", "description": "Logistics bottleneck in food distribution networks.", "people_affected": 5500, "status": "Pending", "verified": True, "human_context_summary": "Bangalore: Strategic node needs resource leveling for community kitchens."}
+    ])
+    st.session_state.intel_feed = "🛰️ **System Alert:** Intelligence channels synchronized. Monitoring global resource nodes. Mission status: OPTIMAL."
+
+
 # --- 🚀 INITIAL MISSION TELEMETRY (WARM START) ---
 initial_markers = [
     {"id": "NY_01", "city": "New York", "lat": 40.7128, "lng": -74.0060, "urgency": 9, "cat": "Medical"},
@@ -768,6 +779,7 @@ def run_dashboard():
                     st.markdown("### 📋 Context Feed")
                     with st.container(height=650):
                         if v_df.empty:
+                            st.info(st.session_state.get('intel_feed', "🛰️ **System Alert:** Intelligence channels synchronized. Monitoring global resource nodes..."))
                             st.info("""
                             🛰️ **Global Situation Summary**
                             *   ⚠️ **Medical supply chain delay** detected in northern logistics clusters.
@@ -936,6 +948,8 @@ def run_dashboard():
         # --- 🧠 SATELLITE DATA LOGIC ---
         # Prioritize Live Data -> Fallback to Persistent Session Data -> Show 3D Warning
         df = st.session_state.get('map_active_data', pd.DataFrame())
+        if df.empty:
+            df = st.session_state.get('map_data', pd.DataFrame())
         
         if df.empty:
             # 🚨 ELITE 3D WARNING CARD (Data-Empty State)
@@ -1634,6 +1648,11 @@ def main():
         [data-testid="stAppViewContainer"], [data-testid="stHeader"], .stApp {
             background-color: #FFFFFF !important;
             background-image: none !important;
+            color: #262730 !important;
+        }
+
+        [data-testid="stAppViewContainer"] {
+            background-color: #FFFFFF !important;
             color: #262730 !important;
         }
 
