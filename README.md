@@ -1,8 +1,10 @@
 # 🛡️ Smart Resource Allocator: AI-Driven Humanitarian Resilience
 
+![App Dashboard](static/dashboard_screenshot.png)
+
 A high-fidelity, professional-grade mission control dashboard for NGOs to manage community needs, volunteer matching, and crisis forecasting. Built for **speed, privacy, and field resilience**.
 
-**Live Link :- https://jaswanthhanumanthu-smart-resource-allocation-ai-build-web-app.streamlit.app/**
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://jaswanthhanumanthu-smart-resource-allocation-ai-build-web-app.streamlit.app/)
 
 [![AI Powered](https://img.shields.io/badge/AI-Gemini%201.5%20Flash-blue?style=for-the-badge&logo=google-gemini)](https://ai.google.dev/)
 [![Privacy First](https://img.shields.io/badge/Privacy-PII%20Redacted-green?style=for-the-badge)](https://github.com/JaswanthHanumanthu/Smart-Resource-Allocation#%EF%B8%8F-ethical-ai-usage--data-privacy)
@@ -112,6 +114,17 @@ graph TD
 3.  **VERIFIED_DATA**: Human administrators authenticate reports before they impact live metrics.
 
 For more technical details, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+---
+
+## 🚀 Future Roadmap: "What's Next?"
+
+We are committed to evolving this platform from a prototype to a global humanitarian standard. Our vision for the next 12 months includes:
+
+*   🛰️ **Real-time Satellite Integration**: Ingesting high-resolution satellite imagery to automatically detect disaster zones (floods, fires) before reports arrive.
+*   📶 **Mesh Network Connectivity**: Enabling field workers to sync data between devices using Bluetooth/LoRa in zero-connectivity environments.
+*   🧠 **Gemini 2.0 Integration**: Leveraging next-gen reasoning for complex resource-leveling across entire countries.
+*   📱 **Native iOS/Android App**: A dedicated mobile client with full biometric security for rescuers.
 
 ---
 
