@@ -1,6 +1,6 @@
 # 🛡️ Smart Resource Allocator: AI-Driven Humanitarian Resilience
 
-**[Live Web Link :- https://jaswanthhanumanthu-smart-resource-allocation-ai-build-web-app.streamlit.app/]**
+**Live Web Link :- https://jaswanthhanumanthu-smart-resource-allocation-ai-build-web-app.streamlit.app/**
 
 
 A high-fidelity, professional-grade mission control dashboard for NGOs to manage community needs, volunteer matching, and crisis forecasting. Built for **speed, privacy, and field resilience**.
