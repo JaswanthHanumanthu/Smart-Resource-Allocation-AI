@@ -254,6 +254,59 @@ def run_dashboard():
             border: 1px solid #1A73E8 !important;
             background: rgba(26, 115, 232, 0.05) !important;
         }
+
+        /* 🛰️ SATELLITE PULSE & SCANNER OVERLAY */
+        .satellite-scanner-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+
+        .satellite-scanner-beam {
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, rgba(66, 133, 244, 0.15), rgba(66, 133, 244, 0.4), transparent);
+            z-index: 5;
+            pointer-events: none;
+            animation: satScan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes satScan {
+            0% { top: -100%; }
+            100% { top: 200%; }
+        }
+
+        .satellite-ping {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #4285F4;
+            border-radius: 50%;
+            opacity: 0;
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        .satellite-ping::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            border: 2px solid #4285F4;
+            border-radius: 50%;
+            animation: satPing 2s ease-out infinite;
+        }
+
+        @keyframes satPing {
+            0% { width: 0; height: 0; opacity: 1; }
+            100% { width: 300%; height: 300%; opacity: 0; }
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -822,7 +875,16 @@ def run_dashboard():
                         popup=f"{row.get('category')} - Urgency: {row.get('urgency')}"
                     ).add_to(m)
                 
+                # --- 🛰️ SATELLITE SCANNER WRAPPER ---
+                st.markdown("""
+                    <div class="satellite-scanner-container">
+                        <div class="satellite-scanner-beam"></div>
+                """, unsafe_allow_html=True)
+                
                 map_res = st_folium(m, width='100%', height=550, key="dashboard_mini_map")
+                
+                st.markdown("</div>", unsafe_allow_html=True) # Close scanner container
+
                 if map_res and map_res.get("last_object_clicked"):
                     st.toast('Tactical Data Packet Received', icon='🛰')
                 st.caption("Satellite Sync Online")
@@ -1234,7 +1296,16 @@ def run_dashboard():
                     # Always render the map to maintain "Live" presence
                     current_style = st.session_state.get('map_style', 'dark')
                     m = generate_impact_map(filtered_df.to_json(), map_style=current_style, show_heatmap=show_heatmap)
+                    
+                    # --- 🛰️ SATELLITE SCANNER WRAPPER ---
+                    st.markdown("""
+                        <div class="satellite-scanner-container">
+                            <div class="satellite-scanner-beam"></div>
+                    """, unsafe_allow_html=True)
+                    
                     map_output = st_folium(m, width='100%', height=500, key=f"impact_map_{current_style}_{show_heatmap}")
+                    
+                    st.markdown("</div>", unsafe_allow_html=True) # Close scanner container
                     
                     # --- 🛰️ CAPTURE TELEMETRY FROM MAP CLICK ---
                     if map_output.get("last_object_clicked"):
