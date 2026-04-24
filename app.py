@@ -446,6 +446,11 @@ def run_dashboard():
         st.sidebar.caption("✅ Cloud Sync Active: Local Cache Loaded.")
     else:
         st.sidebar.caption("⚠️ Sync Pending: Low Signal Environment.")
+        with st.sidebar:
+    
+            st.markdown("---") # Adds a visual separator
+            st.link_button("📤 Share App Link", "https://your-app-link.streamlit.app", use_container_width=True)
+
 
     st.sidebar.markdown("---")
     st.sidebar.subheader("🗨️ Chat with Data (AI)")
