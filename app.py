@@ -271,6 +271,44 @@ def run_dashboard():
         @keyframes pulse-brand { 0%, 100% { opacity: 0.6; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
         @keyframes pulse-critical-glow { 0%, 100% { opacity: 0.7; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
         .main-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+        /* 🔥 Interactive Click Animation */
+.high-end-card, div[data-testid="stMetric"], .stMetric {
+    cursor: pointer !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hover = soft glow */
+.high-end-card:hover {
+    transform: scale(1.03) !important;
+    border: 1px solid rgba(66, 133, 244, 0.5) !important;
+}
+
+/* Click = zoom + highlight border */
+.high-end-card:active {
+    transform: scale(0.97) !important;
+    border: 2px solid #4285F4 !important;
+    box-shadow: 0 0 20px rgba(66,133,244,0.6) !important;
+}
+
+/* Ripple effect */
+.high-end-card::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    background: rgba(66,133,244,0.3);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+}
+
+.high-end-card:active::after {
+    width: 200px;
+    height: 200px;
+}
     </style>
     """, unsafe_allow_html=True)
 
