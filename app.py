@@ -1928,10 +1928,31 @@ def main():
     # --- ENGINEERING ATTRIBUTION COMPONENT ---
     st.markdown("""
         <style>
-        /* Professional Developer Footer Styling */
-        .dev-signature-container {
-            margin-top: 80px;
-            padding: 40px 10px;
+        /* ✨ NAME ANIMATION */
+.animated-name {
+    font-size: 26px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #4285F4, #34A853, #EA4335, #4285F4);
+    background-size: 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: flowGradient 4s linear infinite;
+}
+
+@keyframes flowGradient {
+    0% { background-position: 0% }
+    100% { background-position: 300% }
+}
+
+/* ✨ SIGNATURE BOX IMPROVEMENT */
+.dev-name {
+    transition: transform 0.3s ease;
+}
+
+.dev-name:hover {
+    transform: scale(1.08);
+}
+
             
             /* 🔗 Themed Background Engine */
             background: var(--secondary-background-color);
@@ -2044,7 +2065,7 @@ def main():
 
         <div class="dev-signature-container">
             <div class="dev-header">Lead System Architect</div>
-            <div class="dev-name">JASWANTH HANUMANTHU</div>
+            <div class="dev-name animated-name">JASWANTH HANUMANTHU</div>
             <div class="dev-social-grid">
                 <a href="https://www.linkedin.com/in/jaswanth-hanumanthu" target="_blank" class="dev-social-btn linkedin-btn">
                     <i class="fab fa-linkedin"></i>
