@@ -824,8 +824,8 @@ def run_dashboard():
                 
                 map_res = st_folium(m, width='100%', height=550, key="dashboard_mini_map")
                 if map_res and map_res.get("last_object_clicked"):
-                    st.toast('Tactical Data Packet Received', icon='🛰️')
-                st.caption("Live Geospatial Sync Active")
+                    st.toast('Tactical Data Packet Received', icon='🛰')
+                st.caption("Satellite Sync Online")
 
     elif page == "Field Report Center":
         st.subheader("📁 Data Aggregation & Field Reporting")
@@ -1959,7 +1959,6 @@ def main():
             box-shadow: 0 20px 50px rgba(66, 133, 244, 0.2) !important;
         }
 
-        /* 💎 3D ENGRAVED TEXT */
         .dev-name-3d {
             font-family: 'Inter', sans-serif;
             font-size: 1.1rem;
@@ -1967,19 +1966,13 @@ def main():
             letter-spacing: 1px;
             color: #3C4043;
             text-transform: uppercase;
-            text-shadow: 
-                0.5px 0.5px 0px rgba(255,255,255,0.8),
-                -0.5px -0.5px 0px rgba(0,0,0,0.1),
-                1px 1px 3px rgba(0,0,0,0.1);
+            text-shadow: 0.5px 0.5px 0px rgba(255,255,255,0.8), -0.5px -0.5px 0px rgba(0,0,0,0.1), 1px 1px 3px rgba(0,0,0,0.1);
             margin-right: 15px;
             border-right: 1px solid rgba(0,0,0,0.1);
             padding-right: 15px;
         }
 
-        .dev-social-dock {
-            display: flex;
-            gap: 15px;
-        }
+        .dev-social-dock { display: flex; gap: 15px; }
 
         .dock-btn {
             width: 40px;
@@ -1996,7 +1989,6 @@ def main():
             color: #3C4043;
         }
 
-        /* 🌈 INTERACTIVE BRAND GLOWS */
         .linkedin-dock:hover { 
             color: white !important; 
             background: #0077b5 !important; 
@@ -2010,7 +2002,6 @@ def main():
             transform: scale(1.1) translateY(-3px);
         }
 
-        /* 🌑 DARK MODE SUPPORT */
         @media (prefers-color-scheme: dark) {
             .dev-dock-container {
                 background: rgba(15, 23, 42, 0.4) !important;
@@ -2018,9 +2009,7 @@ def main():
             }
             .dev-name-3d {
                 color: #E8EAED;
-                text-shadow: 
-                    0.5px 0.5px 0px rgba(0,0,0,0.5),
-                    -0.5px -0.5px 0px rgba(255,255,255,0.1);
+                text-shadow: 0.5px 0.5px 0px rgba(0,0,0,0.5), -0.5px -0.5px 0px rgba(255,255,255,0.1);
             }
             .dock-btn { color: #E8EAED; background: rgba(255,255,255,0.05); }
         }
