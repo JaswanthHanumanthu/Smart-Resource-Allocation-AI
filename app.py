@@ -256,56 +256,21 @@ def run_dashboard():
         }
 
         /* 🛰️ SATELLITE PULSE & SCANNER OVERLAY */
-        .satellite-scanner-container {
-            position: relative;
-            overflow: hidden;
-            border-radius: 16px;
-        }
-
         .satellite-scanner-beam {
             position: absolute;
-            top: -100%;
+            top: 0;
             left: 0;
             width: 100%;
             height: 100px;
-            background: linear-gradient(to bottom, transparent, rgba(66, 133, 244, 0.15), rgba(66, 133, 244, 0.4), transparent);
-            z-index: 5;
+            background: linear-gradient(to bottom, transparent, rgba(66, 133, 244, 0.1), rgba(66, 133, 244, 0.3), transparent);
+            z-index: 999;
             pointer-events: none;
-            animation: satScan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            animation: satScan 6s linear infinite;
         }
 
         @keyframes satScan {
-            0% { top: -100%; }
-            100% { top: 200%; }
-        }
-
-        .satellite-ping {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #4285F4;
-            border-radius: 50%;
-            opacity: 0;
-            z-index: 6;
-            pointer-events: none;
-        }
-
-        .satellite-ping::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100%;
-            transform: translate(-50%, -50%);
-            border: 2px solid #4285F4;
-            border-radius: 50%;
-            animation: satPing 2s ease-out infinite;
-        }
-
-        @keyframes satPing {
-            0% { width: 0; height: 0; opacity: 1; }
-            100% { width: 300%; height: 300%; opacity: 0; }
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(600px); }
         }
         </style>
     """, unsafe_allow_html=True)
@@ -875,15 +840,10 @@ def run_dashboard():
                         popup=f"{row.get('category')} - Urgency: {row.get('urgency')}"
                     ).add_to(m)
                 
-                # --- 🛰️ SATELLITE SCANNER WRAPPER ---
-                st.markdown("""
-                    <div class="satellite-scanner-container">
-                        <div class="satellite-scanner-beam"></div>
-                """, unsafe_allow_html=True)
+                # --- 🛰️ SATELLITE SCANNER BEAM ---
+                st.markdown("<div class='satellite-scanner-beam'></div>", unsafe_allow_html=True)
                 
                 map_res = st_folium(m, width='100%', height=550, key="dashboard_mini_map")
-                
-                st.markdown("</div>", unsafe_allow_html=True) # Close scanner container
 
                 if map_res and map_res.get("last_object_clicked"):
                     st.toast('Tactical Data Packet Received', icon='🛰')
@@ -1297,15 +1257,10 @@ def run_dashboard():
                     current_style = st.session_state.get('map_style', 'dark')
                     m = generate_impact_map(filtered_df.to_json(), map_style=current_style, show_heatmap=show_heatmap)
                     
-                    # --- 🛰️ SATELLITE SCANNER WRAPPER ---
-                    st.markdown("""
-                        <div class="satellite-scanner-container">
-                            <div class="satellite-scanner-beam"></div>
-                    """, unsafe_allow_html=True)
+                    # --- 🛰️ SATELLITE SCANNER BEAM ---
+                    st.markdown("<div class='satellite-scanner-beam'></div>", unsafe_allow_html=True)
                     
                     map_output = st_folium(m, width='100%', height=500, key=f"impact_map_{current_style}_{show_heatmap}")
-                    
-                    st.markdown("</div>", unsafe_allow_html=True) # Close scanner container
                     
                     # --- 🛰️ CAPTURE TELEMETRY FROM MAP CLICK ---
                     if map_output.get("last_object_clicked"):
@@ -1974,36 +1929,6 @@ def main():
             animation: eliteFadeIn 1s cubic-bezier(0.23, 1, 0.32, 1) forwards !important;
         }
 
-        @keyframes eliteFadeIn {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        </style>
-    """), unsafe_allow_html=True)
-    try:
-        run_dashboard()
-    except Exception as e:
-        import traceback
-        st.error("### 🚨 Mission-Critical System Failure")
-        st.markdown(f"""
-        **The system encountered an unanticipated tactical error.** 
-        This is most likely due to a brief interruption in the AI satellite link or the mission database.
-        
-        **Recommended Recovery Actions:**
-        1. 🔄 **Refresh your browser** to re-establish the encrypted session.
-        2. 🔑 **Verify API Secrets**: Ensure your `GOOGLE_API_KEY` is correctly configured in your environment.
-        3. 📂 **Check File Integrity**: If you were uploading a file, verify the format and try again.
-        
-        *Technicians can view the detailed telemetry pulse below.*
-        """)
-        
-        with st.expander("🛠️ Tactical Diagnostic Pulse (Technical Traceback)"):
-            st.code(f"Error Type: {type(e).__name__}\nMessage: {str(e)}\n\n{traceback.format_exc()}")
-
-    # --- ENGINEERING ATTRIBUTION COMPONENT ---
-    st.markdown(textwrap.dedent("""
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
         /* 🚢 FLOATING GLASS DOCK FOOTER */
         .dev-dock-container {
             position: fixed;
@@ -2073,6 +1998,24 @@ def main():
             transform: scale(1.1) translateY(-3px);
         }
 
+        /* 🛰️ SATELLITE PULSE & SCANNER OVERLAY */
+        .satellite-scanner-beam {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, rgba(66, 133, 244, 0.1), rgba(66, 133, 244, 0.3), transparent);
+            z-index: 999;
+            pointer-events: none;
+            animation: satScan 6s linear infinite;
+        }
+
+        @keyframes satScan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(600px); }
+        }
+
         @media (prefers-color-scheme: dark) {
             .dev-dock-container {
                 background: rgba(15, 23, 42, 0.4) !important;
@@ -2085,7 +2028,29 @@ def main():
             .dock-btn { color: #E8EAED; background: rgba(255,255,255,0.05); }
         }
         </style>
+    """), unsafe_allow_html=True)
+    try:
+        run_dashboard()
+    except Exception as e:
+        import traceback
+        st.error("### 🚨 Mission-Critical System Failure")
+        st.markdown(f"""
+        **The system encountered an unanticipated tactical error.** 
+        This is most likely due to a brief interruption in the AI satellite link or the mission database.
+        
+        **Recommended Recovery Actions:**
+        1. 🔄 **Refresh your browser** to re-establish the encrypted session.
+        2. 🔑 **Verify API Secrets**: Ensure your `GOOGLE_API_KEY` is correctly configured in your environment.
+        3. 📂 **Check File Integrity**: If you were uploading a file, verify the format and try again.
+        
+        *Technicians can view the detailed telemetry pulse below.*
+        """)
+        
+        with st.expander("🛠️ Tactical Diagnostic Pulse (Technical Traceback)"):
+            st.code(f"Error Type: {type(e).__name__}\nMessage: {str(e)}\n\n{traceback.format_exc()}")
 
+    # --- ENGINEERING ATTRIBUTION COMPONENT ---
+    st.markdown(textwrap.dedent("""
         <div class="dev-dock-container">
             <div class="dev-name-3d">Jaswanth Hanumanthu</div>
             <div class="dev-social-dock">
