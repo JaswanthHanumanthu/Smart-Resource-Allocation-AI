@@ -840,14 +840,29 @@ def run_dashboard():
                         popup=f"{row.get('category')} - Urgency: {row.get('urgency')}"
                     ).add_to(m)
                 
+                # --- 📍 GEOSPATIAL COMMAND CENTER ---
+                m_header_col1, m_header_col2 = st.columns([3, 1])
+                with m_header_col1:
+                    st.markdown("### 🗺️ Resource Allocation Map")
+                with m_header_col2:
+                    fullscreen_map = st.toggle("🖥️ Full-Screen Command", value=False, key="fs_map_toggle")
+                
+                # Dynamic Layout based on Full-Screen Toggle
+                if fullscreen_map:
+                    map_width = '100%'
+                    map_height = 800
+                else:
+                    map_width = '100%'
+                    map_height = 550
+
                 # --- 🛰️ SATELLITE SCANNER BEAM ---
                 st.markdown("<div class='satellite-scanner-beam'></div>", unsafe_allow_html=True)
                 
-                map_res = st_folium(m, width='100%', height=550, key="dashboard_mini_map")
+                map_res = st_folium(m, width=map_width, height=map_height, key=f"dashboard_map_{fullscreen_map}")
 
                 if map_res and map_res.get("last_object_clicked"):
                     st.toast('Tactical Data Packet Received', icon='🛰')
-                st.caption("Satellite Sync Online")
+                st.caption("Satellite Sync Online // Operational Pulse: Nominal")
 
     elif page == "Field Report Center":
         st.subheader("📁 Data Aggregation & Field Reporting")
@@ -1909,24 +1924,35 @@ def main():
         }
 
         /* 💎 TARGETED GLASSMORPHISM: Light Mode Refinement */
-        div[data-testid="stMetric"], .high-end-card, [data-testid="stExpander"] {
-            background: rgba(255, 255, 255, 0.8) !important;
-            border: 1.5px solid rgba(66, 133, 244, 0.2) !important;
-            border-radius: 15px !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.05) !important;
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
-            color: #3C4043 !important;
+        /* 💎 MODERN SaaS AESTHETIC REFINEMENT */
+        div[data-testid="stMetric"], .high-end-card, [data-testid="stExpander"], .nav-tile {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid #E1E4E8 !important;
+            border-radius: 16px !important;
+            padding: 24px !important;
+            margin-bottom: 20px !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03) !important;
+            transition: all 0.3s ease !important;
         }
 
-        div[data-testid="stMetric"]:hover, .high-end-card:hover, [data-testid="stExpander"]:hover {
-            transform: translateY(-5px) !important;
-            box-shadow: 0 20px 40px rgba(66, 133, 244, 0.15) !important;
+        .high-end-card:hover, div[data-testid="stMetric"]:hover {
             border-color: #4285F4 !important;
+            box-shadow: 0 10px 25px rgba(66, 133, 244, 0.1) !important;
+            transform: translateY(-4px) !important;
         }
 
         /* 🎬 FADE-IN ENTRANCE ANIMATION */
         .main .block-container {
+            padding-top: 4rem !important;
+            padding-left: 3rem !important;
+            padding-right: 3rem !important;
+            max-width: 95% !important;
             animation: eliteFadeIn 1s cubic-bezier(0.23, 1, 0.32, 1) forwards !important;
+        }
+
+        @keyframes eliteFadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
 
         /* 🚢 FLOATING GLASS DOCK FOOTER */
