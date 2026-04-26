@@ -49,6 +49,7 @@ initial_markers = [
     {"id": "NRB_01", "city": "Nairobi", "lat": -1.2921, "lng": 36.8219, "urgency": 6, "cat": "General"}
 ]
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
+model = None
 try:
     # Get API key from secrets
     api_key = st.secrets['GOOGLE_API_KEY']
@@ -57,15 +58,28 @@ try:
     # Initialize the model without extra version flags
     model = genai.GenerativeModel('gemini-1.5-flash')
     _api_key = api_key
-except Exception:
+except Exception as e:
     _api_key = None
+    print(f"Failed to load st.secrets: {e}")
 
 def get_ai_response(prompt):
     try:
+        if model is None:
+            # Fallback in case st.secrets failed
+            from src.utils.api_keys import get_google_api_key
+            fallback_key = get_google_api_key()
+            if fallback_key:
+                genai.configure(api_key=fallback_key)
+                temp_model = genai.GenerativeModel('gemini-1.5-flash')
+                response = temp_model.generate_content(prompt)
+                return response.text
+            else:
+                return "⚠️ API Key not found. Please check secrets or environment."
+        
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return "⚠️ I am currently experiencing connection issues or AI service is unavailable. Please try again later."
+        return f"⚠️ I am currently experiencing connection issues or AI service is unavailable: {str(e)}"
 
 @contextlib.contextmanager
 def skeleton_spinner(label="AI Processing...", n_blocks=3, heights=None):
