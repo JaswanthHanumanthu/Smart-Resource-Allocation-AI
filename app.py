@@ -72,21 +72,14 @@ else:
         st.warning("⚠️ GOOGLE_API_KEY not found in secrets or environment.")
 
 def get_ai_response(prompt):
-    system_instruction = "You are an expert in disaster logistics. Use the provided Mumbai resource data to suggest specific allocations. Be decisive and tactical."
     try:
-        # Standard stable call (forcing v1 API)
-        model = genai.GenerativeModel(
-            'gemini-1.5-flash',
-            system_instruction=system_instruction
-        )
+        # Standard stable call on v1
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
         return response.text
     except Exception:
         # Immediate fallback to legacy stable model if Flash fails
-        model = genai.GenerativeModel(
-            'gemini-pro',
-            system_instruction=system_instruction
-        )
+        model = genai.GenerativeModel('gemini-pro')
         response = model.generate_content(prompt)
         return response.text
 
@@ -541,31 +534,32 @@ def run_dashboard():
 
     st.sidebar.markdown("---")
     st.sidebar.subheader("🗨️ Chat with Data (AI)")
-    chat_input_text = st.sidebar.chat_input("Ask a question about the resources...")
-    if chat_input_text:
-        st.session_state['chat_query'] = chat_input_text
+    if "pending_chat_query" not in st.session_state:
+        st.session_state.pending_chat_query = None
 
-    if st.session_state.get('chat_query'):
-        query_text = st.session_state['chat_query']
+    chat_input_val = st.sidebar.chat_input("Ask a question about the resources...")
+    if chat_input_val:
+        st.session_state.pending_chat_query = chat_input_val
+
+    if st.session_state.pending_chat_query:
         try:
             with st.sidebar:
-                st.chat_message("user").write(query_text)
+                st.chat_message("user").write(st.session_state.pending_chat_query)
                 with st.spinner("Scanning database..."):
                     df = st.session_state.get('needs_df', pd.DataFrame())
                     cols = [c for c in ['category', 'urgency', 'status', 'description', 'latitude', 'longitude'] if c in df.columns]
                     report_data = df.to_string(columns=cols) if not df.empty else "Database is currently empty."
                     
-                    data_prompt = (
+                    system_prompt = (
+                        "SYSTEM: You are an expert in disaster logistics. Use the provided Mumbai resource data to suggest specific allocations. Be decisive and tactical.\n\n"
                         "Current Active Database:\n"
                         f"{report_data}\n\n"
-                        f"User Query: {query_text}"
+                        f"User Query: {st.session_state.pending_chat_query}"
                     )
                     
-                    reply = get_ai_response(data_prompt)
+                    reply = get_ai_response(system_prompt)
                     st.chat_message("assistant").write(reply)
-                    
-                    # Clear query on success so it doesn't auto-run on next app interaction
-                    st.session_state['chat_query'] = None
+                    st.session_state.pending_chat_query = None # Clear on success
         except Exception as e:
             st.sidebar.error("🛰️ **System Re-routing:** AI Satellite Link interrupted. Attempting to re-establish connection...")
             if st.sidebar.button("Retry AI Uplink"):
