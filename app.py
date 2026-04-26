@@ -66,7 +66,22 @@ if not _api_key:
 if _api_key:
     genai.configure(api_key=_api_key)
 else:
-    st.warning("⚠️ GOOGLE_API_KEY not found in secrets or environment.")
+    try:
+        genai.configure(api_key=st.secrets['GOOGLE_API_KEY'])
+    except Exception:
+        st.warning("⚠️ GOOGLE_API_KEY not found in secrets or environment.")
+
+def get_ai_response(prompt):
+    try:
+        # Standard stable call
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception:
+        # Immediate fallback to legacy stable model if Flash fails
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content(prompt)
+        return response.text
 
 @contextlib.contextmanager
 def skeleton_spinner(label="AI Processing...", n_blocks=3, heights=None):
@@ -522,11 +537,21 @@ def run_dashboard():
     chat_query = st.sidebar.chat_input("Ask a question about the resources...")
     if chat_query:
         try:
-            from src.processor import chat_with_data
             with st.sidebar:
                 st.chat_message("user").write(chat_query)
                 with st.spinner("Scanning database..."):
-                    reply = chat_with_data(chat_query, st.session_state.get('needs_df', pd.DataFrame()))
+                    df = st.session_state.get('needs_df', pd.DataFrame())
+                    cols = [c for c in ['category', 'urgency', 'status', 'description', 'latitude', 'longitude'] if c in df.columns]
+                    report_data = df.to_string(columns=cols) if not df.empty else "Database is currently empty."
+                    
+                    system_prompt = (
+                        "You are the Smart Resource Allocation Assistant. Analyze the provided Mumbai logistics data and give concise, tactical advice. Focus on saving time and lives.\n\n"
+                        "Current Active Database:\n"
+                        f"{report_data}\n\n"
+                        f"User Query: {chat_query}"
+                    )
+                    
+                    reply = get_ai_response(system_prompt)
                     st.chat_message("assistant").write(reply)
         except Exception as e:
             st.sidebar.error("🛰️ **System Re-routing:** AI Satellite Link interrupted. Attempting to re-establish connection...")
