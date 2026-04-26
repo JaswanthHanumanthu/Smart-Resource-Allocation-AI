@@ -518,36 +518,42 @@ def run_dashboard():
 
     st.sidebar.markdown("---")
     st.sidebar.subheader("🗨️ Chat with Data (AI)")
-    if "pending_chat_query" not in st.session_state:
-        st.session_state.pending_chat_query = None
+    
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+        
+    for msg in st.session_state.chat_history:
+        st.sidebar.chat_message(msg["role"]).write(msg["content"])
 
     chat_input_val = st.sidebar.chat_input("Ask a question about the resources...")
     if chat_input_val:
-        st.session_state.pending_chat_query = chat_input_val
-
-    if st.session_state.pending_chat_query:
-        try:
-            with st.sidebar:
-                st.chat_message("user").write(st.session_state.pending_chat_query)
-                with st.spinner("Scanning database..."):
+        st.session_state.chat_history.append({"role": "user", "content": chat_input_val})
+        with st.sidebar:
+            st.chat_message("user").write(chat_input_val)
+            with st.spinner("Scanning database..."):
+                try:
                     df = st.session_state.get('needs_df', pd.DataFrame())
                     cols = [c for c in ['category', 'urgency', 'status', 'description', 'latitude', 'longitude'] if c in df.columns]
                     report_data = df.to_string(columns=cols) if not df.empty else "Database is currently empty."
                     
+                    history_text = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.chat_history[-4:-1]])
+                    
                     system_prompt = (
-                        "SYSTEM: You are an expert in disaster logistics. Use the provided Mumbai resource data to suggest specific allocations. Be decisive and tactical.\n\n"
+                        "SYSTEM: You are an expert in disaster logistics. Use the provided resource data to suggest specific allocations. Be decisive and tactical.\n\n"
                         "Current Active Database:\n"
                         f"{report_data}\n\n"
-                        f"User Query: {st.session_state.pending_chat_query}"
+                        "Recent Conversation:\n"
+                        f"{history_text}\n\n"
+                        f"User Query: {chat_input_val}"
                     )
                     
                     reply = get_ai_response(system_prompt)
                     st.chat_message("assistant").write(reply)
-                    st.session_state.pending_chat_query = None # Clear on success
-        except Exception as e:
-            st.sidebar.error("🛰️ **System Re-routing:** AI Satellite Link interrupted. Attempting to re-establish connection...")
-            if st.sidebar.button("Retry AI Uplink"):
-                st.rerun()
+                    st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                except Exception as e:
+                    st.sidebar.error("🛰️ **System Re-routing:** AI Satellite Link interrupted. Attempting to re-establish connection...")
+                    if st.sidebar.button("Retry AI Uplink"):
+                        st.rerun()
     
     # --- SIDEBAR BRANDING ---
     st.sidebar.markdown("---")
