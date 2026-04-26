@@ -47,39 +47,25 @@ initial_markers = [
     {"id": "MUM_01", "city": "Mumbai", "lat": 19.0760, "lng": 72.8777, "urgency": 10, "cat": "Water"},
     {"id": "TOK_01", "city": "Tokyo", "lat": 35.6762, "lng": 139.6503, "urgency": 8, "cat": "Shelter"},
     {"id": "NRB_01", "city": "Nairobi", "lat": -1.2921, "lng": 36.8219, "urgency": 6, "cat": "General"}
-]
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
-model = None
-try:
-    # Get API key from secrets
-    api_key = st.secrets['GOOGLE_API_KEY']
-    genai.configure(api_key=api_key)
+import google.generativeai as genai
 
+# Get API key from secrets
+try:
+    _api_key = st.secrets['GOOGLE_API_KEY']
+    genai.configure(api_key=_api_key)
     # Initialize the model without extra version flags
     model = genai.GenerativeModel('gemini-1.5-flash')
-    _api_key = api_key
-except Exception as e:
+except Exception:
     _api_key = None
-    print(f"Failed to load st.secrets: {e}")
+    model = None
 
 def get_ai_response(prompt):
     try:
-        if model is None:
-            # Fallback in case st.secrets failed
-            from src.utils.api_keys import get_google_api_key
-            fallback_key = get_google_api_key()
-            if fallback_key:
-                genai.configure(api_key=fallback_key)
-                temp_model = genai.GenerativeModel('gemini-1.5-flash')
-                response = temp_model.generate_content(prompt)
-                return response.text
-            else:
-                return "⚠️ API Key not found. Please check secrets or environment."
-        
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return f"⚠️ I am currently experiencing connection issues or AI service is unavailable: {str(e)}"
+        return "⚠️ I am currently experiencing connection issues or AI service is unavailable. Please try again later."
 
 @contextlib.contextmanager
 def skeleton_spinner(label="AI Processing...", n_blocks=3, heights=None):
@@ -427,29 +413,41 @@ def run_dashboard():
         with st.expander("🕹️ Command", expanded=True):
             nav_options = ["🕹️ System Dashboard", "📡 Data Upload", "🗺️ Impact Map", "🚨 EMERGENCY DISPATCH 🚨"]
             page_map = {"🕹️ System Dashboard": "System Dashboard", "📡 Data Upload": "Field Report Center", "🗺️ Impact Map": "Impact Map", "🚨 EMERGENCY DISPATCH 🚨": "Rapid Dispatch"}
-            _sel = st.radio("Go to", nav_options, index=0, label_visibility="collapsed")
+            
+            # Find current index
+            current_page = st.session_state.get("page", "System Dashboard")
+            try:
+                current_index = list(page_map.values()).index(current_page)
+            except ValueError:
+                current_index = 0
+                
+            _sel = st.radio("Go to", nav_options, index=current_index, label_visibility="collapsed")
             if st.session_state.get("page") != page_map[_sel]:
                 st.session_state["page"] = page_map[_sel]
                 st.toast(f"✅ Mission Sector Synchronized: {st.session_state['page']}")
+                st.rerun()
             
-            if st.button("🚀 Launch 'Perfect Demo' Mode", use_container_width=True, type="primary", help="Initializes the mission database with 50+ tactical crisis nodes."):
-                epicenter_lat, epicenter_lon = 28.6139, 77.2090
+            if st.button("🚀 Launch 'Perfect Demo' Mode", use_container_width=True, type="primary", help="Initializes the mission database with 5 tactical crisis nodes."):
+                epicenter_lat, epicenter_lon = 19.0760, 72.8777
                 st.session_state['demo_active'] = True
                 demo_records = []
-                for i in range(50):
+                for i in range(5):
                     demo_records.append({
                         "id": f"DEMO_{i+10}",
-                        "urgency": random.randint(7, 10),
+                        "urgency": random.randint(8, 10),
                         "category": random.choice(["Medical", "Food", "Shelter", "Water", "Power"]),
-                        "latitude": epicenter_lat + random.uniform(-0.1, 0.1),
-                        "longitude": epicenter_lon + random.uniform(-0.1, 0.1),
+                        "latitude": epicenter_lat + random.uniform(-0.05, 0.05),
+                        "longitude": epicenter_lon + random.uniform(-0.05, 0.05),
                         "description": f"Tactical Alert #{i+100}: Resource leveling required.",
                         "people_affected": random.randint(50, 5000),
                         "status": "Pending",
                         "verified": True
                     })
-                st.session_state['needs_df'] = pd.concat([st.session_state.get('needs_df', pd.DataFrame()), pd.DataFrame(demo_records)], ignore_index=True)
-                st.toast("🚀 50+ Tactical Nodes Synchronized.")
+                st.session_state['needs_df'] = pd.DataFrame(demo_records)
+                st.session_state['map_data'] = st.session_state['needs_df']
+                st.session_state['map_active_data'] = st.session_state['needs_df']
+                st.session_state['intel_feed'] = "🛰️ Intelligence Synced: Moderate flood risk detected in Mumbai coastal sectors. Resource nodes at 85% capacity. Priority: Sector 4 (Bandra Logistics Hub)."
+                st.toast("🚀 5 Tactical Nodes Synchronized.")
                 st.rerun()
 
             if st.button("🛡️ Admin Review Portal", use_container_width=True):
@@ -785,7 +783,7 @@ def run_dashboard():
             st.markdown("---")
 
             # --- 🏰 TRIPLE-COLLECTOR ARCHITECTURE ---
-            col1, col2, col3 = st.columns([1, 2, 1])
+            col1, col2 = st.columns([1, 2])
 
             with col1:
                 st.markdown("### <i class='fas fa-crosshairs'></i> Strategic Command", unsafe_allow_html=True)
@@ -879,50 +877,44 @@ def run_dashboard():
                     else:
                         st.caption("Select a mission card to view detailed analysis.")
 
-            with col3:
-                st.markdown("### <i class='fas fa-map-location-dot'></i> Resource Map", unsafe_allow_html=True)
-                
-                # --- MINI MAP INTEGRATION ---
-                import folium
-                from streamlit_folium import st_folium
-                
-                m = folium.Map(location=list(st.session_state['mumbai_coords']), zoom_start=10, tiles='cartodbdark_matter')
-                for _, row in v_df.iterrows():
-                    if pd.isna(row['latitude']): continue
-                    color = 'red' if row.get('urgency', 5) >= 8 else 'orange' if row.get('urgency', 5) >= 5 else 'green'
-                    folium.CircleMarker(
-                        location=[row['latitude'], row['longitude']],
-                        radius=6,
-                        color=color,
-                        fill=True,
-                        fill_color=color,
-                        fill_opacity=0.6,
-                        popup=f"{row.get('category')} - Urgency: {row.get('urgency')}"
-                    ).add_to(m)
-                
-                # --- 📍 GEOSPATIAL COMMAND CENTER ---
-                m_header_col1, m_header_col2 = st.columns([3, 1])
-                with m_header_col1:
-                    st.markdown("### 🗺️ Resource Allocation Map")
-                with m_header_col2:
-                    fullscreen_map = st.toggle("🖥️ Full-Screen Command", value=False, key="fs_map_toggle")
-                
-                # Dynamic Layout based on Full-Screen Toggle
-                if fullscreen_map:
-                    map_width = '100%'
-                    map_height = 800
-                else:
-                    map_width = '100%'
-                    map_height = 550
-
-                # --- 🛰️ SATELLITE SCANNER BEAM ---
-                st.markdown("<div class='satellite-scanner-beam'></div>", unsafe_allow_html=True)
-                
-                map_res = st_folium(m, width=map_width, height=map_height, key=f"dashboard_map_{fullscreen_map}")
-
-                if map_res and map_res.get("last_object_clicked"):
-                    st.toast('Tactical Data Packet Received', icon='🛰')
-                st.caption("Satellite Sync Online // Operational Pulse: Nominal")
+    elif page == "Impact Map":
+        st.markdown("### <i class='fas fa-map-location-dot'></i> Strategic Impact Map", unsafe_allow_html=True)
+        
+        df = st.session_state.get('needs_df', pd.DataFrame())
+        v_df = df[df['verified'] == True] if 'verified' in df.columns else df
+        
+        import folium
+        from streamlit_folium import st_folium
+        
+        m = folium.Map(location=list(st.session_state['mumbai_coords']), zoom_start=11, tiles='cartodbdark_matter')
+        for _, row in v_df.iterrows():
+            if pd.isna(row['latitude']): continue
+            color = 'red' if row.get('urgency', 5) >= 8 else 'orange' if row.get('urgency', 5) >= 5 else 'green'
+            folium.CircleMarker(
+                location=[row['latitude'], row['longitude']],
+                radius=6,
+                color=color,
+                fill=True,
+                fill_color=color,
+                fill_opacity=0.6,
+                popup=f"{row.get('category')} - Urgency: {row.get('urgency')}"
+            ).add_to(m)
+        
+        m_header_col1, m_header_col2 = st.columns([3, 1])
+        with m_header_col1:
+            st.markdown("### 🗺️ Resource Allocation Map")
+        with m_header_col2:
+            fullscreen_map = st.toggle("🖥️ Full-Screen Command", value=False, key="fs_map_toggle")
+        
+        map_width = '100%'
+        map_height = 800 if fullscreen_map else 550
+        
+        st.markdown("<div class='satellite-scanner-beam'></div>", unsafe_allow_html=True)
+        map_res = st_folium(m, width=map_width, height=map_height, key=f"dashboard_map_{fullscreen_map}")
+        
+        if map_res and map_res.get("last_object_clicked"):
+            st.toast('Tactical Data Packet Received', icon='🛰')
+        st.caption("Satellite Sync Online // Operational Pulse: Nominal")
 
     elif page == "Field Report Center":
         st.subheader("📁 Data Aggregation & Field Reporting")
