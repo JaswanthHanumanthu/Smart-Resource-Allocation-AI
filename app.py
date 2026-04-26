@@ -41,12 +41,14 @@ if 'initialized' not in st.session_state:
 
 
 # --- 🚀 INITIAL MISSION TELEMETRY (WARM START) ---
+# Corrected Initial Markers for Mumbai
 initial_markers = [
-    {"id": "NY_01", "city": "New York", "lat": 40.7128, "lng": -74.0060, "urgency": 9, "cat": "Medical"},
-    {"id": "LDN_01", "city": "London", "lat": 51.5074, "lng": -0.1278, "urgency": 7, "cat": "Food"},
-    {"id": "MUM_01", "city": "Mumbai", "lat": 19.0760, "lng": 72.8777, "urgency": 10, "cat": "Water"},
-    {"id": "TOK_01", "city": "Tokyo", "lat": 35.6762, "lng": 139.6503, "urgency": 8, "cat": "Shelter"},
-    {"id": "NRB_01", "city": "Nairobi", "lat": -1.2921, "lng": 36.8219, "urgency": 6, "cat": "General"}
+    {'lat': 18.9219, 'lon': 72.8347, 'name': 'Colaba Supply Hub'},
+    {'lat': 19.0596, 'lon': 72.8295, 'name': 'Bandra Emergency Center'},
+    {'lat': 19.1136, 'lon': 72.8697, 'name': 'Andheri Logistics Node'},
+    {'lat': 19.2183, 'lon': 72.9781, 'name': 'Thane Resource Base'},
+    {'lat': 19.0330, 'lon': 73.0297, 'name': 'Navi Mumbai Relief Camp'}
+] # Ensure this bracket is closed
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
 import google.generativeai as genai
 
@@ -878,7 +880,7 @@ def run_dashboard():
                         st.caption("Select a mission card to view detailed analysis.")
 
     elif page == "Impact Map":
-        st.markdown("### <i class='fas fa-map-location-dot'></i> Strategic Impact Map", unsafe_allow_html=True)
+        st.subheader("🗺️ Mumbai Crisis Impact Map")
         
         df = st.session_state.get('needs_df', pd.DataFrame())
         v_df = df[df['verified'] == True] if 'verified' in df.columns else df
