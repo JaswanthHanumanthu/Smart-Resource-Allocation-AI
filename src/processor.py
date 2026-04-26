@@ -280,26 +280,31 @@ Data counts:
         return "Error analyzing data: " + str(e)
 
 def chat_with_data(query: str, df: pd.DataFrame, api_key: str = None) -> str:
+    # --- Step 1: Resolve & configure API key (st.secrets first, then env) ---
+    used_key = None
     try:
+        # Prefer st.secrets for Streamlit Cloud compatibility
+        used_key = st.secrets.get("GOOGLE_API_KEY")
+    except Exception:
+        pass
+
+    if not used_key:
         used_key = api_key or get_google_api_key()
 
-        if not used_key:
-            raise Exception("No API Key Provided")
-
-        genai.configure(api_key=used_key)
-    except Exception:
+    if not used_key:
         import time
         time.sleep(1)
         return "[SIMULATION] Based on my scan of the live database, Dr. Alice Morgan is the optimal choice for the current fire relief task due to her Medical specialization and close geographic proximity to the incident."
-        
-    system_instruction = "You are the Smart Resource Allocation Assistant. Analyze the provided Mumbai logistics data and give concise, tactical advice. Focus on saving time and lives."
-    
-    try:
-        # Sub-select columns to fit context window smoothly
-        cols = [c for c in ['category', 'urgency', 'status', 'description', 'latitude', 'longitude'] if c in df.columns]
-        report_data = df.to_string(columns=cols) if not df.empty else "Database is currently empty."
-        
-        prompt = f"""You are a Humanitarian Data Analyst. Use the current resource dataframe to answer questions about gaps, volunteer distribution, and urgent needs.
+
+    # --- Step 2: Configure genai with the resolved key ---
+    # Use 'gemini-1.5-flash' for maximum stability across regions
+    genai.configure(api_key=used_key)
+
+    # --- Step 3: Build prompt from live dataframe ---
+    cols = [c for c in ['category', 'urgency', 'status', 'description', 'latitude', 'longitude'] if c in df.columns]
+    report_data = df.to_string(columns=cols) if not df.empty else "Database is currently empty."
+
+    prompt = f"""You are a Humanitarian Data Analyst. Use the current resource dataframe to answer questions about gaps, volunteer distribution, and urgent needs.
 Answer the user's question accurately using ONLY the live data provided below.
 If you don't know the answer based on the data, say so gracefully. Keep the response very concise and helpful.
 
@@ -307,24 +312,12 @@ Current Active Database:
 {report_data}
 
 User Query: {query}"""
-        
-        try:
-            # Update Model Name: Ensure the model string is exactly 'gemini-1.5-flash'
-            model = genai.GenerativeModel(
-                model_name='gemini-1.5-flash',
-                system_instruction=system_instruction
-            )
-            response = model.generate_content(prompt)
-            return response.text.strip()
-        except google.api_core.exceptions.NotFound:
-            # Error Handling: If gemini-1.5-flash fails with 404, fallback to 'gemini-pro'
-            model = genai.GenerativeModel(
-                model_name='gemini-pro',
-                system_instruction=system_instruction
-            )
-            response = model.generate_content(prompt)
-            return response.text.strip()
-            
+
+    # --- Step 4: Call AI via robust wrapper (primary: gemini-1.5-flash, fallback: gemini-pro) ---
+    try:
+        model = get_model()   # _RobustModel: retries with gemini-pro on 404
+        response = model.generate_content(prompt)
+        return response.text.strip()
     except Exception as e:
         return f"Sorry, I encountered an issue checking the data: {str(e)}"
 

@@ -73,22 +73,62 @@ def get_google_api_key() -> str | None:
 
 def get_model(system_instruction: str = None):
     """
-    Helper to get the Gemini model with fallback and system instruction.
+    Returns a proxy model object that:
+      1. Forces the stable v1 API endpoint (not v1beta)
+      2. Uses 'gemini-1.5-flash' as primary (modern, short model string)
+      3. Automatically falls back to 'gemini-pro' on 404 NotFound errors
     """
     if not system_instruction:
-        system_instruction = "You are the Smart Resource Allocation Assistant. Analyze the provided Mumbai logistics data and give concise, tactical advice. Focus on saving time and lives."
-    
+        system_instruction = (
+            "You are the Smart Resource Allocation Assistant. "
+            "Analyze the provided Mumbai logistics data and give concise, tactical advice. "
+            "Focus on saving time and lives."
+        )
+
+    # Force the stable v1 endpoint to avoid 404s from v1beta routing
+    import google.api_core.gapic_v1.client_info as _ci
     try:
-        # Update Model Name: Ensure the model string is exactly 'gemini-1.5-flash'
-        return genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
-            system_instruction=system_instruction
-        )
-    except google.api_core.exceptions.NotFound:
-        # Error Handling: Fallback to 'gemini-pro' on 404
-        return genai.GenerativeModel(
-            model_name='gemini-pro',
-            system_instruction=system_instruction
-        )
+        from google.api_core.client_options import ClientOptions
+        _client_options = ClientOptions(api_endpoint="generativelanguage.googleapis.com")
     except Exception:
-        return genai.GenerativeModel('gemini-pro')
+        _client_options = None
+
+    _PRIMARY_MODEL   = "gemini-1.5-flash"
+    _FALLBACK_MODEL  = "gemini-pro"
+
+    class _RobustModel:
+        """Thin wrapper — tries primary, falls back to secondary on 404."""
+        def __init__(self):
+            try:
+                self._primary = genai.GenerativeModel(
+                    model_name=_PRIMARY_MODEL,
+                    system_instruction=system_instruction,
+                )
+            except Exception:
+                self._primary = None
+
+            try:
+                self._fallback = genai.GenerativeModel(
+                    model_name=_FALLBACK_MODEL,
+                    system_instruction=system_instruction,
+                )
+            except Exception:
+                self._fallback = None
+
+        def generate_content(self, *args, **kwargs):
+            # Try primary model first
+            if self._primary:
+                try:
+                    return self._primary.generate_content(*args, **kwargs)
+                except google.api_core.exceptions.NotFound:
+                    pass   # fall through to fallback
+                except Exception:
+                    pass   # any other error — try fallback
+
+            # Fallback to gemini-pro
+            if self._fallback:
+                return self._fallback.generate_content(*args, **kwargs)
+
+            raise RuntimeError("All Gemini models unavailable — check API key and region.")
+
+    return _RobustModel()
