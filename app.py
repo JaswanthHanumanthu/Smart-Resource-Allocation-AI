@@ -537,6 +537,7 @@ def run_dashboard():
     st.sidebar.markdown("---")
     st.sidebar.markdown(textwrap.dedent("""
         <div style="padding: 10px; border-top: 1px solid rgba(66, 133, 244, 0.1); margin-top: 20px; text-align: center;">
+            <div style="font-size: 0.65rem; color: #5F6368; margin-bottom: 4px; font-weight: 600;">Created, Designed and Managed by</div>
             <div style="font-size: 0.8rem; font-weight: 800; color: #1A73E8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;">
                 Jaswanth Hanumanthu
             </div>
@@ -2115,7 +2116,10 @@ def main():
     st.write('<br>' * 5, unsafe_allow_html=True)
     st.markdown(textwrap.dedent("""
         <div class="dev-dock-container">
-            <div class="dev-name-3d">Jaswanth Hanumanthu</div>
+            <div style="display: flex; flex-direction: column; justify-content: center; margin-right: 15px; border-right: 1px solid rgba(0,0,0,0.1); padding-right: 15px;">
+                <span style="font-size: 0.65rem; color: #5F6368; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Created, Designed and Managed by</span>
+                <div class="dev-name-3d" style="border-right: none; margin-right: 0; padding-right: 0;">Jaswanth Hanumanthu</div>
+            </div>
             <div class="dev-social-dock">
                 <a href="https://www.linkedin.com/in/jaswanth-hanumanthu" target="_blank" class="dock-btn linkedin-dock">
                     <i class="fab fa-linkedin-in"></i>
