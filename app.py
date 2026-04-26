@@ -49,39 +49,23 @@ initial_markers = [
     {"id": "NRB_01", "city": "Nairobi", "lat": -1.2921, "lng": 36.8219, "urgency": 6, "cat": "General"}
 ]
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
-_api_key = None
 try:
-    if "GOOGLE_API_KEY" in st.secrets:
-        _api_key = st.secrets["GOOGLE_API_KEY"]
+    # Get API key from secrets
+    api_key = st.secrets['GOOGLE_API_KEY']
+    genai.configure(api_key=api_key)
+
+    # Initialize the model without extra version flags
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    _api_key = api_key
 except Exception:
-    pass
-
-if not _api_key:
-    try:
-        from src.utils.api_keys import get_google_api_key, get_model
-        _api_key = get_google_api_key()
-    except Exception:
-        pass
-
-if _api_key:
-    genai.configure(api_key=_api_key, client_options={'api_version': 'v1'})
-else:
-    try:
-        genai.configure(api_key=st.secrets['GOOGLE_API_KEY'], client_options={'api_version': 'v1'})
-    except Exception:
-        st.warning("⚠️ GOOGLE_API_KEY not found in secrets or environment.")
+    _api_key = None
 
 def get_ai_response(prompt):
     try:
-        # Standard stable call on v1
-        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
         return response.text
-    except Exception:
-        # Immediate fallback to legacy stable model if Flash fails
-        model = genai.GenerativeModel('gemini-pro')
-        response = model.generate_content(prompt)
-        return response.text
+    except Exception as e:
+        return "⚠️ I am currently experiencing connection issues or AI service is unavailable. Please try again later."
 
 @contextlib.contextmanager
 def skeleton_spinner(label="AI Processing...", n_blocks=3, heights=None):
