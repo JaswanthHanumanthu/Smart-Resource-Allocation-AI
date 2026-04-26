@@ -18,8 +18,9 @@ def ai_truth_check(text: str, api_key: str = None) -> bool:
         return True
         
     try:
+        from .api_keys import get_google_api_key, get_model
         genai.configure(api_key=used_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         prompt = f"""
         Analyze this NGO report: "{text}"
         Respond with "REALISTIC" OR "SPAM" (ONLY ONE WORD). Use spam for lorem ipsum or nonsense.

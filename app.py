@@ -12,6 +12,8 @@ st.set_page_config(
 import pandas as pd
 import io
 import google.generativeai as genai
+import google.api_core.exceptions
+
 import contextlib
 import sys
 import os
@@ -47,20 +49,24 @@ initial_markers = [
     {"id": "NRB_01", "city": "Nairobi", "lat": -1.2921, "lng": 36.8219, "urgency": 6, "cat": "General"}
 ]
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
+_api_key = None
 try:
-    _api_key = st.secrets.get("GOOGLE_API_KEY")
+    if "GOOGLE_API_KEY" in st.secrets:
+        _api_key = st.secrets["GOOGLE_API_KEY"]
 except Exception:
-    _api_key = None
+    pass
 
 if not _api_key:
     try:
-        from src.utils.api_keys import get_google_api_key
+        from src.utils.api_keys import get_google_api_key, get_model
         _api_key = get_google_api_key()
     except Exception:
         pass
 
 if _api_key:
     genai.configure(api_key=_api_key)
+else:
+    st.warning("⚠️ GOOGLE_API_KEY not found in secrets or environment.")
 
 @contextlib.contextmanager
 def skeleton_spinner(label="AI Processing...", n_blocks=3, heights=None):
@@ -73,8 +79,10 @@ def skeleton_spinner(label="AI Processing...", n_blocks=3, heights=None):
 
 @st.cache_resource
 def get_gemini_model(model_name='gemini-1.5-flash'):
-    if _api_key: return genai.GenerativeModel(model_name)
-    return None
+    if not _api_key:
+        return None
+    from src.utils.api_keys import get_model
+    return get_model()
 
 def typewriter_effect(text, delay=0.01):
     """Simulates a typewriter effect for AI responses."""
@@ -524,6 +532,21 @@ def run_dashboard():
             st.sidebar.error("🛰️ **System Re-routing:** AI Satellite Link interrupted. Attempting to re-establish connection...")
             if st.sidebar.button("Retry AI Uplink"):
                 st.rerun()
+    
+    # --- SIDEBAR BRANDING ---
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(textwrap.dedent("""
+        <div style="padding: 10px; border-top: 1px solid rgba(66, 133, 244, 0.1); margin-top: 20px; text-align: center;">
+            <div style="font-size: 0.8rem; font-weight: 800; color: #1A73E8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;">
+                Jaswanth Hanumanthu
+            </div>
+            <div style="display: flex; justify-content: center; gap: 12px;">
+                <a href="https://www.linkedin.com/in/jaswanth-hanumanthu" target="_blank" style="color: #5F6368; font-size: 0.9rem;"><i class="fab fa-linkedin-in"></i></a>
+                <a href="https://github.com/JaswanthHanumanthu" target="_blank" style="color: #5F6368; font-size: 0.9rem;"><i class="fab fa-github"></i></a>
+                <a href="mailto:jaswanthhanumanthu2025@gmail.com" style="color: #5F6368; font-size: 0.9rem;"><i class="fas fa-envelope"></i></a>
+            </div>
+        </div>
+    """), unsafe_allow_html=True)
 
     _df_crisis = st.session_state.get('needs_df', pd.DataFrame())
     _max_urg = int(_df_crisis['urgency'].max()) if not _df_crisis.empty and 'urgency' in _df_crisis.columns else 0
@@ -1957,21 +1980,20 @@ def main():
 
         /* 🚢 FLOATING GLASS DOCK FOOTER */
         .dev-dock-container {
-            position: fixed;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: relative;
+            margin: 40px auto 20px auto;
+            width: fit-content;
             z-index: 1000;
             display: flex;
             align-items: center;
             gap: 20px;
             padding: 12px 25px;
-            background: rgba(255, 255, 255, 0.3) !important;
+            background: rgba(255, 255, 255, 0.9) !important;
             backdrop-filter: blur(15px) !important;
             -webkit-backdrop-filter: blur(15px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.4) !important;
-            border-radius: 50px !important;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+            border: 1.5px solid #4285F4 !important;
+            border-radius: 20px !important;
+            box-shadow: 0 10px 30px rgba(66, 133, 244, 0.1) !important;
             transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
@@ -1986,12 +2008,20 @@ def main():
             font-size: 1.1rem;
             font-weight: 900;
             letter-spacing: 1px;
-            color: #3C4043;
+            background: linear-gradient(90deg, #3C4043, #4285F4, #3C4043);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
             text-transform: uppercase;
-            text-shadow: 0.5px 0.5px 0px rgba(255,255,255,0.8), -0.5px -0.5px 0px rgba(0,0,0,0.1), 1px 1px 3px rgba(0,0,0,0.1);
             margin-right: 15px;
             border-right: 1px solid rgba(0,0,0,0.1);
             padding-right: 15px;
+        }
+
+        @keyframes shine {
+            0% { background-position: -200%; }
+            100% { background-position: 200%; }
         }
 
         .dev-social-dock { display: flex; gap: 15px; }
@@ -2021,6 +2051,12 @@ def main():
             color: white !important; 
             background: #24292e !important; 
             box-shadow: 0 0 20px rgba(36, 41, 46, 0.6);
+            transform: scale(1.1) translateY(-3px);
+        }
+        .gmail-dock:hover {
+            color: white !important;
+            background: #EA4335 !important;
+            box-shadow: 0 0 20px rgba(234, 67, 53, 0.6);
             transform: scale(1.1) translateY(-3px);
         }
 
@@ -2076,6 +2112,7 @@ def main():
             st.code(f"Error Type: {type(e).__name__}\nMessage: {str(e)}\n\n{traceback.format_exc()}")
 
     # --- ENGINEERING ATTRIBUTION COMPONENT ---
+    st.write('<br>' * 5, unsafe_allow_html=True)
     st.markdown(textwrap.dedent("""
         <div class="dev-dock-container">
             <div class="dev-name-3d">Jaswanth Hanumanthu</div>
@@ -2083,8 +2120,11 @@ def main():
                 <a href="https://www.linkedin.com/in/jaswanth-hanumanthu" target="_blank" class="dock-btn linkedin-dock">
                     <i class="fab fa-linkedin-in"></i>
                 </a>
-                <a href="https://github.com/JaswanthHanumanthu/Smart-Resource-Allocation-AI" target="_blank" class="dock-btn github-dock">
+                <a href="https://github.com/JaswanthHanumanthu" target="_blank" class="dock-btn github-dock">
                     <i class="fab fa-github"></i>
+                </a>
+                <a href="mailto:jaswanthhanumanthu2025@gmail.com" class="dock-btn gmail-dock">
+                    <i class="fas fa-envelope"></i>
                 </a>
             </div>
         </div>

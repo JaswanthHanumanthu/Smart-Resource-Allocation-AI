@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import google.generativeai as genai
+import google.api_core.exceptions
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -68,3 +70,25 @@ def get_google_api_key() -> str | None:
             pass
 
     return key
+
+def get_model(system_instruction: str = None):
+    """
+    Helper to get the Gemini model with fallback and system instruction.
+    """
+    if not system_instruction:
+        system_instruction = "You are the Smart Resource Allocation Assistant. Analyze the provided Mumbai logistics data and give concise, tactical advice. Focus on saving time and lives."
+    
+    try:
+        # Update Model Name: Ensure the model string is exactly 'gemini-1.5-flash'
+        return genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            system_instruction=system_instruction
+        )
+    except google.api_core.exceptions.NotFound:
+        # Error Handling: Fallback to 'gemini-pro' on 404
+        return genai.GenerativeModel(
+            model_name='gemini-pro',
+            system_instruction=system_instruction
+        )
+    except Exception:
+        return genai.GenerativeModel('gemini-pro')

@@ -1,10 +1,13 @@
 import google.generativeai as genai
+import google.api_core.exceptions
+
 import json
 import streamlit as st
 import pandas as pd
 import io
 from pathlib import Path
-from .utils.api_keys import get_google_api_key
+from .utils.api_keys import get_google_api_key, get_model
+
 
 def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
     """
@@ -33,7 +36,7 @@ def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
             "note": "Set GOOGLE_API_KEY in .env or Streamlit secrets to use the live model."
         }
         
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = get_model()
     
     prompt = f"""
     You are an AI data extractor and translator with a strict Privacy First policy. 
@@ -122,7 +125,7 @@ def process_field_audio(audio_data: bytes, api_key: str = None) -> dict:
     try:
         genai.configure(api_key=used_key)
         # Gemini 1.5 Flash can process audio directly
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         # We need a mime type, assuming wav/mp3 for this prototype
         response = model.generate_content([
             """Analyze this humanitarian field recording. 
@@ -145,7 +148,7 @@ def process_field_image(image_bytes: bytes) -> dict:
     if st.session_state.get('high_traffic'):
         return {"error": "Vision Tier Unavailable: Resource Limit Exceeded."}
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         
         prompt = """
         You are a Humanitarian Data Expert. Analyze the attached mission photo.
@@ -205,7 +208,7 @@ def process_survey_image(pil_image, api_key: str = None) -> dict:
             "note": "Set GOOGLE_API_KEY in .env or Streamlit secrets for the live multimodal model.",
         }
         
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = get_model()
     
     prompt = """
     You are an expert AI multimodal data extractor and translator with a strict Privacy First policy. 
@@ -265,7 +268,7 @@ def summarize_situation_ai(df_json: str, api_key: str = None) -> str:
             
     try:
         genai.configure(api_key=used_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         report_data = df.groupby(['category', 'status']).size().to_string()
         prompt = f"""You are an AI logistics director for an NGO. Look at the following raw aggregation of community needs.
 Write EXACTLY a punchy 2-sentence executive summary emphasizing what is most critical, and recommending where to cleanly shift resources today.
@@ -289,8 +292,9 @@ def chat_with_data(query: str, df: pd.DataFrame, api_key: str = None) -> str:
         time.sleep(1)
         return "[SIMULATION] Based on my scan of the live database, Dr. Alice Morgan is the optimal choice for the current fire relief task due to her Medical specialization and close geographic proximity to the incident."
         
+    system_instruction = "You are the Smart Resource Allocation Assistant. Analyze the provided Mumbai logistics data and give concise, tactical advice. Focus on saving time and lives."
+    
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
         # Sub-select columns to fit context window smoothly
         cols = [c for c in ['category', 'urgency', 'status', 'description', 'latitude', 'longitude'] if c in df.columns]
         report_data = df.to_string(columns=cols) if not df.empty else "Database is currently empty."
@@ -303,8 +307,24 @@ Current Active Database:
 {report_data}
 
 User Query: {query}"""
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        
+        try:
+            # Update Model Name: Ensure the model string is exactly 'gemini-1.5-flash'
+            model = genai.GenerativeModel(
+                model_name='gemini-1.5-flash',
+                system_instruction=system_instruction
+            )
+            response = model.generate_content(prompt)
+            return response.text.strip()
+        except google.api_core.exceptions.NotFound:
+            # Error Handling: If gemini-1.5-flash fails with 404, fallback to 'gemini-pro'
+            model = genai.GenerativeModel(
+                model_name='gemini-pro',
+                system_instruction=system_instruction
+            )
+            response = model.generate_content(prompt)
+            return response.text.strip()
+            
     except Exception as e:
         return f"Sorry, I encountered an issue checking the data: {str(e)}"
 
@@ -321,7 +341,7 @@ def predict_depletion_zones(df_json: str) -> list:
             raise Exception("No API Key Provided")
 
         genai.configure(api_key=used_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         
         # Sample recent data to fit prompt limits
         cols = [c for c in ['category', 'urgency', 'latitude', 'longitude', 'status'] if c in df.columns]
@@ -367,7 +387,7 @@ def centralized_input_sanitizer(raw_data: dict, api_key: str = None) -> dict:
         
     try:
         genai.configure(api_key=used_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         
         prompt = f"""
         You are a Humanitarian Data Integrity Agent. Your job is to 'heal' and standardize raw mission data.
@@ -399,7 +419,7 @@ def auto_tag_document(content: str, api_key: str = None) -> list:
         
     try:
         genai.configure(api_key=used_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         prompt = f"""
         Analyze this document snippet and generate 3 to 5 highly relevant hashtags.
         Focus on categories (Medical, Food, etc.), locations mentioned, and crisis type.
@@ -425,7 +445,7 @@ def process_report_intelligence(file_content: str, api_key: str = None) -> dict:
         
     try:
         genai.configure(api_key=used_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         prompt = f"""
         Analyze the following mission report snippet:
         {file_content[:5000]}
@@ -456,7 +476,7 @@ def run_intelligent_audit(df: pd.DataFrame, api_key: str = None) -> str:
         
     try:
         genai.configure(api_key=used_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         
         # Create situational context
         summary = df[['category', 'urgency', 'status', 'people_affected'] if all(c in df.columns for c in ['category', 'urgency', 'status', 'people_affected']) else df.columns].describe().to_string()
@@ -526,7 +546,7 @@ def generate_elite_report(uploaded_file, current_df: pd.DataFrame, api_key: str 
 
     try:
         genai.configure(api_key=used_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
 
         db_snapshot = current_df[['category', 'urgency', 'status', 'latitude', 'longitude', 'description']].head(15).to_string() if not current_df.empty else "No existing records."
 
@@ -603,7 +623,7 @@ def run_autonomous_matching(needs_df_json: str, volunteers_json: str) -> list:
             raise Exception("No Key")
 
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         
         prompt = f"""
         You are a Humanitarian Dispatch AI. Match the following 'Critical Needs' with the 'Available Volunteers'.
@@ -664,7 +684,7 @@ def translate_text(text: str, target_lang: str) -> str:
             return text
 
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         
         prompt = f"Translate the following short UI label or phrase into {target_lang}. Return ONLY the translated string: '{text}'"
         response = model.generate_content(prompt)
@@ -680,7 +700,7 @@ def process_voice_command(audio_data: bytes) -> dict:
             return {"error": "AI Navigation Offline"}
 
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
         
         prompt = """
         Analyze the following voice command request for a humanitarian dashboard.
@@ -714,7 +734,7 @@ def get_tactical_insights(df_json: str, volunteers_json: str, api_key: str = Non
             raise Exception("API Key Missing")
 
         genai.configure(api_key=used_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = get_model()
 
         needs_summary = df[['id', 'category', 'urgency', 'description', 'people_affected']].head(10).to_json(orient='records')
         vol_summary = json.dumps([{"name": v['name'], "skills": v['skills']} for v in volunteers])
