@@ -845,9 +845,9 @@ def run_dashboard():
                         if insights:
                             st.markdown("#### 🧠 Strategic Summary")
                             def word_generator():
-                                for word in insights.get('strategic_summary', 'N/A').split():
-                                    yield word + " "
-                                    time.sleep(0.04)
+                                for char in insights.get('strategic_summary', 'N/A'):
+                                    yield char
+                                    time.sleep(0.01)
                             st.write_stream(word_generator)
                 
                 st.divider()
@@ -951,9 +951,13 @@ def run_dashboard():
                 st.markdown("---")
                 def audit_stream():
                     import time
-                    for word in st.session_state['last_audit_report'].split():
-                        yield word + " "
-                        time.sleep(0.02)
+                    import re
+                    raw_text = st.session_state['last_audit_report']
+                    # Ensure points are on new lines if the AI didn't provide them
+                    processed_text = re.sub(r'(?<!\n)(\d+\.)', r'\n\1', raw_text)
+                    for char in processed_text:
+                        yield char
+                        time.sleep(0.005)
                 st.write_stream(audit_stream)
                 if st.button("Acknowledge & Archive Audit", use_container_width=True):
                     del st.session_state['last_audit_report']
@@ -1022,9 +1026,10 @@ def run_dashboard():
                         st.divider()
                         
                         def summary_stream():
-                            for word in elite_report.get('summary_text', elite_report.get('summary', '')).split():
-                                yield word + " "
-                                time.sleep(0.03)
+                            text = elite_report.get('summary_text', elite_report.get('summary', ''))
+                            for char in text:
+                                yield char
+                                time.sleep(0.01)
                         st.write_stream(summary_stream)
                         
                         col_a, col_b = st.columns(2)

@@ -484,7 +484,7 @@ def run_intelligent_audit(df: pd.DataFrame, api_key: str = None) -> str:
         Tasks:
         1. Identify the top 3 logistics bottlenecks (e.g., disproportionate pending tasks in a sector).
         2. Suggest a specific, actionable fix for each.
-        3. Format as a professional 'Executive Logistics Audit' report with a punchy conclusion.
+        3. Format as a professional 'Executive Logistics Audit' report with a punchy conclusion. Use clear newlines between each numbered point so they are easy to read.
         """
         response = model.generate_content(analysis_prompt)
         return response.text.strip()
