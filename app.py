@@ -19,6 +19,8 @@ import sys
 import os
 import json
 import random
+import time
+import datetime
 import numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -96,7 +98,6 @@ def typewriter_effect(text, delay=0.01):
     for char in text:
         displayed_text += char
         container.markdown(displayed_text + "▌")
-        import time
         time.sleep(delay)
     container.markdown(displayed_text)
 
@@ -949,6 +950,7 @@ def run_dashboard():
             if 'last_audit_report' in st.session_state:
                 st.markdown("---")
                 def audit_stream():
+                    import time
                     for word in st.session_state['last_audit_report'].split():
                         yield word + " "
                         time.sleep(0.02)
