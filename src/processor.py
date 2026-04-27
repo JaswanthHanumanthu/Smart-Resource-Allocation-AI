@@ -125,36 +125,26 @@ def process_field_audio(audio_data: bytes, api_key: str = None) -> dict:
 
     try:
         genai.configure(api_key=used_key)
-        model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Your responses must be professional, direct, and formatted for emergency coordination.")
+        model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Provide ultra-fast extraction of resource needs.")
         
         prompt = """
-        Transcribe this humanitarian field recording and provide:
-        1. A professional tactical summary for a coordinator (bulleted list).
-        2. A structured JSON block at the end with these keys: {"urgency": 1-10, "category": "Food/Medical/Shelter/General", "latitude": float, "longitude": float, "description": "short summary"}.
+        Analyze this audio field memo. Return a JSON object with:
+        1. "tactical_briefing": (bulleted list of resources, locations, and urgency)
+        2. "urgency": (1-10)
+        3. "category": ("Food", "Medical", "Shelter", "General")
+        4. "latitude": (float)
+        5. "longitude": (float)
+        6. "description": (1-sentence summary)
         """
         
-        response = model.generate_content([
-            prompt,
-            {"mime_type": "audio/wav", "data": audio_data}
-        ])
+        response = model.generate_content(
+            [prompt, {"mime_type": "audio/wav", "data": audio_data}],
+            generation_config={"response_mime_type": "application/json"}
+        )
         
-        full_text = response.text
-        # Attempt to extract JSON from the response
-        try:
-            import re
-            json_match = re.search(r'\{.*\}', full_text, re.DOTALL)
-            if json_match:
-                data = json.loads(json_match.group())
-                data['text'] = full_text.replace(json_match.group(), '').strip()
-                return data
-        except:
-            pass
-            
-        return {
-            "text": full_text,
-            "urgency": 5, "category": "General", "latitude": 19.0760, "longitude": 72.8777,
-            "description": "Tactical summary extracted from audio."
-        }
+        data = json.loads(response.text)
+        data['text'] = data.get('tactical_briefing', data.get('description', 'No briefing available.'))
+        return data
     except Exception as e:
         return {
             "urgency": 8,
@@ -170,34 +160,27 @@ def process_field_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> di
     if st.session_state.get('high_traffic'):
         return {"error": "Vision Tier Unavailable: Resource Limit Exceeded."}
     try:
-        model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Your responses must be professional, direct, and formatted for emergency coordination.")
+        model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Provide ultra-fast extraction of resource needs.")
         
         prompt = """
-        Analyze this mission imagery/document and provide:
-        1. A professional tactical analysis for an emergency coordinator (bulleted list of resources, locations, urgency).
-        2. A structured JSON block at the end with these keys: {"urgency": 1-10, "category": "Food/Medical/Shelter/General", "latitude": float, "longitude": float, "description": "short summary"}.
+        Analyze this image/document. Return a JSON object with:
+        1. "tactical_briefing": (bulleted list of resources, locations, and urgency)
+        2. "urgency": (1-10)
+        3. "category": ("Food", "Medical", "Shelter", "General")
+        4. "latitude": (float)
+        5. "longitude": (float)
+        6. "description": (1-sentence summary)
         """
         
         img = {"mime_type": mime_type, "data": image_bytes}
-        response = model.generate_content([prompt, img])
+        response = model.generate_content(
+            [prompt, img],
+            generation_config={"response_mime_type": "application/json"}
+        )
         
-        full_text = response.text
-        # Attempt to extract JSON from the response
-        try:
-            import re
-            json_match = re.search(r'\{.*\}', full_text, re.DOTALL)
-            if json_match:
-                data = json.loads(json_match.group())
-                data['text'] = full_text.replace(json_match.group(), '').strip()
-                return data
-        except:
-            pass
-
-        return {
-            "text": full_text,
-            "urgency": 7, "category": "General", "latitude": 19.0760, "longitude": 72.8777,
-            "description": "Tactical analysis extracted from imagery."
-        }
+        data = json.loads(response.text)
+        data['text'] = data.get('tactical_briefing', data.get('description', 'No briefing available.'))
+        return data
     except Exception as e:
         return {
             "urgency": 9,
@@ -570,37 +553,22 @@ def generate_elite_report(uploaded_file, current_df: pd.DataFrame, api_key: str 
         if hasattr(uploaded_file, 'name') and uploaded_file.name.lower().endswith('.pdf'):
             uploaded_file.seek(0)
             pdf_data = uploaded_file.read()
-            prompt = "Extract all resource numbers, locations, and urgency levels from this document. Format it as a bulleted list for an emergency coordinator."
-            response = model.generate_content([
-                prompt,
-                {"mime_type": "application/pdf", "data": pdf_data}
-            ])
-            # For the elite report, we'll still want the JSON structure for the UI components
-            # but we can include the tactical summary.
-            tactical_text = response.text
-            
-            # Now get the JSON structure
-            master_prompt = f"""
-            Based on the following tactical analysis and the current mission snapshot, generate a strategic JSON report.
-            
-            TACTICAL ANALYSIS:
-            {tactical_text}
-            
-            CURRENT MISSION SNAPSHOT:
-            {db_snapshot}
-            
-            JSON Schema:
-            {{
-                "immediate_actions": "<Markdown table | Task | Priority | Responsible Party |>",
-                "sustainability_impact": "<Markdown table | Initiative | SDG Alignment | Expected Outcome |>",
-                "social_roi": "<Explanation of ROI>",
-                "social_roi_score": <int 0-100>,
-                "summary": "{tactical_text[:500]}...",
-                "summary_text": "{tactical_text}",
-                "sdg_impact": ["SDG 2: Zero Hunger", "SDG 3: Good Health", "SDG 11: Sustainable Cities"]
-            }}
+            prompt = """
+            Analyze this PDF. Return a JSON object with:
+            1. "summary_text": (Professional bulleted tactical briefing)
+            2. "immediate_actions": (Markdown table: | Task | Priority | Responsible Party |)
+            3. "sustainability_impact": (Markdown table: | Initiative | SDG Alignment | Expected Outcome |)
+            4. "social_roi_score": (int 0-100)
+            5. "social_roi": (brief explanation)
+            6. "sdg_impact": (list of 3 SDGs)
             """
-            response = model.generate_content(master_prompt)
+            response = model.generate_content(
+                [prompt, {"mime_type": "application/pdf", "data": pdf_data}],
+                generation_config={"response_mime_type": "application/json"}
+            )
+            report_data = json.loads(response.text)
+            report_data['summary'] = report_data.get('summary_text', '')[:100]
+            return report_data
         else:
             master_prompt = f"""
             You are a Senior Social Impact Strategist for a global humanitarian mission. Your objective is to optimize resource distribution for maximum human impact.

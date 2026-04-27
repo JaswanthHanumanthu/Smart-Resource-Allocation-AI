@@ -969,9 +969,7 @@ def run_dashboard():
             if voice_memo:
                 from src.processor import process_field_audio
                 with st.status("📡 Tactical Audio Uplink: Synchronizing...", expanded=True) as status:
-                    import time
-                    time.sleep(0.8)
-                    status.update(label="🧠 Tactical Crisis Analyst: Transcribing & Analyzing...", state="running")
+                    status.update(label="🧠 Tactical Crisis Analyst: Analyzing...", state="running")
                     res = process_field_audio(voice_memo.read())
                     status.update(label="✅ Tactical Briefing Compiled", state="complete")
                 
@@ -982,9 +980,7 @@ def run_dashboard():
             if photo_memo:
                 from src.processor import process_field_image
                 with st.status("📡 Tactical Vision Uplink: Synchronizing...", expanded=True) as status:
-                    import time
-                    time.sleep(1)
-                    status.update(label="🧠 Tactical Crisis Analyst: Analyzing Terrain & Documents...", state="running")
+                    status.update(label="🧠 Tactical Crisis Analyst: Analyzing...", state="running")
                     res = process_field_image(photo_memo.read())
                     status.update(label="✅ Vision Intelligence Decrypted", state="complete")
                 
@@ -1039,9 +1035,7 @@ def run_dashboard():
                 
                 with st.status("🕵️ Senior Strategist Analyzing Impact Payload...", expanded=True) as status:
                     from src.processor import generate_elite_report
-                    import time
-                    time.sleep(1)
-                    status.update(label="🌍 Calculating Global SDG Multiplier...", state="running")
+                    status.update(label="🌍 Calculating Strategic Impact...", state="running")
                     elite_report = generate_elite_report(uploaded_file, st.session_state.get('needs_df', pd.DataFrame()), api_key=_api_key)
                     status.update(label="✅ Strategic Report Generated", state="complete", expanded=False)
                 
