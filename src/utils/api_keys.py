@@ -66,16 +66,7 @@ def get_model(system_instruction: str = None):
     """
     Returns a standard Gemini 1.5 Flash model.
     """
-    if not system_instruction:
-        system_instruction = (
-            "You are the Smart Resource Allocation Assistant. "
-            "Analyze the provided Mumbai logistics data and give concise, tactical advice. "
-            "Focus on saving time and lives."
-        )
-
     model_name = "gemini-1.5-flash"
     
-    return genai.GenerativeModel(
-        model_name=model_name,
-        system_instruction=system_instruction,
-    )
+    # User requested simple initialization
+    return genai.GenerativeModel(model_name)

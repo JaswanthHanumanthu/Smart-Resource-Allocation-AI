@@ -967,9 +967,9 @@ def run_dashboard():
         with r1:
             voice_memo = st.file_uploader("🎤 Voice Memo (Audio)", type=["mp3", "wav", "m4a"], key="voice_ingest")
             if voice_memo:
-                with st.spinner("🛰️ Gemini AI is decoding field transmission..."):
-                    from src.processor import process_field_audio
-                    res = process_field_audio(voice_memo.read())
+                st.info('🛰️ Gemini Intelligence Syncing...')
+                from src.processor import process_field_audio
+                res = process_field_audio(voice_memo.read())
                 
                 if "error" not in res:
                     st.toast("✅ Tactical Briefing Compiled")
@@ -981,9 +981,9 @@ def run_dashboard():
         with r2:
             photo_memo = st.file_uploader("📸 Situational Photo", type=["jpg", "png", "jpeg"], key="photo_ingest")
             if photo_memo:
-                with st.spinner("🛰️ Gemini AI is decoding field transmission..."):
-                    from src.processor import process_field_image
-                    res = process_field_image(photo_memo.read())
+                st.info('🛰️ Gemini Intelligence Syncing...')
+                from src.processor import process_field_image
+                res = process_field_image(photo_memo.read())
                 
                 if "error" not in res:
                     st.toast("✅ Vision Intelligence Decrypted")

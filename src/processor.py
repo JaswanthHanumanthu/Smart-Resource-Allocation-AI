@@ -129,34 +129,24 @@ def process_field_audio(audio_data: bytes, api_key: str = None) -> dict:
         
         prompt = """
         Analyze this audio field memo. Return a JSON object with:
-        1. "tactical_briefing": (bulleted list of resources, locations, and urgency)
-        2. "urgency": (1-10)
-        3. "category": ("Food", "Medical", "Shelter", "General")
-        4. "latitude": (float)
-        5. "longitude": (float)
-        6. "description": (1-sentence summary)
+        {"tactical_briefing": "...", "urgency": 1-10, "category": "Food/Medical/Shelter/General", "latitude": float, "longitude": float, "description": "..."}
         """
         
-        import tempfile
+        import tempfile, os
         with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:
             tmp.write(audio_data)
             tmp_path = tmp.name
             
         try:
-            audio_file = genai.upload_file(path=tmp_path, mime_type="audio/wav")
-            response = model.generate_content(
-                [prompt, audio_file],
-                generation_config={"response_mime_type": "application/json"}
-            )
-            data = json.loads(response.text)
-            data['text'] = data.get('tactical_briefing', data.get('description', 'No briefing available.'))
+            uploaded = genai.upload_file(path=tmp_path)
+            response = model.generate_content([prompt, uploaded])
+            data = json.loads(response.text.strip('`').replace('json', ''))
+            data['text'] = data.get('tactical_briefing', data.get('description', ''))
             return data
         finally:
-            import os
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
+            if os.path.exists(tmp_path): os.unlink(tmp_path)
     except Exception as e:
-        return {"error": str(e), "text": f"Mission processing interrupted: {str(e)}"}
+        return {"error": str(e)}
 
 def process_field_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict:
     """Multimodal vision extraction as a Tactical Crisis Analyst for Mumbai."""
@@ -164,28 +154,24 @@ def process_field_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> di
         return {"error": "Vision Tier Unavailable: Resource Limit Exceeded."}
     try:
         model = get_model()
-        
         prompt = """
-        Analyze this image/document. Return a JSON object with:
-        1. "tactical_briefing": (bulleted list of resources, locations, and urgency)
-        2. "urgency": (1-10)
-        3. "category": ("Food", "Medical", "Shelter", "General")
-        4. "latitude": (float)
-        5. "longitude": (float)
-        6. "description": (1-sentence summary)
+        Analyze this imagery/document. Return JSON:
+        {"tactical_briefing": "...", "urgency": 1-10, "category": "Food/Medical/Shelter/General", "latitude": float, "longitude": float, "description": "..."}
         """
-        
-        img = {"mime_type": mime_type, "data": image_bytes}
-        response = model.generate_content(
-            [prompt, img],
-            generation_config={"response_mime_type": "application/json"}
-        )
-        
-        data = json.loads(response.text)
-        data['text'] = data.get('tactical_briefing', data.get('description', 'No briefing available.'))
-        return data
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
+            tmp.write(image_bytes)
+            tmp_path = tmp.name
+        try:
+            uploaded = genai.upload_file(path=tmp_path)
+            response = model.generate_content([prompt, uploaded])
+            data = json.loads(response.text.strip('`').replace('json', ''))
+            data['text'] = data.get('tactical_briefing', data.get('description', ''))
+            return data
+        finally:
+            if os.path.exists(tmp_path): os.unlink(tmp_path)
     except Exception as e:
-        return {"error": str(e), "text": f"Vision analysis interrupted: {str(e)}"}
+        return {"error": str(e)}
 
 def process_survey_image(pil_image, api_key: str = None) -> dict:
     """
