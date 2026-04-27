@@ -125,7 +125,7 @@ def process_field_audio(audio_data: bytes, api_key: str = None) -> dict:
 
     try:
         genai.configure(api_key=used_key)
-        model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Provide ultra-fast extraction of resource needs.")
+        model = get_model()
         
         prompt = """
         Analyze this audio field memo. Return a JSON object with:
@@ -137,30 +137,33 @@ def process_field_audio(audio_data: bytes, api_key: str = None) -> dict:
         6. "description": (1-sentence summary)
         """
         
-        response = model.generate_content(
-            [prompt, {"mime_type": "audio/wav", "data": audio_data}],
-            generation_config={"response_mime_type": "application/json"}
-        )
-        
-        data = json.loads(response.text)
-        data['text'] = data.get('tactical_briefing', data.get('description', 'No briefing available.'))
-        return data
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:
+            tmp.write(audio_data)
+            tmp_path = tmp.name
+            
+        try:
+            audio_file = genai.upload_file(path=tmp_path, mime_type="audio/wav")
+            response = model.generate_content(
+                [prompt, audio_file],
+                generation_config={"response_mime_type": "application/json"}
+            )
+            data = json.loads(response.text)
+            data['text'] = data.get('tactical_briefing', data.get('description', 'No briefing available.'))
+            return data
+        finally:
+            import os
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
     except Exception as e:
-        return {
-            "urgency": 8,
-            "category": "General",
-            "latitude": 19.0760,
-            "longitude": 72.8777,
-            "description": f"Tactical Audio Alert: Incoming field report received. Manual review recommended due to signal interference. Error: {str(e)}",
-            "text": f"### ⚠️ Tactical Signal Interference\n\n**Analyst Note:** An audio field report was successfully uploaded, but the automated transcription engine encountered an error ({str(e)}). \n\n**Immediate Actions:**\n- Play the audio file manually to extract details.\n- Coordinate with Sector Delta for verification.\n- Urgent resource leveling may be required based on the origin of the transmission."
-        }
+        return {"error": str(e), "text": f"Mission processing interrupted: {str(e)}"}
 
 def process_field_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict:
     """Multimodal vision extraction as a Tactical Crisis Analyst for Mumbai."""
     if st.session_state.get('high_traffic'):
         return {"error": "Vision Tier Unavailable: Resource Limit Exceeded."}
     try:
-        model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Provide ultra-fast extraction of resource needs.")
+        model = get_model()
         
         prompt = """
         Analyze this image/document. Return a JSON object with:
@@ -182,14 +185,7 @@ def process_field_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> di
         data['text'] = data.get('tactical_briefing', data.get('description', 'No briefing available.'))
         return data
     except Exception as e:
-        return {
-            "urgency": 9,
-            "category": "General",
-            "latitude": 19.0760,
-            "longitude": 72.8777,
-            "description": f"Tactical Vision Alert: High-resolution imagery received. Computer vision diagnostics interrupted. Error: {str(e)}",
-            "text": f"### ⚠️ Vision Intelligence Interrupted\n\n**Analyst Note:** Situational imagery was received by the command center. While the AI vision diagnostic was interrupted ({str(e)}), the presence of new field data suggests an evolving situation.\n\n**Tactical Estimate:**\n- **Sector:** Mumbai Core\n- **Urgency Level:** High (Assumed)\n- **Recommendation:** Perform manual visual inspection of the uploaded asset to identify resource numbers and locations."
-        }
+        return {"error": str(e), "text": f"Vision analysis interrupted: {str(e)}"}
 
 def process_survey_image(pil_image, api_key: str = None) -> dict:
     """

@@ -62,36 +62,9 @@ def get_google_api_key() -> str | None:
 
     return key
 
-class RobustModel:
-    """
-    Tactical Failover Engine: Cycles through satellite models to ensure mission continuity 
-    when primary quotas are exceeded.
-    """
-    def __init__(self, system_instruction):
-        self.system_instruction = system_instruction
-        self.models = ["gemini-3-flash-preview", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]
-
-    def generate_content(self, contents, **kwargs):
-        last_error = None
-        for model_name in self.models:
-            try:
-                model = genai.GenerativeModel(
-                    model_name=model_name,
-                    system_instruction=self.system_instruction
-                )
-                return model.generate_content(contents, **kwargs)
-            except Exception as e:
-                last_error = e
-                # If it's not a quota (429) or not found (404), stop cycling
-                error_str = str(e).lower()
-                if "429" not in error_str and "404" not in error_str:
-                    break
-                continue
-        raise last_error
-
 def get_model(system_instruction: str = None):
     """
-    Returns a RobustModel that handles multi-satellite failover.
+    Returns a standard Gemini 1.5 Flash model.
     """
     if not system_instruction:
         system_instruction = (
@@ -100,4 +73,9 @@ def get_model(system_instruction: str = None):
             "Focus on saving time and lives."
         )
 
-    return RobustModel(system_instruction=system_instruction)
+    model_name = "gemini-1.5-flash"
+    
+    return genai.GenerativeModel(
+        model_name=model_name,
+        system_instruction=system_instruction,
+    )
