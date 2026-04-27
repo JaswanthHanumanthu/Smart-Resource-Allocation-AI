@@ -73,7 +73,7 @@ def get_model(system_instruction: str = None):
             "Focus on saving time and lives."
         )
 
-    model_name = "gemini-1.5-flash"
+    model_name = "gemini-3-flash-preview"
     
     return genai.GenerativeModel(
         model_name=model_name,
