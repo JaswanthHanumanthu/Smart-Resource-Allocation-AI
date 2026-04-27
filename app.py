@@ -997,8 +997,17 @@ def run_dashboard():
         # --- 🛡️ PERSISTENT TACTICAL BRIEFING AREA ---
         if 'extracted_result' in st.session_state:
             res = st.session_state['extracted_result']
+            st.markdown("---")
             with st.chat_message("assistant", avatar="🧠"):
-                st.markdown("### 🛡️ Tactical Crisis Analyst: Field Intelligence Briefing")
+                st.markdown("### 🛡️ Tactical Crisis Analyst: Intelligence Briefing")
+                
+                # Standard Structured Information
+                m1, m2, m3 = st.columns(3)
+                m1.metric("Urgency Level", f"{res.get('urgency', 'N/A')}/10")
+                m2.metric("Category", res.get('category', 'General'))
+                m3.metric("Location Node", f"{res.get('latitude', 0):.2f}, {res.get('longitude', 0):.2f}")
+                
+                st.markdown("#### 📝 Mission Summary")
                 st.write(res.get('text', res.get('description', 'Analyst note: Data packet received but briefing content is missing.')))
                 
                 col_sync1, col_sync2 = st.columns(2)
@@ -1006,7 +1015,7 @@ def run_dashboard():
                     if st.button("🚀 Synchronize to Mission Database", use_container_width=True, type="primary"):
                         try:
                             # Filter out 'text' and other non-DB fields
-                            db_data = {k: v for k, v in res.items() if k not in ['text', 'error']}
+                            db_data = {k: v for k, v in res.items() if k not in ['text', 'error', 'tactical_briefing']}
                             df_new = pd.DataFrame([db_data])
                             st.session_state['needs_df'] = pd.concat([st.session_state['needs_df'], df_new], ignore_index=True)
                             st.session_state['map_active_data'] = st.session_state['needs_df']
