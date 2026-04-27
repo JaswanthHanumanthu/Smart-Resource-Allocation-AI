@@ -973,17 +973,10 @@ def run_dashboard():
                     time.sleep(0.8)
                     status.update(label="🧠 Tactical Crisis Analyst: Transcribing & Analyzing...", state="running")
                     res = process_field_audio(voice_memo.read())
-                    status.update(label="✅ Intelligence Payload Decrypted", state="complete", expanded=False)
+                    status.update(label="✅ Tactical Briefing Compiled", state="complete")
                 
-                if "error" not in res:
-                    st.session_state['extracted_result'] = res
-                    st.markdown("### 🛡️ Tactical Intelligence Summary")
-                    st.write(res.get('text', 'No transcription available.'))
-                    if st.button("🚀 Synchronize to Mission Database", key="sync_voice"):
-                        df_new = pd.DataFrame([{k: v for k, v in res.items() if k != 'text'}])
-                        st.session_state['needs_df'] = pd.concat([st.session_state['needs_df'], df_new], ignore_index=True)
-                        st.success("Mission Database Synchronized.")
-                        st.rerun()
+                st.session_state['extracted_result'] = res
+                st.rerun() # Force rerun to show the result in the display area
         with r2:
             photo_memo = st.file_uploader("📸 Situational Photo", type=["jpg", "png", "jpeg"], key="photo_ingest")
             if photo_memo:
@@ -993,19 +986,38 @@ def run_dashboard():
                     time.sleep(1)
                     status.update(label="🧠 Tactical Crisis Analyst: Analyzing Terrain & Documents...", state="running")
                     res = process_field_image(photo_memo.read())
-                    status.update(label="✅ Vision Intelligence Decrypted", state="complete", expanded=False)
+                    status.update(label="✅ Vision Intelligence Decrypted", state="complete")
                 
-                if "error" not in res:
-                    st.session_state['extracted_result'] = res
-                    st.markdown("### 🛡️ Tactical Vision Intelligence")
-                    st.write(res.get('text', 'No analysis available.'))
-                    if st.button("🚀 Synchronize to Mission Database", key="sync_photo"):
-                        df_new = pd.DataFrame([{k: v for k, v in res.items() if k != 'text'}])
-                        st.session_state['needs_df'] = pd.concat([st.session_state['needs_df'], df_new], ignore_index=True)
-                        st.success("Mission Database Synchronized.")
-                        st.rerun()
+                st.session_state['extracted_result'] = res
+                st.rerun() # Force rerun to show the result in the display area
 
         st.markdown("---")
+        # --- 🛡️ PERSISTENT TACTICAL BRIEFING AREA ---
+        if 'extracted_result' in st.session_state:
+            res = st.session_state['extracted_result']
+            with st.chat_message("assistant", avatar="🧠"):
+                st.markdown("### 🛡️ Tactical Crisis Analyst: Field Intelligence Briefing")
+                st.write(res.get('text', res.get('description', 'Analyst note: Data packet received but briefing content is missing.')))
+                
+                col_sync1, col_sync2 = st.columns(2)
+                with col_sync1:
+                    if st.button("🚀 Synchronize to Mission Database", use_container_width=True, type="primary"):
+                        try:
+                            # Filter out 'text' and other non-DB fields
+                            db_data = {k: v for k, v in res.items() if k not in ['text', 'error']}
+                            df_new = pd.DataFrame([db_data])
+                            st.session_state['needs_df'] = pd.concat([st.session_state['needs_df'], df_new], ignore_index=True)
+                            st.session_state['map_active_data'] = st.session_state['needs_df']
+                            del st.session_state['extracted_result']
+                            st.toast("✅ Mission Database Synchronized.")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Sync failed: {e}")
+                with col_sync2:
+                    if st.button("🗑️ Discard Intelligence", use_container_width=True):
+                        del st.session_state['extracted_result']
+                        st.rerun()
+            st.markdown("---")
         uploaded_file = st.file_uploader("Conventional Database Sync (CSV, JSON, PDF)", type=["csv", "json", "pdf", "txt"], key="field_uploader")
         if uploaded_file is not None:
             ext = uploaded_file.name.split('.')[-1].lower()

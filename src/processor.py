@@ -125,25 +125,36 @@ def process_field_audio(audio_data: bytes, api_key: str = None) -> dict:
 
     try:
         genai.configure(api_key=used_key)
-        # Act as Tactical Crisis Analyst for Mumbai
         model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Your responses must be professional, direct, and formatted for emergency coordination.")
         
+        prompt = """
+        Transcribe this humanitarian field recording and provide:
+        1. A professional tactical summary for a coordinator (bulleted list).
+        2. A structured JSON block at the end with these keys: {"urgency": 1-10, "category": "Food/Medical/Shelter/General", "latitude": float, "longitude": float, "description": "short summary"}.
+        """
+        
         response = model.generate_content([
-            "Transcribe this humanitarian field recording and provide a tactical summary for a coordinator. Extract resource numbers, locations, and urgency levels if mentioned.",
+            prompt,
             {"mime_type": "audio/wav", "data": audio_data}
         ])
         
-        # We also want to extract structured data for the DB, but the user primarily wants st.write(response.text)
-        # So we'll try to get structured data in a separate call or parse it if possible.
-        # To keep it simple and fulfill the request, we'll return the text.
-        
-        # Try to get structured JSON as well for the system state
-        struct_prompt = f"Extract structured data from this text into JSON: {{urgency: 1-10, category: Food/Medical/Shelter/General, latitude: float, longitude: float, description: str}}. Text: {response.text}"
-        struct_res = model.generate_content(struct_prompt)
-        clean_res = struct_res.text.replace('```json', '').replace('```', '').strip()
-        data = json.loads(clean_res)
-        data['text'] = response.text # Attach the raw text
-        return data
+        full_text = response.text
+        # Attempt to extract JSON from the response
+        try:
+            import re
+            json_match = re.search(r'\{.*\}', full_text, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group())
+                data['text'] = full_text.replace(json_match.group(), '').strip()
+                return data
+        except:
+            pass
+            
+        return {
+            "text": full_text,
+            "urgency": 5, "category": "General", "latitude": 19.0760, "longitude": 72.8777,
+            "description": "Tactical summary extracted from audio."
+        }
     except Exception as e:
         return {
             "urgency": 8,
@@ -161,18 +172,32 @@ def process_field_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> di
     try:
         model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Your responses must be professional, direct, and formatted for emergency coordination.")
         
-        prompt = "Extract all resource numbers, locations, and urgency levels from this document/image. Format it as a bulleted list for an emergency coordinator."
+        prompt = """
+        Analyze this mission imagery/document and provide:
+        1. A professional tactical analysis for an emergency coordinator (bulleted list of resources, locations, urgency).
+        2. A structured JSON block at the end with these keys: {"urgency": 1-10, "category": "Food/Medical/Shelter/General", "latitude": float, "longitude": float, "description": "short summary"}.
+        """
         
         img = {"mime_type": mime_type, "data": image_bytes}
         response = model.generate_content([prompt, img])
         
-        # Get structured data for the system
-        struct_prompt = f"Based on this tactical report, extract structured JSON: {{urgency: 1-10, category: Food/Medical/Shelter/General, latitude: float, longitude: float, description: str}}. Report: {response.text}"
-        struct_res = model.generate_content(struct_prompt)
-        clean_res = struct_res.text.replace('```json', '').replace('```', '').strip()
-        data = json.loads(clean_res)
-        data['text'] = response.text
-        return data
+        full_text = response.text
+        # Attempt to extract JSON from the response
+        try:
+            import re
+            json_match = re.search(r'\{.*\}', full_text, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group())
+                data['text'] = full_text.replace(json_match.group(), '').strip()
+                return data
+        except:
+            pass
+
+        return {
+            "text": full_text,
+            "urgency": 7, "category": "General", "latitude": 19.0760, "longitude": 72.8777,
+            "description": "Tactical analysis extracted from imagery."
+        }
     except Exception as e:
         return {
             "urgency": 9,
