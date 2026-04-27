@@ -52,22 +52,26 @@ initial_markers = [
 # --- 🔐 Enterprise-Grade Security: API Configuration ---
 import google.generativeai as genai
 
-# Get API key from secrets
+# Get API key from secrets without extra parameters
 try:
-    _api_key = st.secrets['GOOGLE_API_KEY']
-    genai.configure(api_key=_api_key)
-    # Initialize the model without extra version flags
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    _api_key = st.secrets.get("GOOGLE_API_KEY")
+    if _api_key:
+        genai.configure(api_key=_api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+    else:
+        model = None
 except Exception:
     _api_key = None
     model = None
 
 def get_ai_response(prompt):
+    if model is None:
+        return "⚠️ AI Core offline: GOOGLE_API_KEY not found in secrets. Please configure it in Streamlit Cloud settings."
     try:
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return "⚠️ I am currently experiencing connection issues or AI service is unavailable. Please try again later."
+        return f"⚠️ AI Satellite Link error: {e}"
 
 @contextlib.contextmanager
 def skeleton_spinner(label="AI Processing...", n_blocks=3, heights=None):
@@ -423,9 +427,9 @@ def run_dashboard():
             except ValueError:
                 current_index = 0
                 
-            _sel = st.radio("Go to", nav_options, index=current_index, label_visibility="collapsed")
-            if st.session_state.get("page") != page_map[_sel]:
-                st.session_state["page"] = page_map[_sel]
+            selection = st.radio("Go to", nav_options, index=current_index, label_visibility="collapsed")
+            if st.session_state.get("page") != page_map[selection]:
+                st.session_state["page"] = page_map[selection]
                 st.toast(f"✅ Mission Sector Synchronized: {st.session_state['page']}")
                 st.rerun()
             
@@ -585,87 +589,90 @@ def run_dashboard():
         </div>
     """), unsafe_allow_html=True)
 
-    _df_crisis = st.session_state.get('needs_df', pd.DataFrame())
-    _max_urg = int(_df_crisis['urgency'].max()) if not _df_crisis.empty and 'urgency' in _df_crisis.columns else 0
-    _is_high_crisis = _max_urg >= 9
+    # --- 🚨 CRISIS ALERT & JUDGE'S GUIDE: System Dashboard only ---
+    # Wrap in selection check as requested to ensure stage is clear for other tools
+    if selection == "🕹️ System Dashboard":
+        _df_crisis = st.session_state.get('needs_df', pd.DataFrame())
+        _max_urg = int(_df_crisis['urgency'].max()) if not _df_crisis.empty and 'urgency' in _df_crisis.columns else 0
+        _is_high_crisis = _max_urg >= 9
 
-    if _is_high_crisis:
-        st.markdown("""
-            <div class='urgent-pinned-banner'>
-                <span style='font-size:1.5rem;'>🚨</span>
-                <div>
-                    <div style='font-size:1.05rem; font-weight:900; letter-spacing:-0.02em;'>HIGH CRISIS ALERT</div>
-                    <div style='font-size:0.8rem; font-weight:500; opacity:0.9;'>Unresolved critical needs detected. Navigate to EMERGENCY DISPATCH immediately.</div>
+        if _is_high_crisis:
+            st.markdown("""
+                <div class='urgent-pinned-banner'>
+                    <span style='font-size:1.5rem;'>🚨</span>
+                    <div>
+                        <div style='font-size:1.05rem; font-weight:900; letter-spacing:-0.02em;'>HIGH CRISIS ALERT</div>
+                        <div style='font-size:0.8rem; font-weight:500; opacity:0.9;'>Unresolved critical needs detected. Navigate to EMERGENCY DISPATCH immediately.</div>
+                    </div>
                 </div>
+            """, unsafe_allow_html=True)
+
+        pulse_class = "ai-pulse-critical" if _is_high_crisis else "ai-pulse-idle"
+        pulse_icon = "zap" if _is_high_crisis else "activity"
+
+        # --- 🏗️ HERO SECTION: SYSTEM PULSE & JUDGE'S GUIDE ---
+        st.markdown("""
+            <div style='display: flex; justify-content: space-between; align-items: center; background: rgba(66, 133, 244, 0.05); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(66, 133, 244, 0.1); margin-bottom: 25px;'>
+                <div style='display: flex; gap: 25px;'>
+                    <span style='font-size: 0.7rem; font-weight: 800; color: #34A853;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #34A853; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🛰️ Satellite Link: Active</span>
+                    <span style='font-size: 0.7rem; font-weight: 800; color: #4285F4;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #4285F4; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🧠 AI Core: Operational</span>
+                    <span style='font-size: 0.7rem; font-weight: 800; color: #FBBC05;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #FBBC05; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 📍 Global Nodes: Online</span>
+                </div>
+                <div style='font-size: 0.65rem; font-weight: 800; color: #5F6368; text-transform: uppercase; letter-spacing: 2px;'>System Status: OPTIMAL</div>
             </div>
+            <style>
+                @keyframes statusPulse {
+                    0% { transform: scale(1); opacity: 1; }
+                    50% { transform: scale(1.2); opacity: 0.5; }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+            </style>
         """, unsafe_allow_html=True)
 
-    pulse_class = "ai-pulse-critical" if _is_high_crisis else "ai-pulse-idle"
-    pulse_icon = "zap" if _is_high_crisis else "activity"
+        st.info("👋 **Judge's Guide:** Start by selecting a tool from the **🛰️ Strategic Command** expander in the sidebar to begin the mission simulation.")
 
-    # --- 🏗️ HERO SECTION: SYSTEM PULSE & JUDGE'S GUIDE ---
-    st.markdown("""
-        <div style='display: flex; justify-content: space-between; align-items: center; background: rgba(66, 133, 244, 0.05); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(66, 133, 244, 0.1); margin-bottom: 25px;'>
-            <div style='display: flex; gap: 25px;'>
-                <span style='font-size: 0.7rem; font-weight: 800; color: #34A853;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #34A853; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🛰️ Satellite Link: Active</span>
-                <span style='font-size: 0.7rem; font-weight: 800; color: #4285F4;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #4285F4; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🧠 AI Core: Operational</span>
-                <span style='font-size: 0.7rem; font-weight: 800; color: #FBBC05;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #FBBC05; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 📍 Global Nodes: Online</span>
+        st.markdown(f"""
+            <style>
+            /* Transparent Button Overlay for Tiles */
+            div[data-testid="stVerticalBlock"] > div:has(button[key^="btn_nav_"]) {{
+                position: relative;
+                margin-top: -115px; /* Pull button over the tile */
+                z-index: 10;
+            }}
+            button[key^="btn_nav_"] {{
+                height: 105px !important;
+                background-color: transparent !important;
+                color: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }}
+            button[key^="btn_nav_"]:hover {{
+                background-color: rgba(66, 133, 244, 0.05) !important;
+            }}
+
+            .command-center-title {{
+                font-family: 'Inter', sans-serif;
+                font-weight: 900;
+                letter-spacing: -2px;
+                margin: 0;
+                background: linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                text-shadow: none !important;
+                display: inline-block;
+            }}
+            @media (max-width: 640px) {{
+                .main-header {{ text-align: center; display: block !important; }}
+                .command-center-title {{ font-size: 2.2rem !important; letter-spacing: -1px; }}
+            }}
+            </style>
+            <div class="main-header">
+                <i data-lucide="{pulse_icon}" class="{pulse_class}" style="width: 42px; height: 42px;"></i>
+                <h1 class="command-center-title">
+                    Smart Resource Allocation <span style="font-size: 0.35em; vertical-align: middle; padding: 6px 12px; background: rgba(66, 133, 244, 0.1); border: 1px solid #1A73E8; border-radius: 10px; color: #1A73E8; margin-left: 15px; letter-spacing: 0;">ELITE v2.0</span>
+                </h1>
             </div>
-            <div style='font-size: 0.65rem; font-weight: 800; color: #5F6368; text-transform: uppercase; letter-spacing: 2px;'>System Status: OPTIMAL</div>
-        </div>
-        <style>
-            @keyframes statusPulse {
-                0% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1.2); opacity: 0.5; }
-                100% { transform: scale(1); opacity: 1; }
-            }
-        </style>
-    """, unsafe_allow_html=True)
-    
-    st.info("👋 **Judge's Guide:** Start by selecting a tool from the **🛰️ Strategic Command** expander in the sidebar to begin the mission simulation.")
-    
-    st.markdown(f"""
-        <style>
-        /* Transparent Button Overlay for Tiles */
-        div[data-testid="stVerticalBlock"] > div:has(button[key^="btn_nav_"]) {{
-            position: relative;
-            margin-top: -115px; /* Pull button over the tile */
-            z-index: 10;
-        }}
-        button[key^="btn_nav_"] {{
-            height: 105px !important;
-            background-color: transparent !important;
-            color: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }}
-        button[key^="btn_nav_"]:hover {{
-            background-color: rgba(66, 133, 244, 0.05) !important;
-        }}
-        
-        .command-center-title {{
-            font-family: 'Inter', sans-serif;
-            font-weight: 900;
-            letter-spacing: -2px;
-            margin: 0;
-            background: linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: none !important;
-            display: inline-block;
-        }}
-        @media (max-width: 640px) {{
-            .main-header {{ text-align: center; display: block !important; }}
-            .command-center-title {{ font-size: 2.2rem !important; letter-spacing: -1px; }}
-        }}
-        </style>
-        <div class="main-header">
-            <i data-lucide="{pulse_icon}" class="{pulse_class}" style="width: 42px; height: 42px;"></i>
-            <h1 class="command-center-title">
-                Smart Resource Allocation <span style="font-size: 0.35em; vertical-align: middle; padding: 6px 12px; background: rgba(66, 133, 244, 0.1); border: 1px solid #1A73E8; border-radius: 10px; color: #1A73E8; margin-left: 15px; letter-spacing: 0;">ELITE v2.0</span>
-            </h1>
-        </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
     if is_field_worker:
         st.markdown("""

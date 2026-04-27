@@ -22,6 +22,7 @@ def process_ngo_notes(messy_text: str, api_key: str = None) -> dict:
         used_key = api_key or get_google_api_key()
         if not used_key:
             raise Exception("No API Key Provided")
+        # Direct configuration without extra parameters
         genai.configure(api_key=used_key)
     except Exception:
         # Fallback simulated response if no API key is present for the hackathon
@@ -194,6 +195,7 @@ def process_survey_image(pil_image, api_key: str = None) -> dict:
         used_key = api_key or get_google_api_key()
         if not used_key:
             raise Exception("No API Key Provided")
+        # Direct configuration without extra parameters
         genai.configure(api_key=used_key)
     except Exception:
         # Fallback simulation for hackathon prototype
