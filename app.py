@@ -794,13 +794,14 @@ def run_dashboard():
             </div>
 
             <style>
-                @keyframes statusPulse {
-                    0% { transform: scale(1); opacity: 1; }
-                    50% { transform: scale(1.2); opacity: 0.5; }
-                    100% { transform: scale(1); opacity: 1; }
-                }
+                @keyframes statusPulse {{
+                    0% {{ transform: scale(1); opacity: 1; }}
+                    50% {{ transform: scale(1.2); opacity: 0.5; }}
+                    100% {{ transform: scale(1); opacity: 1; }}
+                }}
             </style>
         """, unsafe_allow_html=True)
+
 
         st.info("👋 **Judge's Guide:** Start by selecting a tool from the **🛰️ Strategic Command** expander in the sidebar to begin the mission simulation.")
 
