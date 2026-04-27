@@ -25,6 +25,132 @@ import numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
 
+# --- 🌐 GLOBAL TRANSLATION ENGINE ---
+TRANSLATIONS = {
+    "English": {
+        "title": "Strategic Resource Allocation AI",
+        "command_center": "Command Center",
+        "dashboard": "System Dashboard",
+        "data_upload": "Data Upload",
+        "impact_map": "Impact Map",
+        "emergency_dispatch": "EMERGENCY DISPATCH",
+        "analytics": "Analytics",
+        "logistics": "Logistics",
+        "offline_mode": "Field Offline Mode",
+        "language": "Language",
+        "cached_banner": "📡 CACHED DATA MODE: Displaying local Mumbai resources.",
+        "impact_lives": "Impact: {} lives",
+        "status_active": "Status: MISSION ACTIVE",
+        "mission_critical": "Mission-Critical Release V2.0",
+        "go_to": "Go to",
+        "launch_demo": "🚀 Launch 'Perfect Demo' Mode",
+        "admin_portal": "🛡️ Admin Review Portal",
+        "exec_analytics": "📈 Executive Analytics",
+        "run_audit": "🕵️ Run Logistical Audit",
+        "scenario_sim": "🌪️ Scenario Simulation",
+        "disaster_intensity": "Disaster Intensity",
+        "high_traffic": "📈 Simulate High Traffic",
+        "light_mode": "☀️ Light Mode",
+        "low_bandwidth": "🚫 Low Bandwidth",
+        "sat_intel": "🛰️ Satellite Intel",
+        "voice_cmd": "🎤 Voice Command",
+        "chat_data": "🗨️ Chat with Data (AI)",
+        "ask_question": "Ask a question about the resources...",
+        "situational_awareness": "SITUATIONAL AWARENESS",
+        "computed_by": "Computed by Gemini 1.5 Flash based on 14 real-time variables.",
+        "current_severity": "Current Severity",
+        "active_alerts": "Active Alerts",
+        "ai_accuracy": "AI Accuracy",
+        "lives_impacted": "Lives Impacted",
+        "system_latency": "System Latency",
+        "strategic_command": "Strategic Command"
+    },
+    "Hindi": {
+        "title": "रणनीतिक संसाधन आवंटन AI",
+        "command_center": "कमांड सेंटर",
+        "dashboard": "सिस्टम डैशबोर्ड",
+        "data_upload": "डेटा अपलोड",
+        "impact_map": "प्रभाव मानचित्र",
+        "emergency_dispatch": "आपातकालीन प्रेषण",
+        "analytics": "विश्लेषण",
+        "logistics": "रसद",
+        "offline_mode": "फील्ड ऑफलाइन मोड",
+        "language": "भाषा",
+        "cached_banner": "📡 कैश्ड डेटा मोड: स्थानीय मुंबई संसाधनों को दिखा रहा है।",
+        "impact_lives": "प्रभाव: {} जीवन",
+        "status_active": "स्थिति: मिशन सक्रिय",
+        "mission_critical": "मिशन-क्रिटिकल रिलीज V2.0",
+        "go_to": "पर जाएं",
+        "launch_demo": "🚀 'परफेक्ट डेमो' मोड लॉन्च करें",
+        "admin_portal": "🛡️ एडमिन समीक्षा पोर्टल",
+        "exec_analytics": "📈 कार्यकारी विश्लेषण",
+        "run_audit": "🕵️ लॉजिस्टिक ऑडिट चलाएं",
+        "scenario_sim": "🌪️ परिदृश्य सिमुलेशन",
+        "disaster_intensity": "आपदा तीव्रता",
+        "high_traffic": "📈 उच्च ट्रैफ़िक का अनुकरण करें",
+        "light_mode": "☀️ लाइट मोड",
+        "low_bandwidth": "🚫 कम बैंडविड्थ",
+        "sat_intel": "🛰️ सैटेलाइट इंटेलिजेंस",
+        "voice_cmd": "🎤 वॉयस कमांड",
+        "chat_data": "🗨️ डेटा के साथ चैट करें (AI)",
+        "ask_question": "సంసాధనాల గురించి ఒక ప్రశ్న అడగండి...",
+        "situational_awareness": "स्थितिजन्य जागरूकता",
+        "computed_by": "14 वास्तविक समय चरों के आधार पर जेमिनी 1.5 फ्लैश द्वारा गणना की गई।",
+        "current_severity": "वर्तमान गंभीरता",
+        "active_alerts": "सक्रिय अलर्ट",
+        "ai_accuracy": "AI सटीकता",
+        "lives_impacted": "प्रभावित जीवन",
+        "system_latency": "सिस्टम विलंबता",
+        "strategic_command": "रणनीतिक कमांड"
+    },
+    "Telugu": {
+        "title": "వ్యూహాత్మక వనరుల కేటాయింపు AI",
+        "command_center": "కమాండ్ సెంటర్",
+        "dashboard": "సిస్టమ్ డాష్‌బోర్డ్",
+        "data_upload": "డేటా అప్‌లోడ్",
+        "impact_map": "ప్రభావ పటం",
+        "emergency_dispatch": "అత్యవసర రవాణా",
+        "analytics": "విశ్లేషణలు",
+        "logistics": "లాజిస్టిక్స్",
+        "offline_mode": "ఫీల్డ్ ఆఫ్ లైన్ మోడ్",
+        "language": "భాష",
+        "cached_banner": "📡 కాష్డ్ డేటా మోడ్: స్థానిక ముంబై వనరులను ప్రదర్శిస్తోంది.",
+        "impact_lives": "ప్రభావం: {} ప్రాణాలు",
+        "status_active": "స్థితి: మిషన్ యాక్టివ్",
+        "mission_critical": "మిషన్-క్రిటికల్ రిలీజ్ V2.0",
+        "go_to": "వెళ్ళండి",
+        "launch_demo": "🚀 'పర్ఫెక్ట్ డెమో' మోడ్‌ను ప్రారంభించండి",
+        "admin_portal": "🛡️ అడ్మిన్ రివ్యూ పోర్టల్",
+        "exec_analytics": "📈 ఎగ్జిక్యూటివ్ అనలిటిక్స్",
+        "run_audit": "🕵️ లాజిస్టికల్ ఆడిట్ రన్ చేయండి",
+        "scenario_sim": "🌪️ సినారియో సిమ్యులేషన్",
+        "disaster_intensity": "విపత్తు తీవ్రత",
+        "high_traffic": "📈 హై ట్రాఫిక్ సిమ్యులేట్ చేయండి",
+        "light_mode": "☀️ లైట్ మోడ్",
+        "low_bandwidth": "🚫 తక్కువ బ్యాండ్‌విడ్త్",
+        "sat_intel": "🛰️ శాటిలైట్ ఇంటెల్",
+        "voice_cmd": "🎤 వాయిస్ కమాండ్",
+        "chat_data": "🗨️ డేటాతో చాట్ చేయండి (AI)",
+        "ask_question": "వనరుల గురించి ప్రశ్న అడగండి...",
+        "situational_awareness": "పరిస్థితి అవగాహన",
+        "computed_by": "14 నిజ-సమయ వేరియబుల్స్ ఆధారంగా జెమిని 1.5 ఫ్లాష్ ద్వారా గణించబడింది.",
+        "current_severity": "ప్రస్తుత తీవ్రత",
+        "active_alerts": "యాక్టివ్ హెచ్చరికలు",
+        "ai_accuracy": "AI ఖచ్చితత్వం",
+        "lives_impacted": "ప్రభావితమైన ప్రాణాలు",
+        "system_latency": "సిస్టమ్ ఆలస్యం",
+        "strategic_command": "వ్యూహాత్మక కమాండ్"
+    }
+}
+
+def t(key, *args):
+    lang = st.session_state.get('lang', 'English')
+    text = TRANSLATIONS.get(lang, TRANSLATIONS['English']).get(key, key)
+    if args:
+        return text.format(*args)
+    return text
+
+
 # --- 🛰️ PERSISTENT MISSION INITIALIZATION (MUMBAI HARD START) ---
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
@@ -59,7 +185,9 @@ try:
     _api_key = st.secrets.get("GOOGLE_API_KEY")
     if _api_key:
         genai.configure(api_key=_api_key)
+        # Use Gemini 1.5 Flash with Stable v1 API
         model = genai.GenerativeModel('gemini-1.5-flash')
+
     else:
         model = None
 except Exception:
@@ -401,15 +529,16 @@ def run_dashboard():
         }
         </style>
     """), unsafe_allow_html=True)
-    st.sidebar.title("🛡️ Command Center")
-    st.sidebar.markdown(textwrap.dedent("""
+    st.sidebar.title(f"🛡️ {t('command_center')}")
+    st.sidebar.markdown(textwrap.dedent(f"""
         <div style="display: flex; align-items: center; padding: 6px 12px; background: rgba(52, 168, 83, 0.1); border-radius: 20px; border: 1px solid rgba(52, 168, 83, 0.2); margin-bottom: 20px;">
             <span class="pulse-dot"></span>
-            <span style="color: #34A853; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.1em;">🛰️ SAT-LINK: ACTIVE</span>
+            <span style="color: #34A853; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.1em;">🛰️ SAT-LINK: {"ACTIVE" if not st.session_state.get('offline_mode') else "OFFLINE"}</span>
         </div>
     """), unsafe_allow_html=True)
-    st.sidebar.caption("Mission-Critical Release V2.0")
+    st.sidebar.caption(t('mission_critical'))
     st.sidebar.markdown("---")
+
 
     # Scope fix: initialize sidebar-dependent vars before expanders
     low_bandwidth = False
@@ -417,22 +546,30 @@ def run_dashboard():
 
     # 1. Expanders Grouping
     with st.sidebar:
-        with st.expander("🕹️ Command", expanded=True):
-            nav_options = ["🕹️ System Dashboard", "📡 Data Upload", "🗺️ Impact Map", "🚨 EMERGENCY DISPATCH 🚨"]
-            page_map = {"🕹️ System Dashboard": "System Dashboard", "📡 Data Upload": "Field Report Center", "🗺️ Impact Map": "Impact Map", "🚨 EMERGENCY DISPATCH 🚨": "Rapid Dispatch"}
+        with st.expander(f"🕹️ {t('strategic_command')}", expanded=True):
+            nav_options = [f"🕹️ {t('dashboard')}", f"📡 {t('data_upload')}", f"🗺️ {t('impact_map')}", f"🚨 {t('emergency_dispatch')} 🚨"]
+            page_map = {
+                f"🕹️ {t('dashboard')}": "System Dashboard",
+                f"📡 {t('data_upload')}": "Field Report Center",
+                f"🗺️ {t('impact_map')}": "Impact Map",
+                f"🚨 {t('emergency_dispatch')} 🚨": "Rapid Dispatch"
+            }
             
             # Find current index
             current_page = st.session_state.get("page", "System Dashboard")
             try:
-                current_index = list(page_map.values()).index(current_page)
-            except ValueError:
+                # Need to match the mapped name
+                current_nav = [k for k, v in page_map.items() if v == current_page][0]
+                current_index = nav_options.index(current_nav)
+            except (ValueError, IndexError):
                 current_index = 0
                 
-            selection = st.radio("Go to", nav_options, index=current_index, label_visibility="collapsed")
+            selection = st.radio(t('go_to'), nav_options, index=current_index, label_visibility="collapsed")
             if st.session_state.get("page") != page_map[selection]:
                 st.session_state["page"] = page_map[selection]
                 st.toast(f"✅ Mission Sector Synchronized: {st.session_state['page']}")
                 st.rerun()
+
             
             if st.button("🚀 Launch 'Perfect Demo' Mode", use_container_width=True, type="primary", help="Initializes the mission database with 5 tactical crisis nodes."):
                 epicenter_lat, epicenter_lon = 19.0760, 72.8777
@@ -483,23 +620,48 @@ def run_dashboard():
             st.markdown(f'<div style="padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:0.8rem; color: #3C4043;">Impact: {_total_impact:,} lives<br>Status: MISSION ACTIVE</div>', unsafe_allow_html=True)
 
         from src.processor import process_voice_command, translate_text
-        with st.expander("📁 Logistics"):
-            st.session_state['offline_mode'] = st.toggle("📡 Field Offline Mode", value=st.session_state.get('offline_mode', False))
-            st.session_state['lang'] = st.selectbox("🌐 Language", ["English", "Hindi", "Telugu"])
-            is_light = st.toggle("☀️ Light Mode", value=True)
+        with st.expander(f"📁 {t('logistics')}"):
+            # Language Switcher
+            prev_lang = st.session_state.get('lang', 'English')
+            selected_lang = st.selectbox(f"🌐 {t('language')}", ["English", "Hindi", "Telugu"], index=["English", "Hindi", "Telugu"].index(prev_lang))
+            if selected_lang != prev_lang:
+                st.session_state['lang'] = selected_lang
+                st.rerun()
+
+            # Offline Mode
+            prev_offline = st.session_state.get('offline_mode', False)
+            offline_toggle = st.toggle(f"📡 {t('offline_mode')}", value=prev_offline)
+            if offline_toggle != prev_offline:
+                st.session_state['offline_mode'] = offline_toggle
+                if offline_toggle:
+                    # Load Mumbai Dataset
+                    mumbai_data = [
+                        {"id": "MUM_1", "category": "Medical", "urgency": 9, "latitude": 18.9067, "longitude": 72.8147, "city": "Colaba", "description": "Emergency Center 1: Critical supply gap.", "people_affected": 5000, "status": "Critical", "verified": True, "human_context_summary": "Colaba: Urgent medical resupply needed for coastal trauma center."},
+                        {"id": "MUM_2", "category": "Food", "urgency": 7, "latitude": 19.0596, "longitude": 72.8295, "city": "Bandra", "description": "Supply Hub A: Bandra Logistics Hub.", "people_affected": 2500, "status": "Pending", "verified": True, "human_context_summary": "Bandra: Priority Sector 4. Resource nodes at 85% capacity."},
+                        {"id": "MUM_3", "category": "Water", "urgency": 10, "latitude": 19.1050, "longitude": 72.8267, "city": "Juhu", "description": "Emergency Center 2: Water desalination needed.", "people_affected": 8000, "status": "Critical", "verified": True, "human_context_summary": "Juhu: Moderate flood risk detected in coastal sectors."},
+                        {"id": "MUM_4", "category": "Shelter", "urgency": 8, "latitude": 19.1136, "longitude": 72.8697, "city": "Andheri", "description": "Supply Hub B: Temporary housing.", "people_affected": 12000, "status": "Escalated", "verified": True, "human_context_summary": "Andheri: Shelter capacity reached; overflow deployment required."},
+                        {"id": "MUM_5", "category": "General", "urgency": 6, "latitude": 19.2183, "longitude": 72.9781, "city": "Thane", "description": "Emergency Center 3: Regional coordination.", "people_affected": 1500, "status": "Stabilizing", "verified": True, "human_context_summary": "Thane: Monitoring regional resource balancing operations."}
+                    ]
+                    st.session_state['needs_df'] = pd.DataFrame(mumbai_data)
+                    st.session_state['map_active_data'] = pd.DataFrame(mumbai_data)
+                st.rerun()
+
+            is_light = st.toggle(f"☀️ {t('light_mode')}", value=True)
             st.session_state['theme_mode'] = "Apple-Light" if is_light else "Cyber-Dark"
-            low_bandwidth = st.toggle("🚫 Low Bandwidth", value=False)
-            sat_overlay = st.toggle("🛰️ Satellite Intel", value=False)
+            low_bandwidth = st.toggle(f"🚫 {t('low_bandwidth')}", value=False)
+            sat_overlay = st.toggle(f"🛰️ {t('sat_intel')}", value=False)
             st.session_state['map_style'] = 'satellite' if sat_overlay else 'dark'
             
-            try:
-                voice_input = st.audio_input("🎤 Voice Command")
-                if voice_input:
-                    st.toast("🎤 Processing Tactical Voice Stream...")
-                    cmd = process_voice_command(voice_input.read())
-                    if "error" not in cmd: st.success("✅ Processed")
-            except Exception:
-                st.info("🎤 Audio N/A")
+            if not st.session_state.get('offline_mode'):
+                try:
+                    voice_input = st.audio_input(f"🎤 {t('voice_cmd')}")
+                    if voice_input:
+                        st.toast("🎤 Processing Tactical Voice Stream...")
+                        cmd = process_voice_command(voice_input.read())
+                        if "error" not in cmd: st.success("✅ Processed")
+                except Exception:
+                    st.info("🎤 Audio N/A")
+
     page = st.session_state["page"]
     active_tools_css = ""
     if low_bandwidth:
@@ -535,44 +697,46 @@ def run_dashboard():
             st.link_button("📤 Share App Link", "https://your-app-link.streamlit.app", use_container_width=True)
 
 
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("🗨️ Chat with Data (AI)")
-    
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+    if not st.session_state.get('offline_mode'):
+        st.sidebar.markdown("---")
+        st.sidebar.subheader(f"🗨️ {t('chat_data')}")
         
-    for msg in st.session_state.chat_history:
-        st.sidebar.chat_message(msg["role"]).write(msg["content"])
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+            
+        for msg in st.session_state.chat_history:
+            st.sidebar.chat_message(msg["role"]).write(msg["content"])
 
-    chat_input_val = st.sidebar.chat_input("Ask a question about the resources...")
-    if chat_input_val:
-        st.session_state.chat_history.append({"role": "user", "content": chat_input_val})
-        with st.sidebar:
-            st.chat_message("user").write(chat_input_val)
-            with st.spinner("Scanning database..."):
-                try:
-                    df = st.session_state.get('needs_df', pd.DataFrame())
-                    cols = [c for c in ['category', 'urgency', 'status', 'description', 'latitude', 'longitude'] if c in df.columns]
-                    report_data = df.to_string(columns=cols) if not df.empty else "Database is currently empty."
-                    
-                    history_text = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.chat_history[-4:-1]])
-                    
-                    system_prompt = (
-                        "SYSTEM: You are an expert in disaster logistics. Use the provided resource data to suggest specific allocations. Be decisive and tactical.\n\n"
-                        "Current Active Database:\n"
-                        f"{report_data}\n\n"
-                        "Recent Conversation:\n"
-                        f"{history_text}\n\n"
-                        f"User Query: {chat_input_val}"
-                    )
-                    
-                    reply = get_ai_response(system_prompt)
-                    st.chat_message("assistant").write(reply)
-                    st.session_state.chat_history.append({"role": "assistant", "content": reply})
-                except Exception as e:
-                    st.sidebar.error("🛰️ **System Re-routing:** AI Satellite Link interrupted. Attempting to re-establish connection...")
-                    if st.sidebar.button("Retry AI Uplink"):
-                        st.rerun()
+        chat_input_val = st.sidebar.chat_input(t('ask_question'))
+        if chat_input_val:
+            st.session_state.chat_history.append({"role": "user", "content": chat_input_val})
+            with st.sidebar:
+                st.chat_message("user").write(chat_input_val)
+                with st.spinner("Scanning database..."):
+                    try:
+                        df = st.session_state.get('needs_df', pd.DataFrame())
+                        cols = [c for c in ['category', 'urgency', 'status', 'description', 'latitude', 'longitude'] if c in df.columns]
+                        report_data = df.to_string(columns=cols) if not df.empty else "Database is currently empty."
+                        
+                        history_text = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.chat_history[-4:-1]])
+                        
+                        system_prompt = (
+                            "SYSTEM: You are an expert in disaster logistics. Use the provided resource data to suggest specific allocations. Be decisive and tactical.\n\n"
+                            "Current Active Database:\n"
+                            f"{report_data}\n\n"
+                            "Recent Conversation:\n"
+                            f"{history_text}\n\n"
+                            f"User Query: {chat_input_val}"
+                        )
+                        
+                        reply = get_ai_response(system_prompt)
+                        st.chat_message("assistant").write(reply)
+                        st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                    except Exception as e:
+                        st.sidebar.error("🛰️ **System Re-routing:** AI Satellite Link interrupted. Attempting to re-establish connection...")
+                        if st.sidebar.button("Retry AI Uplink"):
+                            st.rerun()
+
     
     # --- SIDEBAR BRANDING ---
     st.sidebar.markdown("---")
@@ -590,37 +754,45 @@ def run_dashboard():
         </div>
     """), unsafe_allow_html=True)
 
-    # --- 🚨 CRISIS ALERT & JUDGE'S GUIDE: System Dashboard only ---
-    # Wrap in selection check as requested to ensure stage is clear for other tools
-    if selection == "🕹️ System Dashboard":
+    # --- 🚨 CRISIS ALERT & OFFLINE BANNER ---
+    if st.session_state.get('offline_mode'):
+        st.markdown(f"""
+            <div style="background: rgba(66, 133, 244, 0.1); border: 1px solid #4285F4; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; font-weight: 700; color: #1A73E8;">
+                {t('cached_banner')}
+            </div>
+        """, unsafe_allow_html=True)
+
+    if selection == f"🕹️ {t('dashboard')}":
         _df_crisis = st.session_state.get('needs_df', pd.DataFrame())
         _max_urg = int(_df_crisis['urgency'].max()) if not _df_crisis.empty and 'urgency' in _df_crisis.columns else 0
         _is_high_crisis = _max_urg >= 9
 
         if _is_high_crisis:
-            st.markdown("""
+            st.markdown(f"""
                 <div class='urgent-pinned-banner'>
                     <span style='font-size:1.5rem;'>🚨</span>
                     <div>
                         <div style='font-size:1.05rem; font-weight:900; letter-spacing:-0.02em;'>HIGH CRISIS ALERT</div>
-                        <div style='font-size:0.8rem; font-weight:500; opacity:0.9;'>Unresolved critical needs detected. Navigate to EMERGENCY DISPATCH immediately.</div>
+                        <div style='font-size:0.8rem; font-weight:500; opacity:0.9;'>Unresolved critical needs detected. Navigate to {t('emergency_dispatch')} immediately.</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
+
 
         pulse_class = "ai-pulse-critical" if _is_high_crisis else "ai-pulse-idle"
         pulse_icon = "zap" if _is_high_crisis else "activity"
 
         # --- 🏗️ HERO SECTION: SYSTEM PULSE & JUDGE'S GUIDE ---
-        st.markdown("""
+        st.markdown(f"""
             <div style='display: flex; justify-content: space-between; align-items: center; background: rgba(66, 133, 244, 0.05); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(66, 133, 244, 0.1); margin-bottom: 25px;'>
                 <div style='display: flex; gap: 25px;'>
-                    <span style='font-size: 0.7rem; font-weight: 800; color: #34A853;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #34A853; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🛰️ Satellite Link: Active</span>
-                    <span style='font-size: 0.7rem; font-weight: 800; color: #4285F4;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #4285F4; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🧠 AI Core: Operational</span>
+                    <span style='font-size: 0.7rem; font-weight: 800; color: #34A853;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #34A853; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🛰️ Satellite Link: {"Active" if not st.session_state.get('offline_mode') else "Offline"}</span>
+                    <span style='font-size: 0.7rem; font-weight: 800; color: #4285F4;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #4285F4; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 🧠 AI Core: {"Operational" if not st.session_state.get('offline_mode') else "Standby"}</span>
                     <span style='font-size: 0.7rem; font-weight: 800; color: #FBBC05;'><span style='animation: statusPulse 2s infinite; display: inline-block; width: 8px; height: 8px; background: #FBBC05; border-radius: 50%; margin-right: 5px; vertical-align: middle;'></span> 📍 Global Nodes: Online</span>
                 </div>
-                <div style='font-size: 0.65rem; font-weight: 800; color: #5F6368; text-transform: uppercase; letter-spacing: 2px;'>System Status: OPTIMAL</div>
+                <div style='font-size: 0.65rem; font-weight: 800; color: #5F6368; text-transform: uppercase; letter-spacing: 2px;'>System Status: {"OPTIMAL" if not st.session_state.get('offline_mode') else "CACHED"}</div>
             </div>
+
             <style>
                 @keyframes statusPulse {
                     0% { transform: scale(1); opacity: 1; }
@@ -670,9 +842,10 @@ def run_dashboard():
             <div class="main-header">
                 <i data-lucide="{pulse_icon}" class="{pulse_class}" style="width: 42px; height: 42px;"></i>
                 <h1 class="command-center-title">
-                    Smart Resource Allocation <span style="font-size: 0.35em; vertical-align: middle; padding: 6px 12px; background: rgba(66, 133, 244, 0.1); border: 1px solid #1A73E8; border-radius: 10px; color: #1A73E8; margin-left: 15px; letter-spacing: 0;">ELITE v2.0</span>
+                    {t('title')} <span style="font-size: 0.35em; vertical-align: middle; padding: 6px 12px; background: rgba(66, 133, 244, 0.1); border: 1px solid #1A73E8; border-radius: 10px; color: #1A73E8; margin-left: 15px; letter-spacing: 0;">ELITE v2.0</span>
                 </h1>
             </div>
+
         """, unsafe_allow_html=True)
 
     if is_field_worker:
@@ -763,16 +936,17 @@ def run_dashboard():
                     <div class="awareness-box">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <h4 style="margin: 0; color: #1A73E8; font-weight: 800;"><i class="fas fa-satellite-dish"></i> SITUATIONAL AWARENESS</h4>
-                                <div style="font-size: 0.75rem; color: #5F6368; margin-top: 4px; font-weight: 600;">Computed by Gemini 1.5 Pro based on 14 real-time variables.</div>
+                                <h4 style="margin: 0; color: #1A73E8; font-weight: 800;"><i class="fas fa-satellite-dish"></i> {t('situational_awareness')}</h4>
+                                <div style="font-size: 0.75rem; color: #5F6368; margin-top: 4px; font-weight: 600;">{t('computed_by')}</div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-size: 0.7rem; font-weight: 800; color: #5F6368; text-transform: uppercase;">Current Severity</div>
+                                <div style="font-size: 0.7rem; font-weight: 800; color: #5F6368; text-transform: uppercase;">{t('current_severity')}</div>
                                 <div style="font-size: 1.8rem; font-weight: 900; color: {'#EA4335' if severity > 70 else '#34A853' if severity < 30 else '#1A73E8'}; line-height: 1;">{severity}</div>
                             </div>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
+
             
             # --- 📊 MASTER KPI RIBBON ---
             s1, s2, s3, s4 = st.columns(4)
@@ -782,13 +956,14 @@ def run_dashboard():
             system_latency = 12.4
 
             with s1:
-                st.markdown(f"""<div class='high-end-card' style='text-align: center; border-left: 5px solid #EF4444 !important;'><div style='font-size: 0.75rem; font-weight: 800; color: #EF4444; letter-spacing: 1px; text-transform: uppercase;'>🚨 Active Alerts</div><div style='font-size: 2.2rem; font-weight: 900; color: #3C4043; line-height: 1.2;'>{active_alerts}</div></div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class='high-end-card' style='text-align: center; border-left: 5px solid #EF4444 !important;'><div style='font-size: 0.75rem; font-weight: 800; color: #EF4444; letter-spacing: 1px; text-transform: uppercase;'>🚨 {t('active_alerts')}</div><div style='font-size: 2.2rem; font-weight: 900; color: #3C4043; line-height: 1.2;'>{active_alerts}</div></div>""", unsafe_allow_html=True)
             with s2:
-                st.markdown(f"""<div class='high-end-card' style='text-align: center; border-left: 5px solid #A855F7 !important;'><div style='font-size: 0.75rem; font-weight: 800; color: #A855F7; letter-spacing: 1px; text-transform: uppercase;'>🎯 AI Accuracy</div><div style='font-size: 2.2rem; font-weight: 900; color: #3C4043; line-height: 1.2;'>{allocation_accuracy}%</div></div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class='high-end-card' style='text-align: center; border-left: 5px solid #A855F7 !important;'><div style='font-size: 0.75rem; font-weight: 800; color: #A855F7; letter-spacing: 1px; text-transform: uppercase;'>🎯 {t('ai_accuracy')}</div><div style='font-size: 2.2rem; font-weight: 900; color: #3C4043; line-height: 1.2;'>{allocation_accuracy}%</div></div>""", unsafe_allow_html=True)
             with s3:
-                st.markdown(f"""<div class='high-end-card' style='text-align: center; border-left: 5px solid #34A853 !important;'><div style='font-size: 0.75rem; font-weight: 800; color: #34A853; letter-spacing: 1px; text-transform: uppercase;'>👥 Lives Impacted</div><div style='font-size: 2.2rem; font-weight: 900; color: #3C4043; line-height: 1.2;'>{total_impacted:,}</div></div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class='high-end-card' style='text-align: center; border-left: 5px solid #34A853 !important;'><div style='font-size: 0.75rem; font-weight: 800; color: #34A853; letter-spacing: 1px; text-transform: uppercase;'>👥 {t('lives_impacted')}</div><div style='font-size: 2.2rem; font-weight: 900; color: #3C4043; line-height: 1.2;'>{total_impacted:,}</div></div>""", unsafe_allow_html=True)
             with s4:
-                st.markdown(f"""<div class='high-end-card' style='text-align: center; border-left: 5px solid #4285F4 !important;'><div style='font-size: 0.75rem; font-weight: 800; color: #4285F4; letter-spacing: 1px; text-transform: uppercase;'>⚡ System Latency</div><div style='font-size: 2.2rem; font-weight: 900; color: #3C4043; line-height: 1.2;'>{system_latency}ms</div></div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class='high-end-card' style='text-align: center; border-left: 5px solid #4285F4 !important;'><div style='font-size: 0.75rem; font-weight: 800; color: #4285F4; letter-spacing: 1px; text-transform: uppercase;'>⚡ {t('system_latency')}</div><div style='font-size: 2.2rem; font-weight: 900; color: #3C4043; line-height: 1.2;'>{system_latency}ms</div></div>""", unsafe_allow_html=True)
+
 
             st.markdown("---")
 
@@ -796,7 +971,8 @@ def run_dashboard():
             col1, col2 = st.columns([1, 2])
 
             with col1:
-                st.markdown("### <i class='fas fa-crosshairs'></i> Strategic Command", unsafe_allow_html=True)
+                st.markdown(f"### <i class='fas fa-crosshairs'></i> {t('strategic_command')}", unsafe_allow_html=True)
+
                 
                 efficiency_score = st.session_state.get('ai_efficiency_score', 94.2)
                 st.markdown(f"""
@@ -819,15 +995,16 @@ def run_dashboard():
                 st.markdown("### <i class='fas fa-brain'></i> Intelligence Feed", unsafe_allow_html=True)
                 
                 # Global Mission Intelligence Card
-                st.markdown("""
+                st.markdown(f"""
                     <div class='high-end-card' style='border-left: 5px solid #4285F4 !important; margin-bottom: 15px;'>
                         <div style='padding: 5px;'>
                             <h4 style='margin: 0; font-weight: 900; color: #1A73E8;'>
-                                <i class="fas fa-microchip" style="margin-right: 10px;"></i> AI Mission Intelligence
+                                <i class="fas fa-microchip" style="margin-right: 10px;"></i> {t('chat_data')}
                             </h4>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
+
                 
                 with st.container(border=True):
                     if st.button("🧠 UNLOCK LEADERSHIP INSIGHTS", use_container_width=True):
@@ -888,7 +1065,8 @@ def run_dashboard():
                         st.caption("Select a mission card to view detailed analysis.")
 
     elif page == "Impact Map":
-        st.subheader("🗺️ Mumbai Crisis Impact Map")
+        st.subheader(f"🗺️ {t('impact_map')}")
+
         
         df = st.session_state.get('needs_df', pd.DataFrame())
         v_df = df[df['verified'] == True] if 'verified' in df.columns else df
@@ -912,7 +1090,8 @@ def run_dashboard():
         
         m_header_col1, m_header_col2 = st.columns([3, 1])
         with m_header_col1:
-            st.markdown("### 🗺️ Resource Allocation Map")
+            st.markdown(f"### 🗺️ {t('impact_map')}")
+
         with m_header_col2:
             fullscreen_map = st.toggle("🖥️ Full-Screen Command", value=False, key="fs_map_toggle")
         
