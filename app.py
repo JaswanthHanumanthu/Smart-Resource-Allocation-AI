@@ -968,26 +968,42 @@ def run_dashboard():
             voice_memo = st.file_uploader("🎤 Voice Memo (Audio)", type=["mp3", "wav", "m4a"], key="voice_ingest")
             if voice_memo:
                 from src.processor import process_field_audio
-                with st.status("🎤 Transcribing field recording...", expanded=True) as status:
+                with st.status("📡 Tactical Audio Uplink: Synchronizing...", expanded=True) as status:
                     import time
                     time.sleep(0.8)
-                    status.update(label="🧠 Extracting Tactical Context from Audio...", state="running")
+                    status.update(label="🧠 Tactical Crisis Analyst: Transcribing & Analyzing...", state="running")
                     res = process_field_audio(voice_memo.read())
-                    status.update(label="✅ Transcription Complete", state="complete", expanded=False)
+                    status.update(label="✅ Intelligence Payload Decrypted", state="complete", expanded=False)
+                
                 if "error" not in res:
                     st.session_state['extracted_result'] = res
+                    st.markdown("### 🛡️ Tactical Intelligence Summary")
+                    st.write(res.get('text', 'No transcription available.'))
+                    if st.button("🚀 Synchronize to Mission Database", key="sync_voice"):
+                        df_new = pd.DataFrame([{k: v for k, v in res.items() if k != 'text'}])
+                        st.session_state['needs_df'] = pd.concat([st.session_state['needs_df'], df_new], ignore_index=True)
+                        st.success("Mission Database Synchronized.")
+                        st.rerun()
         with r2:
             photo_memo = st.file_uploader("📸 Situational Photo", type=["jpg", "png", "jpeg"], key="photo_ingest")
             if photo_memo:
                 from src.processor import process_field_image
-                with st.status("📸 Analyzing situational imagery...", expanded=True) as status:
+                with st.status("📡 Tactical Vision Uplink: Synchronizing...", expanded=True) as status:
                     import time
                     time.sleep(1)
-                    status.update(label="👁️ Running Computer Vision Diagnostics...", state="running")
+                    status.update(label="🧠 Tactical Crisis Analyst: Analyzing Terrain & Documents...", state="running")
                     res = process_field_image(photo_memo.read())
-                    status.update(label="✅ Imagery Analyzed", state="complete", expanded=False)
+                    status.update(label="✅ Vision Intelligence Decrypted", state="complete", expanded=False)
+                
                 if "error" not in res:
                     st.session_state['extracted_result'] = res
+                    st.markdown("### 🛡️ Tactical Vision Intelligence")
+                    st.write(res.get('text', 'No analysis available.'))
+                    if st.button("🚀 Synchronize to Mission Database", key="sync_photo"):
+                        df_new = pd.DataFrame([{k: v for k, v in res.items() if k != 'text'}])
+                        st.session_state['needs_df'] = pd.concat([st.session_state['needs_df'], df_new], ignore_index=True)
+                        st.success("Mission Database Synchronized.")
+                        st.rerun()
 
         st.markdown("---")
         uploaded_file = st.file_uploader("Conventional Database Sync (CSV, JSON, PDF)", type=["csv", "json", "pdf", "txt"], key="field_uploader")

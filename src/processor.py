@@ -107,84 +107,73 @@ def generate_mock_impact_data() -> pd.DataFrame:
     return pd.DataFrame(mock_data)
 
 def process_field_audio(audio_data: bytes, api_key: str = None) -> dict:
-    """Transcription and extraction from a field audio memo."""
+    """Transcription and extraction from a field audio memo with Mumbai Tactical Persona."""
     if st.session_state.get('high_traffic'):
         return {"error": "Audio Processing Inhibited: System Load 98%."}
     
     used_key = api_key or get_google_api_key()
 
     if not used_key:
-        # Fallback simulation
         return {
+            "text": "[SIMULATED AUDIO] Tactical Crisis Analyst: Requesting urgent water distribution at the Bandra West main square. 50+ residents dehydrated.",
             "urgency": 7,
             "category": "General",
-            "latitude": 37.77,
-            "longitude": -122.42,
-            "description": "[SIMULATED AUDIO] Voice transcript: Requesting urgent water distribution at the main square. People are dehydrated."
+            "latitude": 19.0596,
+            "longitude": 72.8295,
+            "description": "Voice transcript: Requesting urgent water distribution at Bandra West."
         }
 
     try:
         genai.configure(api_key=used_key)
-        # Gemini 1.5 Flash can process audio directly
-        model = get_model()
-        # We need a mime type, assuming wav/mp3 for this prototype
+        # Act as Tactical Crisis Analyst for Mumbai
+        model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Your responses must be professional, direct, and formatted for emergency coordination.")
+        
         response = model.generate_content([
-            """Analyze this humanitarian field recording. 
-            Draft a structured JSON report with:
-            1. urgency (1-10)
-            2. category (Food, Medical, Shelter, General)
-            3. latitude and longitude (extract if mentioned, else default 37.77, -122.42)
-            4. description (concise English summary)
-            
-            Respond ONLY with valid JSON.""",
+            "Transcribe this humanitarian field recording and provide a tactical summary for a coordinator. Extract resource numbers, locations, and urgency levels if mentioned.",
             {"mime_type": "audio/wav", "data": audio_data}
         ])
-        clean_res = response.text.replace('```json', '').replace('```', '').strip()
-        return json.loads(clean_res)
+        
+        # We also want to extract structured data for the DB, but the user primarily wants st.write(response.text)
+        # So we'll try to get structured data in a separate call or parse it if possible.
+        # To keep it simple and fulfill the request, we'll return the text.
+        
+        # Try to get structured JSON as well for the system state
+        struct_prompt = f"Extract structured data from this text into JSON: {{urgency: 1-10, category: Food/Medical/Shelter/General, latitude: float, longitude: float, description: str}}. Text: {response.text}"
+        struct_res = model.generate_content(struct_prompt)
+        clean_res = struct_res.text.replace('```json', '').replace('```', '').strip()
+        data = json.loads(clean_res)
+        data['text'] = response.text # Attach the raw text
+        return data
     except Exception as e:
-        return {"error": f"Audio Analysis Failed: {str(e)}"}
+        return {"error": f"Audio Analysis Failed: {str(e)}", "text": f"Error: {str(e)}"}
 
-def process_field_image(image_bytes: bytes) -> dict:
-    """Multimodal vision extraction with Severity Scoring."""
+def process_field_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict:
+    """Multimodal vision extraction as a Tactical Crisis Analyst for Mumbai."""
     if st.session_state.get('high_traffic'):
         return {"error": "Vision Tier Unavailable: Resource Limit Exceeded."}
     try:
-        model = get_model()
+        model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Your responses must be professional, direct, and formatted for emergency coordination.")
         
-        prompt = """
-        You are a Humanitarian Data Expert. Analyze the attached mission photo.
+        prompt = "Extract all resource numbers, locations, and urgency levels from this document/image. Format it as a bulleted list for an emergency coordinator."
         
-        1. Estimate a Severity Score (1-10) based on visible damage/risk. 
-        2. Categorize the incident (Food, Medical, Shelter, General).
-        3. Extract any visible text context (signs, documents).
-        4. Provide an English summary.
-        
-        Respond with ONLY JSON:
-        {
-            "urgency": (severity score 1-10),
-            "category": "category string",
-            "latitude": 37.77, (default if unknown),
-            "longitude": -122.42, (default if unknown),
-            "description": "brief situational summary",
-            "detected_language": "English",
-            "people_affected": (estimate from photo)
-        }
-        """
-        
-        img = {"mime_type": "image/jpeg", "data": image_bytes}
+        img = {"mime_type": mime_type, "data": image_bytes}
         response = model.generate_content([prompt, img])
-        clean_res = response.text.replace('```json', '').replace('```', '').strip()
-        return json.loads(clean_res)  # BUG FIX: was missing this return
-    except Exception:
-        # Emergency evaluation fallback — ensures no UI crash
+        
+        # Get structured data for the system
+        struct_prompt = f"Based on this tactical report, extract structured JSON: {{urgency: 1-10, category: Food/Medical/Shelter/General, latitude: float, longitude: float, description: str}}. Report: {response.text}"
+        struct_res = model.generate_content(struct_prompt)
+        clean_res = struct_res.text.replace('```json', '').replace('```', '').strip()
+        data = json.loads(clean_res)
+        data['text'] = response.text
+        return data
+    except Exception as e:
         return {
             "urgency": 9,
             "category": "Medical",
-            "latitude": 37.77,
-            "longitude": -122.42,
-            "description": "[SIMULATED VISION] High-fidelity situational estimate: Severe damage detected. Immediate medical intervention required in this sector.",
-            "detected_language": "English",
-            "people_affected": 15
+            "latitude": 19.0760,
+            "longitude": 72.8777,
+            "description": f"[FALLBACK] Strategic analysis error: {str(e)}",
+            "text": f"⚠️ Tactical Analysis Interrupted: {str(e)}"
         }
 
 def process_survey_image(pil_image, api_key: str = None) -> dict:
@@ -541,36 +530,76 @@ def generate_elite_report(uploaded_file, current_df: pd.DataFrame, api_key: str 
 
     try:
         genai.configure(api_key=used_key)
-        model = get_model()
+        model = get_model(system_instruction="You are a Tactical Crisis Analyst for Mumbai. Your responses must be professional, direct, and formatted for emergency coordination.")
 
         db_snapshot = current_df[['category', 'urgency', 'status', 'latitude', 'longitude', 'description']].head(15).to_string() if not current_df.empty else "No existing records."
 
-        master_prompt = f"""
-        You are a Senior Social Impact Strategist for a global humanitarian mission. Your objective is to optimize resource distribution for maximum human impact.
+        # Multi-modal handling for PDF if it's a PDF
+        if hasattr(uploaded_file, 'name') and uploaded_file.name.lower().endswith('.pdf'):
+            uploaded_file.seek(0)
+            pdf_data = uploaded_file.read()
+            prompt = "Extract all resource numbers, locations, and urgency levels from this document. Format it as a bulleted list for an emergency coordinator."
+            response = model.generate_content([
+                prompt,
+                {"mime_type": "application/pdf", "data": pdf_data}
+            ])
+            # For the elite report, we'll still want the JSON structure for the UI components
+            # but we can include the tactical summary.
+            tactical_text = response.text
+            
+            # Now get the JSON structure
+            master_prompt = f"""
+            Based on the following tactical analysis and the current mission snapshot, generate a strategic JSON report.
+            
+            TACTICAL ANALYSIS:
+            {tactical_text}
+            
+            CURRENT MISSION SNAPSHOT:
+            {db_snapshot}
+            
+            JSON Schema:
+            {{
+                "immediate_actions": "<Markdown table | Task | Priority | Responsible Party |>",
+                "sustainability_impact": "<Markdown table | Initiative | SDG Alignment | Expected Outcome |>",
+                "social_roi": "<Explanation of ROI>",
+                "social_roi_score": <int 0-100>,
+                "summary": "{tactical_text[:500]}...",
+                "summary_text": "{tactical_text}",
+                "sdg_impact": ["SDG 2: Zero Hunger", "SDG 3: Good Health", "SDG 11: Sustainable Cities"]
+            }}
+            """
+            response = model.generate_content(master_prompt)
+        else:
+            master_prompt = f"""
+            You are a Senior Social Impact Strategist for a global humanitarian mission. Your objective is to optimize resource distribution for maximum human impact.
 
-        CURRENT MISSION SNAPSHOT:
-        {db_snapshot}
+            CURRENT MISSION SNAPSHOT:
+            {db_snapshot}
 
-        NEW INCOMING FIELD DATA:
-        {new_data_str[:4000]}
+            NEW INCOMING FIELD DATA:
+            {new_data_str[:4000]}
 
-        YOUR MISSION CRITICAL TASKS:
-        Analyze the incoming data and provide a strategic analysis in JSON format with the following keys:
-        {{
-            "immediate_actions": "<A Markdown table listing exactly 3 immediate action items: | Task | Priority | Responsible Party |>",
-            "sustainability_impact": "<A Markdown table summarizing long-term impact: | Initiative | SDG Alignment | Expected Outcome |>",
-            "social_roi": "<A detailed explanation of the 'Social Return on Investment' (Social ROI) score (0-100) based on current efficiency and lives potentially saved>",
-            "social_roi_score": <integer 0-100>,
-            "summary": "<A 2-paragraph executive overview of the tactical situation in professional prose>",
-            "sdg_impact": ["SDG 2: Zero Hunger", "SDG 3: Good Health", "SDG 11: Sustainable Cities"]
-        }}
+            YOUR MISSION CRITICAL TASKS:
+            Analyze the incoming data and provide a strategic analysis in JSON format with the following keys:
+            {{
+                "immediate_actions": "<A Markdown table listing exactly 3 immediate action items: | Task | Priority | Responsible Party |>",
+                "sustainability_impact": "<A Markdown table summarizing long-term impact: | Initiative | SDG Alignment | Expected Outcome |>",
+                "social_roi": "<A detailed explanation of the 'Social Return on Investment' (Social ROI) score (0-100) based on current efficiency and lives potentially saved>",
+                "social_roi_score": <integer 0-100>,
+                "summary": "<A 2-paragraph executive overview of the tactical situation in professional prose>",
+                "summary_text": "<Full analysis text>",
+                "sdg_impact": ["SDG 2: Zero Hunger", "SDG 3: Good Health", "SDG 11: Sustainable Cities"]
+            }}
 
-        Output ONLY valid JSON.
-        """
+            Output ONLY valid JSON.
+            """
+            response = model.generate_content(master_prompt)
 
-        response = model.generate_content(master_prompt)
         clean = response.text.replace('```json', '').replace('```', '').strip()
-        return json.loads(clean)
+        report_data = json.loads(clean)
+        if 'summary_text' not in report_data:
+            report_data['summary_text'] = report_data.get('summary', '')
+        return report_data
 
     except Exception as e:
         return {
